@@ -5,13 +5,15 @@ class TableModel extends TableEntity {
     required super.id,
     required super.number,
     required super.occupied,
+    required super.needsPayment,
   });
 
   factory TableModel.fromJson(Map<String, dynamic> json) {
     return TableModel(
-      id: json['id'],
-      number: json['number'],
-      occupied: json['occupied'],
+      id: json['id'] as String,
+      number: json['number'] as int,
+      occupied: json['occupied'] as bool? ?? false,
+      needsPayment: json['needs_payment'] as bool? ?? false,
     );
   }
 
@@ -20,6 +22,7 @@ class TableModel extends TableEntity {
       "id": id,
       "number": number,
       "occupied": occupied,
+      "needs_payment": needsPayment,
     };
   }
 
@@ -28,6 +31,7 @@ class TableModel extends TableEntity {
       id: table.id,
       number: table.number,
       occupied: table.occupied,
+      needsPayment: table.needsPayment,
     );
   }
 
@@ -36,6 +40,7 @@ class TableModel extends TableEntity {
       id: id,
       number: number,
       occupied: occupied,
+      needsPayment: needsPayment,
     );
   }
 }
