@@ -49,7 +49,7 @@ dependencies:
 
   geolocator: ^12.0.0
 
-  speech_to_text: ^6.6.2
+  speech_to_text: ^7.3.0
 
   flutter_tts: ^4.0.2
 
