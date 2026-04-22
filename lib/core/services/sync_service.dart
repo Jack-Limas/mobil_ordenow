@@ -5,16 +5,16 @@ class SyncService {
   static Future<void> syncOrders() async {
     final box = HiveService.getOrderBox();
 
-    for (var item in box.values) {
-      await SupabaseService.insertOrder(item);
+    for (final item in box.values) {
+      await SupabaseService.upsertOrder(Map<String, dynamic>.from(item));
     }
   }
 
   static Future<void> syncUsers() async {
     final box = HiveService.getUserBox();
 
-    for (var item in box.values) {
-      await SupabaseService.insertUser(item);
+    for (final item in box.values) {
+      await SupabaseService.upsertUser(Map<String, dynamic>.from(item));
     }
   }
 
