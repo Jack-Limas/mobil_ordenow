@@ -1,9 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/app_copy.dart';
 import '../providers/app_settings_provider.dart';
+import '../widgets/app_utility_toggles.dart';
 import '../widgets/welcome_metric.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -15,21 +15,23 @@ class WelcomeScreen extends StatelessWidget {
 
   static const _backgroundImage =
       'lib/assets/images/background_bienvenida.png';
-  static const _moonImage = 'lib/assets/images/moon_mode.png';
   final VoidCallback onCustomerDemo;
   final VoidCallback onAdminDemo;
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final settings = context.watch<AppSettingsProvider>();
-    final isDarkMode = settings.themeMode == ThemeMode.dark ||
-        (settings.themeMode == ThemeMode.system &&
-            View.of(context).platformDispatcher.platformBrightness ==
-                Brightness.dark);
+    final isDarkMode = settings.themeMode == ThemeMode.dark;
+    final baseBackground =
+        isDarkMode ? const Color(0xFF131313) : const Color(0xFFF4E8E0);
+    final primaryText = isDarkMode ? Colors.white : const Color(0xFF241A15);
+    final secondaryText =
+        isDarkMode ? const Color(0xFFE4BEB1) : const Color(0xFF6D5247);
 
     return Scaffold(
       body: Container(
-        color: const Color(0xFF131313),
+        color: baseBackground,
         child: Stack(
           children: [
             Positioned.fill(
@@ -45,8 +47,8 @@ class WelcomeScreen extends StatelessWidget {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      const Color(0xFF131313),
-                      const Color(0xFF131313).withValues(alpha: 0.40),
+                      baseBackground,
+                      baseBackground.withValues(alpha: 0.40),
                       Colors.transparent,
                     ],
                     stops: const [0, 0.5, 1],
@@ -61,7 +63,7 @@ class WelcomeScreen extends StatelessWidget {
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      const Color(0xFF131313).withValues(alpha: 0.80),
+                      baseBackground.withValues(alpha: 0.80),
                       Colors.transparent,
                       Colors.transparent,
                     ],
@@ -103,46 +105,24 @@ class WelcomeScreen extends StatelessWidget {
                         children: [
                           const Expanded(child: _BrandBlock()),
                           const SizedBox(width: 16),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _LanguageToggle(
-                                currentLanguageCode:
-                                    settings.locale.languageCode,
-                                onChanged: settings.updateLanguage,
-                              ),
-                              const SizedBox(width: 16),
-                              _ThemeToggle(
-                                isDarkMode: isDarkMode,
-                                onPressed: () {
-                                  settings.updateThemeMode(
-                                    isDarkMode
-                                        ? ThemeMode.light
-                                        : ThemeMode.dark,
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
+                          const AppUtilityToggles(),
                         ],
                       ),
                       const SizedBox(height: 22),
-                      const Text(
-                        'Elevate\nYour Palate.',
+                      Text(
+                        copy.welcomeHeadline,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: primaryText,
                           fontSize: 48,
                           fontWeight: FontWeight.w400,
                           height: 1.25,
                           letterSpacing: -2.4,
                         ),
                       ),
-                      const Text(
-                        '\nAI-curated dining experiences tailored\n'
-                        'to your unique sensory profile.\n'
-                        'Welcome to the future of appetite.',
+                      Text(
+                        '\n${copy.welcomeDescription}',
                         style: TextStyle(
-                          color: Color(0xFFE4BEB1),
+                          color: secondaryText,
                           fontSize: 18,
                           fontWeight: FontWeight.w400,
                           height: 1.625,
@@ -182,7 +162,7 @@ class WelcomeScreen extends StatelessWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        'Get Started',
+                                        copy.getStarted,
                                         style: TextStyle(
                                           color: Color(0xFF521800),
                                           fontSize: 18,
@@ -205,7 +185,7 @@ class WelcomeScreen extends StatelessWidget {
                             OutlinedButton.icon(
                               onPressed: onAdminDemo,
                               icon: const Icon(Icons.dashboard_customize_rounded),
-                              label: const Text('Open Admin Demo'),
+                              label: Text(copy.openAdminDemo),
                             ),
                             const SizedBox(height: 24),
                             ClipRRect(
@@ -232,7 +212,7 @@ class WelcomeScreen extends StatelessWidget {
                                       _OnlineDot(),
                                       SizedBox(width: 12),
                                       Text(
-                                        'AI CONCIERGE ONLINE',
+                                        copy.aiConciergeOnline,
                                         style: TextStyle(
                                           color: Color(0xFF7DDB7A),
                                           fontSize: 14,
@@ -254,14 +234,14 @@ class WelcomeScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: WelcomeMetric(
-                              label: 'CURATED DISHES',
+                              label: copy.curatedDishes,
                               value: '12.4k+',
                             ),
                           ),
                           SizedBox(width: 32),
                           Expanded(
                             child: WelcomeMetric(
-                              label: 'MICHELIN CHEFS',
+                              label: copy.michelinChefs,
                               value: '450+',
                             ),
                           ),
@@ -307,12 +287,14 @@ class _BrandBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    final copy = AppCopy.of(context);
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'OrdeNow',
+          copy.appName,
           style: TextStyle(
             color: Color(0xFFFF5C00),
             fontSize: 30,
@@ -323,7 +305,7 @@ class _BrandBlock extends StatelessWidget {
         ),
         SizedBox(height: 4),
         Text(
-          'SENSORY SOMMELIER',
+          copy.sensorySommelier,
           style: TextStyle(
             color: Color(0xCCFFB599),
             fontSize: 10,
@@ -333,152 +315,6 @@ class _BrandBlock extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _LanguageToggle extends StatelessWidget {
-  const _LanguageToggle({
-    required this.currentLanguageCode,
-    required this.onChanged,
-  });
-
-  final String currentLanguageCode;
-  final Future<void> Function(String languageCode) onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return _GlassShell(
-      padding: const EdgeInsets.all(4),
-      borderRadius: 999,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _LanguageChip(
-            label: 'EN',
-            selected: currentLanguageCode == 'en',
-            onTap: () => onChanged('en'),
-          ),
-          _LanguageChip(
-            label: 'ES',
-            selected: currentLanguageCode == 'es',
-            onTap: () => onChanged('es'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LanguageChip extends StatelessWidget {
-  const _LanguageChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFFFF5C00) : Colors.transparent,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected
-                  ? const Color(0xFF521800)
-                  : const Color(0xFFE5E2E1).withValues(alpha: 0.60),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              height: 1.33,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ThemeToggle extends StatelessWidget {
-  const _ThemeToggle({
-    required this.isDarkMode,
-    required this.onPressed,
-  });
-
-  final bool isDarkMode;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return _GlassShell(
-      width: 40,
-      height: 40,
-      borderRadius: 999,
-      child: IconButton(
-        onPressed: onPressed,
-        splashRadius: 20,
-        padding: EdgeInsets.zero,
-        icon: Opacity(
-          opacity: isDarkMode ? 1 : 0.8,
-          child: Image.asset(
-            WelcomeScreen._moonImage,
-            width: 18,
-            height: 18,
-            fit: BoxFit.contain,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassShell extends StatelessWidget {
-  const _GlassShell({
-    this.child,
-    this.padding,
-    this.width,
-    this.height,
-    required this.borderRadius,
-  });
-
-  final Widget? child;
-  final EdgeInsetsGeometry? padding;
-  final double? width;
-  final double? height;
-  final double borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          width: width,
-          height: height,
-          padding: padding,
-          decoration: BoxDecoration(
-            color: const Color(0xFF353533).withValues(alpha: 0.40),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-          ),
-          child: child,
-        ),
-      ),
     );
   }
 }
