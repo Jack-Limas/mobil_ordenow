@@ -7,11 +7,17 @@ import '../providers/app_settings_provider.dart';
 import '../widgets/welcome_metric.dart';
 
 class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key});
+  const WelcomeScreen({
+    super.key,
+    required this.onCustomerDemo,
+    required this.onAdminDemo,
+  });
 
   static const _backgroundImage =
       'lib/assets/images/background_bienvenida.png';
   static const _moonImage = 'lib/assets/images/moon_mode.png';
+  final VoidCallback onCustomerDemo;
+  final VoidCallback onAdminDemo;
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +171,7 @@ class WelcomeScreen extends StatelessWidget {
                                 ],
                               ),
                               child: InkWell(
-                                onTap: () {},
+                                onTap: onCustomerDemo,
                                 borderRadius: BorderRadius.circular(12),
                                 child: const Padding(
                                   padding: EdgeInsets.symmetric(
@@ -194,6 +200,12 @@ class WelcomeScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: onAdminDemo,
+                              icon: const Icon(Icons.dashboard_customize_rounded),
+                              label: const Text('Open Admin Demo'),
                             ),
                             const SizedBox(height: 24),
                             ClipRRect(
