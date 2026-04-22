@@ -15,15 +15,37 @@ class AppColors {
 }
 
 class AppStrings {
-  static const String appName = 'OrdeNow';
-  static const String appTagline = 'Pide rapido, claro y sin filas.';
+  static const String appName = 'Ordenow';
+  static const String appTagline = 'Order faster, clearly, and without waiting.';
 }
 
 class HiveBoxes {
   static const String settings = 'settings_box';
+  static const String user = 'user_box';
+  static const String order = 'order_box';
+  static const String menu = 'menu_box';
+  static const String table = 'table_box';
 }
 
 class HiveKeys {
   static const String themeMode = 'theme_mode';
   static const String languageCode = 'language_code';
+  static const String currentUserId = 'current_user_id';
+  static const String selectedTableId = 'selected_table_id';
+}
+
+class SupabaseTables {
+  static const String user = 'user';
+  static const String menu = 'menu';
+  static const String order = 'order';
+  static const String table = 'table';
+}
+
+class OrderStatuses {
+  static const String pending = 'pending';
+  static const String accepted = 'accepted';
+  static const String preparing = 'preparing';
+  static const String ready = 'ready';
+  static const String delivered = 'delivered';
+  static const String completed = 'completed';
 }
