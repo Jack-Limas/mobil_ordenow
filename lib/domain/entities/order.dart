@@ -5,7 +5,12 @@ class Order {
   final List<String> items;
   final String status;
   final DateTime createdAt;
+  final DateTime updatedAt;
   final bool paid;
+  final String paymentMethod;
+  final double totalAmount;
+  final String notes;
+  final bool synced;
 
   Order({
     required this.id,
@@ -14,6 +19,11 @@ class Order {
     required this.items,
     required this.status,
     required this.createdAt,
+    required this.updatedAt,
     required this.paid,
+    required this.paymentMethod,
+    required this.totalAmount,
+    required this.notes,
+    required this.synced,
   });
 }
