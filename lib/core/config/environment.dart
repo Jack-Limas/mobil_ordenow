@@ -2,7 +2,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Environment {
   static Future<void> init() async {
-    await dotenv.load(fileName: '.env');
+    try {
+      await dotenv.load(fileName: '.env');
+    } catch (_) {
+      // In phase 1 the app can run without backend configuration.
+    }
   }
 
   static String get supabaseUrl {
