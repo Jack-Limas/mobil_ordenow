@@ -143,7 +143,7 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                       shrinkWrap: true,
                       physics: const BouncingScrollPhysics(),
                       itemCount: ai.messages.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, index) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final message = ai.messages[index];
                         return AiMessageBubble(
