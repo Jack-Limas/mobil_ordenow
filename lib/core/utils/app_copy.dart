@@ -23,14 +23,24 @@ class AppCopy {
       isSpanish ? 'Eleva\nTu Paladar.' : 'Elevate\nYour Palate.';
 
   String get welcomeDescription => isSpanish
-      ? 'Experiencias gastrónomicas guiadas por IA según tu perfil sensorial.\nBienvenido al futuro del apetito.'
+      ? 'Experiencias gastronomicas guiadas por IA segun tu perfil sensorial.\nBienvenido al futuro del apetito.'
       : 'AI-curated dining experiences tailored to your unique sensory profile.\nWelcome to the future of appetite.';
 
+  String get welcomeBadge =>
+      isSpanish ? 'EXPERIENCIA GASTRONOMICA' : 'DINING EXPERIENCE';
+  String get welcomePill => isSpanish
+      ? 'Personalizacion, voz y IA en un solo flujo.'
+      : 'Voice, personalization, and AI in one flow.';
   String get getStarted => isSpanish ? 'Comenzar' : 'Get Started';
   String get openAdminDemo =>
       isSpanish ? 'Abrir demo admin' : 'Open Admin Demo';
   String get aiConciergeOnline =>
       isSpanish ? 'IA CONCIERGE EN LINEA' : 'AI CONCIERGE ONLINE';
+  String get switchLanguage =>
+      isSpanish ? 'Cambiar a ingles' : 'Switch to Spanish';
+  String get switchTheme =>
+      isSpanish ? 'Cambiar tema' : 'Toggle theme';
+  String get aiReady => isSpanish ? 'IA lista para asistir' : 'AI ready to assist';
 
   String get curatedDishes =>
       isSpanish ? 'PLATOS CURADOS' : 'CURATED DISHES';
@@ -47,6 +57,12 @@ class AppCopy {
   String get signUp => isSpanish ? 'Registrarme' : 'Sign Up';
   String get createAccount =>
       isSpanish ? 'Crear Cuenta' : 'Create Account';
+  String get signInTitle => isSpanish
+      ? 'Accede a tu mesa inteligente'
+      : 'Enter your smart table journey';
+  String get signUpTitle => isSpanish
+      ? 'Crea tu perfil gastronomico'
+      : 'Create your dining profile';
   String get customer => isSpanish ? 'Cliente' : 'Customer';
   String get administrator =>
       isSpanish ? 'Administrador' : 'Administrator';
@@ -68,6 +84,20 @@ class AppCopy {
   String get allergiesPreferences => isSpanish
       ? 'ALERGIAS O PREFERENCIAS'
       : 'ALLERGIES OR PREFERENCES';
+  String get signInDescription => isSpanish
+      ? 'Inicia sesion para continuar con recomendaciones, pedido asistido y seguimiento en tiempo real.'
+      : 'Sign in to continue with recommendations, AI-assisted ordering, and live tracking.';
+  String get signUpDescription => isSpanish
+      ? 'Crea tu perfil para empezar a pedir con IA, recomendaciones y seguimiento en tiempo real.'
+      : 'Create your profile to start ordering with AI, recommendations, and live tracking.';
+  String get passwordMismatch =>
+      isSpanish ? 'Las contrasenas no coinciden.' : 'Passwords do not match.';
+  String get unableToCreateAccount => isSpanish
+      ? 'No se pudo crear la cuenta.'
+      : 'Unable to create account.';
+  String get unableToSignIn =>
+      isSpanish ? 'No se pudo iniciar sesion.' : 'Unable to sign in.';
+  String get footerCopyright => '(C) 2026\nORDENOW\nTECHNOLOGIES';
 
   String get privacy => isSpanish ? 'PRIVACIDAD' : 'PRIVACY';
   String get terms => isSpanish ? 'TERMINOS' : 'TERMS';

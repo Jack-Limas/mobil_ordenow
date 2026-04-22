@@ -9,6 +9,7 @@ class AppSettingsProvider extends ChangeNotifier {
 
   ThemeMode get themeMode => _themeMode;
   Locale get locale => _locale;
+  bool get isSpanish => _locale.languageCode == 'es';
 
   Future<void> loadPreferences() async {
     final settingsBox = HiveService.settingsBox;
@@ -40,6 +41,10 @@ class AppSettingsProvider extends ChangeNotifier {
     _locale = Locale(languageCode);
     await HiveService.settingsBox.put(HiveKeys.languageCode, languageCode);
     notifyListeners();
+  }
+
+  Future<void> toggleLanguage() async {
+    await updateLanguage(isSpanish ? 'en' : 'es');
   }
 
   ThemeMode _themeModeFromValue(String value) {

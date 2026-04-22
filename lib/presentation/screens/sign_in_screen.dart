@@ -35,6 +35,7 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> _handleSignIn() async {
     final auth = context.read<AuthProvider>();
     final demo = context.read<AppDemoProvider>();
+    final copy = AppCopy.of(context);
 
     if (_role == SignInRole.administrator) {
       demo.openAdminDemo();
@@ -57,7 +58,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(auth.errorMessage ?? 'Unable to sign in.'),
+        content: Text(auth.errorMessage ?? copy.unableToSignIn),
       ),
     );
   }
@@ -66,15 +67,28 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     final copy = AppCopy.of(context);
     final auth = context.watch<AuthProvider>();
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final backgroundColor =
+        isDarkMode ? const Color(0xFF11100F) : const Color(0xFFF8EEE6);
+    final panelColor = isDarkMode
+        ? const Color(0xFF131313).withValues(alpha: 0.62)
+        : Colors.white.withValues(alpha: 0.86);
+    final headingColor =
+        isDarkMode ? const Color(0xFFE5E2E1) : const Color(0xFF221813);
+    final bodyColor =
+        isDarkMode ? const Color(0xFFE4BEB1) : const Color(0xFF76584D);
+    final mutedColor =
+        isDarkMode ? const Color(0x66E5E2E1) : const Color(0x88665045);
 
     return Scaffold(
       body: Container(
-        color: const Color(0xFF131313),
+        color: backgroundColor,
         child: Stack(
           children: [
             Positioned.fill(
               child: Opacity(
-                opacity: 0.4,
+                opacity: isDarkMode ? 0.38 : 0.24,
                 child: Image.asset(
                   'lib/assets/images/background_bienvenida.png',
                   fit: BoxFit.cover,
@@ -88,8 +102,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     begin: Alignment.bottomLeft,
                     end: Alignment.topRight,
                     colors: [
-                      const Color(0xFF131313),
-                      const Color(0xFF131313).withValues(alpha: 0.80),
+                      backgroundColor,
+                      backgroundColor.withValues(alpha: 0.82),
                       Colors.transparent,
                     ],
                     stops: const [0, 0.5, 1],
@@ -111,7 +125,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: Column(
                         children: [
                           ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 342),
+                            constraints: const BoxConstraints(maxWidth: 360),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(32),
                               child: BackdropFilter(
@@ -120,14 +134,13 @@ class _SignInScreenState extends State<SignInScreen> {
                                   sigmaY: 24,
                                 ),
                                 child: Container(
-                                  padding: const EdgeInsets.all(40),
+                                  padding: const EdgeInsets.all(32),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF131313)
-                                        .withValues(alpha: 0.60),
+                                    color: panelColor,
                                     borderRadius: BorderRadius.circular(32),
                                     boxShadow: const [
                                       BoxShadow(
-                                        color: Color.fromRGBO(0, 0, 0, 0.40),
+                                        color: Color.fromRGBO(0, 0, 0, 0.28),
                                         offset: Offset(0, 25),
                                         blurRadius: 50,
                                         spreadRadius: -12,
@@ -135,38 +148,38 @@ class _SignInScreenState extends State<SignInScreen> {
                                     ],
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
-                                      Column(
-                                        children: [
-                                          Text(
-                                            copy.welcomeBack,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: Color(0xFFE5E2E1),
-                                              fontSize: 30,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            copy.continueJourney,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: Color(0xFFE4BEB1),
-                                              fontSize: 14,
-                                              height: 1.4,
-                                            ),
-                                          ),
-                                        ],
+                                      Text(
+                                        copy.signInTitle,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: headingColor,
+                                          fontSize: 30,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        copy.signInDescription,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: bodyColor,
+                                          fontSize: 14,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 28),
                                       Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF0E0E0E)
-                                              .withValues(alpha: 0.50),
-                                          borderRadius: BorderRadius.circular(16),
+                                          color: isDarkMode
+                                              ? const Color(0xFF0E0E0E)
+                                                  .withValues(alpha: 0.50)
+                                              : const Color(0xFFF3E4D8),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
                                         ),
                                         child: Row(
                                           children: [
@@ -177,7 +190,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                                     _role == SignInRole.customer,
                                                 onTap: () {
                                                   setState(() {
-                                                    _role = SignInRole.customer;
+                                                    _role =
+                                                        SignInRole.customer;
                                                   });
                                                 },
                                               ),
@@ -198,62 +212,47 @@ class _SignInScreenState extends State<SignInScreen> {
                                           ],
                                         ),
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 24),
                                       _FieldBlock(
                                         label: copy.emailAddress,
                                         icon: Icons.mail_outline_rounded,
+                                        isDarkMode: isDarkMode,
                                         child: TextField(
                                           controller: _emailController,
                                           keyboardType:
                                               TextInputType.emailAddress,
-                                          style: const TextStyle(
-                                            color: Color(0xFFE5E2E1),
-                                          ),
+                                          style: TextStyle(color: headingColor),
                                           decoration: InputDecoration(
                                             hintText: copy.emailHint,
-                                            hintStyle: const TextStyle(
-                                              color: Color.fromRGBO(
-                                                  229, 226, 225, 0.20),
-                                            ),
-                                            prefixIconColor:
-                                                const Color.fromRGBO(
-                                                    229, 226, 225, 0.40),
+                                            hintStyle: TextStyle(color: mutedColor),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 20),
+                                      const SizedBox(height: 18),
                                       _FieldBlock(
                                         label: copy.password,
+                                        icon: Icons.lock_outline_rounded,
+                                        isDarkMode: isDarkMode,
                                         trailing: Text(
                                           copy.forgot,
-                                          style: const TextStyle(
-                                            color:
-                                                Color.fromRGBO(229, 226, 225, 0.40),
+                                          style: TextStyle(
+                                            color: mutedColor,
                                             fontSize: 10,
                                             fontWeight: FontWeight.w700,
                                             letterSpacing: 0.6,
                                           ),
                                         ),
-                                        icon: Icons.lock_outline_rounded,
                                         child: TextField(
                                           controller: _passwordController,
                                           obscureText: true,
-                                          style: const TextStyle(
-                                            color: Color(0xFFE5E2E1),
-                                          ),
+                                          style: TextStyle(color: headingColor),
                                           decoration: InputDecoration(
                                             hintText: '••••••••',
-                                            hintStyle: const TextStyle(
-                                              color: Color.fromRGBO(
-                                                  229, 226, 225, 0.20),
-                                            ),
-                                            prefixIconColor:
-                                                const Color.fromRGBO(
-                                                    229, 226, 225, 0.40),
+                                            hintStyle: TextStyle(color: mutedColor),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 20),
+                                      const SizedBox(height: 22),
                                       DecoratedBox(
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
@@ -268,8 +267,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                               BorderRadius.circular(24),
                                           boxShadow: const [
                                             BoxShadow(
-                                              color: Color.fromRGBO(
-                                                  255, 92, 0, 0.30),
+                                              color:
+                                                  Color.fromRGBO(255, 92, 0, 0.30),
                                               offset: Offset(0, 8),
                                               blurRadius: 30,
                                             ),
@@ -309,13 +308,14 @@ class _SignInScreenState extends State<SignInScreen> {
                                                 ),
                                         ),
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 28),
                                       Row(
                                         children: [
                                           Expanded(
                                             child: Divider(
-                                              color: Colors.white
-                                                  .withValues(alpha: 0.05),
+                                              color: mutedColor.withValues(
+                                                alpha: 0.24,
+                                              ),
                                             ),
                                           ),
                                           Padding(
@@ -324,26 +324,26 @@ class _SignInScreenState extends State<SignInScreen> {
                                             ),
                                             child: Text(
                                               copy.continueWith,
-                                              style: const TextStyle(
-                                                color: Color.fromRGBO(
-                                                    229, 226, 225, 0.30),
+                                              style: TextStyle(
+                                                color: mutedColor,
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w700,
-                                                letterSpacing: 2.4,
+                                                letterSpacing: 2.2,
                                               ),
                                             ),
                                           ),
                                           Expanded(
                                             child: Divider(
-                                              color: Colors.white
-                                                  .withValues(alpha: 0.05),
+                                              color: mutedColor.withValues(
+                                                alpha: 0.24,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 32),
-                                      Row(
-                                        children: const [
+                                      const SizedBox(height: 24),
+                                      const Row(
+                                        children: [
                                           Expanded(
                                             child: _SocialButton(
                                               assetPath:
@@ -361,7 +361,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 24),
                                       Center(
                                         child: TextButton(
                                           onPressed: () {
@@ -372,8 +372,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                           child: Text(
                                             copy.newToOrdenow,
                                             textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: Color(0xFFE4BEB1),
+                                            style: TextStyle(
+                                              color: bodyColor,
                                             ),
                                           ),
                                         ),
@@ -384,16 +384,16 @@ class _SignInScreenState extends State<SignInScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 36),
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 390),
                             child: Row(
                               children: [
-                                const Expanded(
+                                Expanded(
                                   child: Text(
-                                    '© 2024\nORDENOW\nTECHNOLOGIES',
+                                    copy.footerCopyright,
                                     style: TextStyle(
-                                      color: Color.fromRGBO(229, 226, 225, 0.20),
+                                      color: mutedColor,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 2,
@@ -410,9 +410,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                   ].map(
                                     (item) => Text(
                                       item,
-                                      style: const TextStyle(
-                                        color:
-                                            Color.fromRGBO(229, 226, 225, 0.20),
+                                      style: TextStyle(
+                                        color: mutedColor,
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 2,
@@ -460,30 +459,14 @@ class _RoleButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFFF5C00) : Colors.transparent,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: selected
-                ? const [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.10),
-                      offset: Offset(0, 4),
-                      blurRadius: 6,
-                      spreadRadius: -4,
-                    ),
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.10),
-                      offset: Offset(0, 10),
-                      blurRadius: 15,
-                      spreadRadius: -3,
-                    ),
-                  ]
-                : null,
           ),
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: selected
-                  ? const Color(0xFF521800)
-                  : const Color.fromRGBO(229, 226, 225, 0.60),
+                  ? Colors.white
+                  : Theme.of(context).textTheme.bodyMedium?.color,
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
@@ -499,16 +482,21 @@ class _FieldBlock extends StatelessWidget {
     required this.label,
     required this.child,
     required this.icon,
+    required this.isDarkMode,
     this.trailing,
   });
 
   final String label;
   final Widget child;
   final IconData icon;
+  final bool isDarkMode;
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    final mutedColor =
+        isDarkMode ? const Color(0x66E5E2E1) : const Color(0x88665045);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -533,12 +521,10 @@ class _FieldBlock extends StatelessWidget {
           data: Theme.of(context).copyWith(
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
-              fillColor: const Color(0xFF2A2A2A).withValues(alpha: 0.50),
-              prefixIconColor: const Color.fromRGBO(229, 226, 225, 0.40),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 17,
-              ),
+              fillColor: isDarkMode
+                  ? const Color(0xFF2A2A2A).withValues(alpha: 0.50)
+                  : const Color(0xFFF3E4D8),
+              contentPadding: const EdgeInsets.fromLTRB(48, 17, 16, 17),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(24),
                 borderSide: BorderSide.none,
@@ -556,7 +542,7 @@ class _FieldBlock extends StatelessWidget {
                     child: Icon(
                       icon,
                       size: 18,
-                      color: const Color.fromRGBO(229, 226, 225, 0.40),
+                      color: mutedColor,
                     ),
                   ),
                 ],
@@ -583,8 +569,11 @@ class _SocialButton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF353533).withValues(alpha: 0.40),
+        color: const Color(0xFF353533).withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

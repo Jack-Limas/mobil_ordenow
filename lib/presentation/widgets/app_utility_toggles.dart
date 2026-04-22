@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/app_copy.dart';
 import '../../presentation/providers/app_settings_provider.dart';
 
 class AppUtilityToggles extends StatelessWidget {
@@ -12,6 +13,7 @@ class AppUtilityToggles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final settings = context.watch<AppSettingsProvider>();
     final isDarkMode = settings.themeMode == ThemeMode.dark ||
         (settings.themeMode == ThemeMode.system &&
@@ -23,9 +25,7 @@ class AppUtilityToggles extends StatelessWidget {
       children: [
         _GlassButton(
           onTap: () {
-            settings.updateLanguage(
-              settings.locale.languageCode == 'en' ? 'es' : 'en',
-            );
+            settings.toggleLanguage();
           },
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -37,7 +37,7 @@ class AppUtilityToggles extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                settings.locale.languageCode.toUpperCase(),
+                settings.isSpanish ? 'ES / EN' : 'EN / ES',
                 style: const TextStyle(
                   color: Color(0xFFE5E2E1),
                   fontSize: 14,
@@ -59,16 +59,22 @@ class AppUtilityToggles extends StatelessWidget {
           },
           child: Center(
             child: isDarkMode
-                ? Image.asset(
-                    _moonImage,
-                    width: 16,
-                    height: 16,
-                    fit: BoxFit.contain,
+                ? Tooltip(
+                    message: copy.switchTheme,
+                    child: const Icon(
+                      Icons.dark_mode_rounded,
+                      size: 16,
+                      color: Color(0xFFE5E2E1),
+                    ),
                   )
-                : const Icon(
-                    Icons.light_mode_rounded,
-                    size: 16,
-                    color: Color(0xFFE5E2E1),
+                : Tooltip(
+                    message: copy.switchTheme,
+                    child: Image.asset(
+                      _moonImage,
+                      width: 16,
+                      height: 16,
+                      fit: BoxFit.contain,
+                    ),
                   ),
           ),
         ),
@@ -108,6 +114,9 @@ class _GlassButton extends StatelessWidget {
               padding: padding,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: const Color(0xFFFFFFFF).withValues(alpha: 0.08),
+                ),
               ),
               child: child,
             ),

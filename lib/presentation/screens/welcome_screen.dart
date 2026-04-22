@@ -17,6 +17,7 @@ class WelcomeScreen extends StatelessWidget {
 
   static const _backgroundImage =
       'lib/assets/images/background_bienvenida.png';
+
   final VoidCallback onCustomerDemo;
   final VoidCallback onAdminDemo;
 
@@ -24,12 +25,14 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final copy = AppCopy.of(context);
     final settings = context.watch<AppSettingsProvider>();
-    final isDarkMode = settings.themeMode == ThemeMode.dark;
+    final isDarkMode = settings.themeMode == ThemeMode.dark ||
+        (settings.themeMode == ThemeMode.system &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final baseBackground =
-        isDarkMode ? const Color(0xFF131313) : const Color(0xFFF4E8E0);
+        isDarkMode ? const Color(0xFF11100F) : const Color(0xFFF8EEE6);
     final primaryText = isDarkMode ? Colors.white : const Color(0xFF241A15);
     final secondaryText =
-        isDarkMode ? const Color(0xFFE4BEB1) : const Color(0xFF6D5247);
+        isDarkMode ? const Color(0xFFE4BEB1) : const Color(0xFF7A5B4E);
 
     return Scaffold(
       body: Container(
@@ -50,10 +53,9 @@ class WelcomeScreen extends StatelessWidget {
                     end: Alignment.topCenter,
                     colors: [
                       baseBackground,
-                      baseBackground.withValues(alpha: 0.40),
+                      baseBackground.withValues(alpha: 0.44),
                       Colors.transparent,
                     ],
-                    stops: const [0, 0.5, 1],
                   ),
                 ),
               ),
@@ -65,39 +67,38 @@ class WelcomeScreen extends StatelessWidget {
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      baseBackground.withValues(alpha: 0.80),
-                      Colors.transparent,
+                      baseBackground.withValues(alpha: 0.86),
+                      baseBackground.withValues(alpha: 0.08),
                       Colors.transparent,
                     ],
-                    stops: const [0, 0.5, 1],
                   ),
                 ),
               ),
             ),
             Positioned(
-              right: -116,
-              top: 181,
+              right: -120,
+              top: 190,
               child: _BlurCircle(
-                size: 384,
-                color: const Color(0xFFFFB599).withValues(alpha: 0.10),
+                size: 340,
+                color: const Color(0xFFFF924F).withValues(alpha: 0.14),
                 blur: 120,
               ),
             ),
             Positioned(
-              left: -96,
-              bottom: 97,
+              left: -90,
+              bottom: 90,
               child: _BlurCircle(
-                size: 256,
-                color: const Color(0xFF7DDB7A).withValues(alpha: 0.05),
+                size: 240,
+                color: const Color(0xFF7DDB7A).withValues(alpha: 0.06),
                 blur: 100,
               ),
             ),
             SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(32, 32, 32, 32),
+                padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    minHeight: MediaQuery.sizeOf(context).height - 64,
+                    minHeight: MediaQuery.sizeOf(context).height - 56,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,73 +111,133 @@ class WelcomeScreen extends StatelessWidget {
                           const AppUtilityToggles(),
                         ],
                       ),
+                      const SizedBox(height: 20),
+                      _TagBadge(
+                        text: copy.welcomeBadge,
+                        isDarkMode: isDarkMode,
+                      ),
                       const SizedBox(height: 22),
                       Text(
                         copy.welcomeHeadline,
                         style: TextStyle(
                           color: primaryText,
-                          fontSize: 48,
+                          fontSize: 50,
                           fontWeight: FontWeight.w400,
-                          height: 1.25,
-                          letterSpacing: -2.4,
+                          height: 1.05,
+                          letterSpacing: -2.6,
                         ),
                       ),
+                      const SizedBox(height: 18),
                       Text(
-                        '\n${copy.welcomeDescription}',
+                        copy.welcomeDescription,
                         style: TextStyle(
                           color: secondaryText,
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.w400,
-                          height: 1.625,
+                          height: 1.55,
                         ),
                       ),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 28),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.white.withValues(alpha: 0.76),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : const Color(0xFFD8B8A8).withValues(alpha: 0.45),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 46,
+                              height: 46,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF6B00),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(
+                                Icons.auto_awesome_rounded,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    copy.aiReady,
+                                    style: TextStyle(
+                                      color: primaryText,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    copy.welcomePill,
+                                    style: TextStyle(
+                                      color: secondaryText,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 34),
                       Center(
                         child: Column(
                           children: [
                             DecoratedBox(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(18),
                                 gradient: const LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
+                                    Color(0xFFFF7B1A),
                                     Color(0xFFFF5C00),
-                                    Color(0xFF802A00),
                                   ],
                                 ),
                                 boxShadow: const [
                                   BoxShadow(
-                                    color: Color.fromRGBO(255, 92, 0, 0.25),
-                                    blurRadius: 40,
+                                    color: Color.fromRGBO(255, 92, 0, 0.28),
+                                    blurRadius: 34,
                                   ),
                                 ],
                               ),
                               child: InkWell(
                                 onTap: onCustomerDemo,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(18),
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 40,
-                                    vertical: 20,
+                                    vertical: 18,
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         copy.getStarted,
-                                        style: TextStyle(
-                                          color: Color(0xFF521800),
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.55,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w800,
                                         ),
                                       ),
-                                      SizedBox(width: 8),
-                                      Icon(
+                                      const SizedBox(width: 8),
+                                      const Icon(
                                         Icons.arrow_forward_rounded,
-                                        size: 16,
-                                        color: Color(0xFF521800),
+                                        size: 18,
+                                        color: Colors.white,
                                       ),
                                     ],
                                   ),
@@ -218,8 +279,8 @@ class WelcomeScreen extends StatelessWidget {
                                         style: const TextStyle(
                                           color: Color(0xFF7DDB7A),
                                           fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 1.4,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1.3,
                                           height: 1.42,
                                         ),
                                       ),
@@ -231,7 +292,8 @@ class WelcomeScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 70),
+                      const Spacer(),
+                      const SizedBox(height: 56),
                       Row(
                         children: [
                           Expanded(
@@ -240,7 +302,7 @@ class WelcomeScreen extends StatelessWidget {
                               value: '12.4k+',
                             ),
                           ),
-                          SizedBox(width: 32),
+                          const SizedBox(width: 20),
                           Expanded(
                             child: WelcomeMetric(
                               label: copy.michelinChefs,
@@ -248,29 +310,6 @@ class WelcomeScreen extends StatelessWidget {
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 32),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                            3,
-                            (index) => Padding(
-                              padding: EdgeInsets.only(left: index == 0 ? 0 : 24),
-                              child: Icon(
-                                [
-                                  Icons.camera_alt_outlined,
-                                  Icons.music_note_outlined,
-                                  Icons.play_circle_outline_rounded,
-                                ][index],
-                                size: 20,
-                                color: const Color(0xFFE5E2E1)
-                                    .withValues(alpha: 0.40),
-                              ),
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -298,25 +337,58 @@ class _BrandBlock extends StatelessWidget {
         Text(
           copy.appName,
           style: const TextStyle(
-            color: Color(0xFFFF5C00),
+            color: Color(0xFFFF6B00),
             fontSize: 30,
             fontWeight: FontWeight.w900,
             letterSpacing: -1.5,
             height: 1.2,
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           copy.sensorySommelier,
           style: const TextStyle(
             color: Color(0xCCFFB599),
             fontSize: 10,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
             letterSpacing: 3,
             height: 1.5,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TagBadge extends StatelessWidget {
+  const _TagBadge({
+    required this.text,
+    required this.isDarkMode,
+  });
+
+  final String text;
+  final bool isDarkMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0xFFFFA274).withValues(alpha: 0.22),
+        ),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: isDarkMode ? const Color(0xFFFFC3A3) : const Color(0xFF8E4A28),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.1,
+        ),
+      ),
     );
   }
 }

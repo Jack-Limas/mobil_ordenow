@@ -40,11 +40,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _confirmPasswordController.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            copy.isSpanish
-                ? 'Las contrasenas no coinciden.'
-                : 'Passwords do not match.',
-          ),
+          content: Text(copy.passwordMismatch),
         ),
       );
       return;
@@ -68,7 +64,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(auth.errorMessage ?? 'Unable to create account.'),
+        content: Text(auth.errorMessage ?? copy.unableToCreateAccount),
       ),
     );
   }
@@ -77,15 +73,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     final copy = AppCopy.of(context);
     final auth = context.watch<AuthProvider>();
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final backgroundColor =
+        isDarkMode ? const Color(0xFF11100F) : const Color(0xFFF8EEE6);
+    final panelColor = isDarkMode
+        ? const Color(0xFF131313).withValues(alpha: 0.62)
+        : Colors.white.withValues(alpha: 0.84);
+    final headingColor =
+        isDarkMode ? const Color(0xFFE5E2E1) : const Color(0xFF221813);
+    final bodyColor =
+        isDarkMode ? const Color(0xFFE4BEB1) : const Color(0xFF76584D);
 
     return Scaffold(
       body: Container(
-        color: const Color(0xFF131313),
+        color: backgroundColor,
         child: Stack(
           children: [
             Positioned.fill(
               child: Opacity(
-                opacity: 0.28,
+                opacity: isDarkMode ? 0.28 : 0.18,
                 child: Image.asset(
                   'lib/assets/images/background_bienvenida.png',
                   fit: BoxFit.cover,
@@ -99,8 +106,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      const Color(0xFF131313),
-                      const Color(0xFF131313).withValues(alpha: 0.86),
+                      backgroundColor,
+                      backgroundColor.withValues(alpha: 0.86),
                       Colors.transparent,
                     ],
                   ),
@@ -119,7 +126,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(24, 76, 24, 76),
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 342),
+                        constraints: const BoxConstraints(maxWidth: 360),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(32),
                           child: BackdropFilter(
@@ -127,30 +134,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(32),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF131313)
-                                    .withValues(alpha: 0.62),
+                                color: panelColor,
                                 borderRadius: BorderRadius.circular(32),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Text(
-                                    copy.createAccount,
+                                    copy.signUpTitle,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Color(0xFFE5E2E1),
+                                    style: TextStyle(
+                                      color: headingColor,
                                       fontSize: 28,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    copy.isSpanish
-                                        ? 'Crea tu perfil para empezar a pedir con IA, recomendaciones y seguimiento en tiempo real.'
-                                        : 'Create your profile to start ordering with AI, recommendations, and live tracking.',
+                                    copy.signUpDescription,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Color(0xFFE4BEB1),
+                                    style: TextStyle(
+                                      color: bodyColor,
                                       fontSize: 14,
                                       height: 1.45,
                                     ),
@@ -161,6 +165,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     icon: Icons.person_outline_rounded,
                                     controller: _fullNameController,
                                     hint: copy.fullNameHint,
+                                    isDarkMode: isDarkMode,
                                   ),
                                   const SizedBox(height: 16),
                                   _RegisterField(
@@ -168,6 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     icon: Icons.mail_outline_rounded,
                                     controller: _emailController,
                                     hint: copy.emailHint,
+                                    isDarkMode: isDarkMode,
                                   ),
                                   const SizedBox(height: 16),
                                   _RegisterField(
@@ -176,6 +182,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     controller: _passwordController,
                                     hint: copy.passwordHint,
                                     obscureText: true,
+                                    isDarkMode: isDarkMode,
                                   ),
                                   const SizedBox(height: 16),
                                   _RegisterField(
@@ -184,6 +191,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     controller: _confirmPasswordController,
                                     hint: copy.passwordHint,
                                     obscureText: true,
+                                    isDarkMode: isDarkMode,
                                   ),
                                   const SizedBox(height: 16),
                                   _RegisterField(
@@ -192,6 +200,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     controller: _preferencesController,
                                     hint: copy.allergiesHint,
                                     maxLines: 3,
+                                    isDarkMode: isDarkMode,
                                   ),
                                   const SizedBox(height: 22),
                                   DecoratedBox(
@@ -237,15 +246,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   const SizedBox(height: 18),
                                   TextButton(
                                     onPressed: () {
-                                      context
-                                          .read<AppDemoProvider>()
-                                          .openSignIn();
+                                      context.read<AppDemoProvider>().openSignIn();
                                     },
                                     child: Text(
                                       copy.alreadyHaveAccount,
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Color(0xFFE4BEB1),
+                                      style: TextStyle(
+                                        color: bodyColor,
                                       ),
                                     ),
                                   ),
@@ -273,6 +280,7 @@ class _RegisterField extends StatelessWidget {
     required this.icon,
     required this.controller,
     required this.hint,
+    required this.isDarkMode,
     this.obscureText = false,
     this.maxLines = 1,
   });
@@ -281,11 +289,17 @@ class _RegisterField extends StatelessWidget {
   final IconData icon;
   final TextEditingController controller;
   final String hint;
+  final bool isDarkMode;
   final bool obscureText;
   final int maxLines;
 
   @override
   Widget build(BuildContext context) {
+    final inputColor =
+        isDarkMode ? const Color(0xFFE5E2E1) : const Color(0xFF221813);
+    final hintColor =
+        isDarkMode ? const Color(0x66E5E2E1) : const Color(0x88665045);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -307,14 +321,14 @@ class _RegisterField extends StatelessWidget {
               obscureText: obscureText,
               maxLines: maxLines,
               minLines: maxLines,
-              style: const TextStyle(color: Color(0xFFE5E2E1)),
+              style: TextStyle(color: inputColor),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: const Color(0xFF2A2A2A).withValues(alpha: 0.50),
+                fillColor: isDarkMode
+                    ? const Color(0xFF2A2A2A).withValues(alpha: 0.50)
+                    : const Color(0xFFF3E4D8),
                 hintText: hint,
-                hintStyle: const TextStyle(
-                  color: Color.fromRGBO(229, 226, 225, 0.20),
-                ),
+                hintStyle: TextStyle(color: hintColor),
                 contentPadding: EdgeInsets.fromLTRB(
                   48,
                   maxLines > 1 ? 18 : 17,
@@ -332,7 +346,7 @@ class _RegisterField extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 18,
-                color: const Color.fromRGBO(229, 226, 225, 0.40),
+                color: hintColor,
               ),
             ),
           ],
