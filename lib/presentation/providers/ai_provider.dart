@@ -44,7 +44,7 @@ class AiProvider extends ChangeNotifier {
     required List<Menu> cartItems,
     required int? tableNumber,
     required String orderStatus,
-  }) {
+  }) async {
     final trimmedPrompt = prompt.trim();
     if (trimmedPrompt.isEmpty) {
       return;
