@@ -525,7 +525,7 @@ class _FieldBlock extends StatelessWidget {
                 ),
               ),
             ),
-            if (trailing case final widget?) widget,
+            trailing ?? const SizedBox.shrink(),
           ],
         ),
         const SizedBox(height: 6),
