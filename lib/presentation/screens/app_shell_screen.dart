@@ -6,6 +6,8 @@ import '../providers/app_demo_provider.dart';
 import '../providers/order_provider.dart';
 import 'admin_demo_screen.dart';
 import 'customer_demo_screen.dart';
+import 'sign_in_screen.dart';
+import 'sign_up_screen.dart';
 import 'welcome_screen.dart';
 
 class AppShellScreen extends StatelessWidget {
@@ -16,6 +18,10 @@ class AppShellScreen extends StatelessWidget {
     final demo = context.watch<AppDemoProvider>();
 
     switch (demo.experience) {
+      case DemoExperience.signIn:
+        return const SignInScreen();
+      case DemoExperience.signUp:
+        return const SignUpScreen();
       case DemoExperience.customer:
         return const CustomerDemoScreen();
       case DemoExperience.admin:
@@ -25,12 +31,12 @@ class AppShellScreen extends StatelessWidget {
           onCustomerDemo: () {
             context.read<OrderProvider>().clearDemoState();
             context.read<AiProvider>().resetConversation();
-            context.read<AppDemoProvider>().openCustomerDemo();
+            context.read<AppDemoProvider>().openSignIn();
           },
           onAdminDemo: () {
             context.read<OrderProvider>().clearDemoState();
             context.read<AiProvider>().resetConversation();
-            context.read<AppDemoProvider>().openAdminDemo();
+            context.read<AppDemoProvider>().openSignIn();
           },
         );
     }
