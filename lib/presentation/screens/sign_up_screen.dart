@@ -58,7 +58,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     if (success) {
-      context.read<AppDemoProvider>().openCustomerDemo();
+      context.read<AppDemoProvider>().openCustomerArea();
       return;
     }
 

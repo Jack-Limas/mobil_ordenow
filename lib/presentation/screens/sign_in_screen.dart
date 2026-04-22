@@ -38,7 +38,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final copy = AppCopy.of(context);
 
     if (_role == SignInRole.administrator) {
-      demo.openAdminDemo();
+      demo.openAdminArea();
       return;
     }
 
@@ -52,7 +52,7 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (success) {
-      demo.openCustomerDemo();
+      demo.openCustomerArea();
       return;
     }
 

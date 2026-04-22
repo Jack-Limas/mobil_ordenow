@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum DemoExperience {
+enum AppStage {
   welcome,
   signIn,
   signUp,
@@ -8,39 +8,83 @@ enum DemoExperience {
   admin,
 }
 
+enum CustomerScreen {
+  menu,
+  cart,
+  aiConcierge,
+  checkout,
+  tracking,
+  profile,
+}
+
+enum AdminScreen {
+  dashboard,
+  menuManagement,
+  orderManagement,
+  profile,
+}
+
 class AppDemoProvider extends ChangeNotifier {
-  DemoExperience _experience = DemoExperience.welcome;
+  AppStage _stage = AppStage.welcome;
+  CustomerScreen _customerScreen = CustomerScreen.menu;
+  AdminScreen _adminScreen = AdminScreen.dashboard;
 
-  DemoExperience get experience => _experience;
+  AppStage get stage => _stage;
+  CustomerScreen get customerScreen => _customerScreen;
+  AdminScreen get adminScreen => _adminScreen;
 
-  bool get isWelcome => _experience == DemoExperience.welcome;
-  bool get isSignIn => _experience == DemoExperience.signIn;
-  bool get isSignUp => _experience == DemoExperience.signUp;
-  bool get isCustomer => _experience == DemoExperience.customer;
-  bool get isAdmin => _experience == DemoExperience.admin;
+  bool get isWelcome => _stage == AppStage.welcome;
+  bool get isSignIn => _stage == AppStage.signIn;
+  bool get isSignUp => _stage == AppStage.signUp;
+  bool get isCustomer => _stage == AppStage.customer;
+  bool get isAdmin => _stage == AppStage.admin;
 
   void openSignIn() {
-    _experience = DemoExperience.signIn;
+    _stage = AppStage.signIn;
     notifyListeners();
   }
 
   void openSignUp() {
-    _experience = DemoExperience.signUp;
+    _stage = AppStage.signUp;
     notifyListeners();
   }
 
-  void openCustomerDemo() {
-    _experience = DemoExperience.customer;
+  void openCustomerArea({
+    CustomerScreen screen = CustomerScreen.menu,
+  }) {
+    _stage = AppStage.customer;
+    _customerScreen = screen;
     notifyListeners();
   }
 
-  void openAdminDemo() {
-    _experience = DemoExperience.admin;
+  void openAdminArea({
+    AdminScreen screen = AdminScreen.dashboard,
+  }) {
+    _stage = AppStage.admin;
+    _adminScreen = screen;
+    notifyListeners();
+  }
+
+  void setCustomerScreen(CustomerScreen screen) {
+    if (_customerScreen == screen) {
+      return;
+    }
+
+    _customerScreen = screen;
+    notifyListeners();
+  }
+
+  void setAdminScreen(AdminScreen screen) {
+    if (_adminScreen == screen) {
+      return;
+    }
+
+    _adminScreen = screen;
     notifyListeners();
   }
 
   void backToWelcome() {
-    _experience = DemoExperience.welcome;
+    _stage = AppStage.welcome;
     notifyListeners();
   }
 }
