@@ -12,11 +12,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-<<<<<<< HEAD
-=======
-
-        // 🔥 NECESARIO PARA flutter_local_notifications
->>>>>>> e95f3d75c124f3b7410bcd5ca24bd1230a24d409
         isCoreLibraryDesugaringEnabled = true
     }
 
