@@ -2,25 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'core/config/app_dependencies.dart';
 import 'core/config/app_bootstrap.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/providers/app_settings_provider.dart';
+import 'presentation/providers/auth_provider.dart';
 import 'presentation/screens/app_shell_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppBootstrap.initialize();
+  final dependencies = AppDependencies();
 
-  runApp(const OrdeNowApp());
+  runApp(OrdeNowApp(dependencies: dependencies));
 }
 
 class OrdeNowApp extends StatelessWidget {
-  const OrdeNowApp({super.key});
+  const OrdeNowApp({
+    super.key,
+    required this.dependencies,
+  });
+
+  final AppDependencies dependencies;
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppSettingsProvider()..loadPreferences(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AppSettingsProvider()..loadPreferences(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(
+            loginUser: dependencies.loginUser,
+            registerUser: dependencies.registerUser,
+            getCurrentUser: dependencies.getCurrentUser,
+            logoutUser: dependencies.logoutUser,
+          )..loadCurrentUser(),
+        ),
+      ],
       child: Consumer<AppSettingsProvider>(
         builder: (context, settingsProvider, _) {
           return MaterialApp(
