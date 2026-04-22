@@ -10,7 +10,7 @@ class Environment {
   }
 
   static String get supabaseUrl {
-    final value = dotenv.env['SUPABASE_URL'];
+    final value = dotenv.env['SUPABASE_URL']?.trim();
     if (value == null || value.isEmpty) {
       throw Exception('SUPABASE_URL is not defined in .env');
     }
@@ -18,7 +18,7 @@ class Environment {
   }
 
   static String get supabaseAnonKey {
-    final value = dotenv.env['SUPABASE_ANON_KEY'];
+    final value = dotenv.env['SUPABASE_ANON_KEY']?.trim();
     if (value == null || value.isEmpty) {
       throw Exception('SUPABASE_ANON_KEY is not defined in .env');
     }
