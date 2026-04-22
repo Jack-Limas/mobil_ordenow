@@ -6,6 +6,18 @@ import '../../domain/entities/menu.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/table.dart';
 
+class CartLineItem {
+  const CartLineItem({
+    required this.menu,
+    required this.quantity,
+  });
+
+  final Menu menu;
+  final int quantity;
+
+  double get total => menu.price * quantity;
+}
+
 class OrderProvider extends ChangeNotifier {
   final Uuid _uuid = const Uuid();
 
@@ -103,6 +115,10 @@ class OrderProvider extends ChangeNotifier {
   double get cartTotal =>
       cartItems.fold(0, (total, item) => total + item.price);
 
+  double get serviceFee => 0;
+
+  double get checkoutTotal => cartTotal + serviceFee;
+
   bool get hasActiveOrder => _activeOrder != null;
   bool get hasSelectedTable => _selectedTableId != null;
   bool get isPaid => _activeOrder?.paid ?? false;
@@ -131,6 +147,18 @@ class OrderProvider extends ChangeNotifier {
   List<TableEntity> get occupiedTables =>
       _tables.where((table) => table.occupied).toList();
 
+  List<CartLineItem> get cartLineItems {
+    final quantities = <String, int>{};
+    for (final id in _cartMenuIds) {
+      quantities.update(id, (value) => value + 1, ifAbsent: () => 1);
+    }
+
+    return quantities.entries.map((entry) {
+      final menuItem = _menu.firstWhere((item) => item.id == entry.key);
+      return CartLineItem(menu: menuItem, quantity: entry.value);
+    }).toList();
+  }
+
   void selectTable(String tableId) {
     _selectedTableId = tableId;
     notifyListeners();
@@ -143,6 +171,16 @@ class OrderProvider extends ChangeNotifier {
 
   void removeItemFromCart(String menuId) {
     _cartMenuIds.remove(menuId);
+    notifyListeners();
+  }
+
+  void decrementItemQuantity(String menuId) {
+    final index = _cartMenuIds.indexOf(menuId);
+    if (index == -1) {
+      return;
+    }
+
+    _cartMenuIds.removeAt(index);
     notifyListeners();
   }
 
