@@ -155,7 +155,7 @@ class WelcomeScreen extends StatelessWidget {
                               child: InkWell(
                                 onTap: onCustomerDemo,
                                 borderRadius: BorderRadius.circular(12),
-                                child: const Padding(
+                                child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 40,
                                     vertical: 20,
