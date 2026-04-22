@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -206,14 +208,14 @@ class WelcomeScreen extends StatelessWidget {
                                           .withValues(alpha: 0.15),
                                     ),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      _OnlineDot(),
-                                      SizedBox(width: 12),
+                                      const _OnlineDot(),
+                                      const SizedBox(width: 12),
                                       Text(
                                         copy.aiConciergeOnline,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: Color(0xFF7DDB7A),
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
@@ -230,7 +232,7 @@ class WelcomeScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 70),
-                      const Row(
+                      Row(
                         children: [
                           Expanded(
                             child: WelcomeMetric(
@@ -295,7 +297,7 @@ class _BrandBlock extends StatelessWidget {
       children: [
         Text(
           copy.appName,
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFFFF5C00),
             fontSize: 30,
             fontWeight: FontWeight.w900,
@@ -306,7 +308,7 @@ class _BrandBlock extends StatelessWidget {
         SizedBox(height: 4),
         Text(
           copy.sensorySommelier,
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xCCFFB599),
             fontSize: 10,
             fontWeight: FontWeight.w400,
