@@ -50,10 +50,6 @@ dependencies:
   geolocator: ^12.0.0
 
   speech_to_text: ^7.3.0
-<<<<<<< HEAD
-
-=======
->>>>>>> df0c9b846654cdedf67f295c4b569f30efa34116
 
   flutter_tts: ^4.0.2
 
