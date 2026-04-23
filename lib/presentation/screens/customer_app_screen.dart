@@ -33,9 +33,10 @@ class CustomerAppScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final flow = context.watch<AppDemoProvider>();
+    final palette = _CustomerPalette.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120F0D),
+      backgroundColor: palette.background,
       body: SafeArea(
         child: IndexedStack(
           index: flow.customerScreen.index,
@@ -118,15 +119,18 @@ class _MenuCatalogViewState extends State<_MenuCatalogView> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _CustomerPalette.of(context);
+    final copy = AppCopy.of(context);
     final order = context.watch<OrderProvider>();
     final flow = context.read<AppDemoProvider>();
     final categories = <String>[
-      'All Dishes',
+      copy.isSpanish ? 'Todos' : 'All Dishes',
       ...order.menu.map((item) => item.category).toSet(),
     ];
     final search = _searchController.text.trim().toLowerCase();
     final filteredMenu = order.menu.where((item) {
-      final matchesCategory = _selectedCategory == 'All Dishes' ||
+      final matchesCategory =
+          _selectedCategory == (copy.isSpanish ? 'Todos' : 'All Dishes') ||
           item.category == _selectedCategory;
       final matchesSearch = search.isEmpty ||
           item.name.toLowerCase().contains(search) ||
@@ -146,16 +150,22 @@ class _MenuCatalogViewState extends State<_MenuCatalogView> {
               backgroundImage:
                   AssetImage('lib/assets/images/background_bienvenida.png'),
             ),
-            trailing: IconButton(
-              onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
-              icon: const Icon(Icons.shopping_bag_outlined),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const _InlineUtilityButtons(),
+                IconButton(
+                  onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
+                  icon: const Icon(Icons.shopping_bag_outlined),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A2522),
+              color: palette.surface,
               borderRadius: BorderRadius.circular(24),
             ),
             child: Row(
@@ -166,15 +176,17 @@ class _MenuCatalogViewState extends State<_MenuCatalogView> {
                   child: TextField(
                     controller: _searchController,
                     onChanged: (_) => setState(() {}),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: palette.primaryText),
+                    decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: 'What are you craving today?',
-                      hintStyle: TextStyle(color: Color(0xFF8E827A)),
+                      hintText: copy.isSpanish
+                          ? 'Que se te antoja hoy?'
+                          : 'What are you craving today?',
+                      hintStyle: TextStyle(color: palette.mutedText),
                     ),
                   ),
                 ),
-                const Icon(Icons.search_rounded, color: Color(0xFFB8ADA5)),
+                Icon(Icons.search_rounded, color: palette.mutedText),
               ],
             ),
           ),
@@ -226,6 +238,8 @@ class _SmartCartView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _CustomerPalette.of(context);
+    final copy = AppCopy.of(context);
     final order = context.watch<OrderProvider>();
     final flow = context.read<AppDemoProvider>();
 
@@ -241,35 +255,12 @@ class _SmartCartView extends StatelessWidget {
               backgroundImage:
                   AssetImage('lib/assets/images/smoked_ribeye.png'),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF342F2B),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.translate_rounded),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF342F2B),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.dark_mode_outlined),
-                ),
-              ],
-            ),
+            trailing: const _InlineUtilityButtons(),
           ),
           const SizedBox(height: 18),
-          const Text(
-            'YOUR SELECTION',
-            style: TextStyle(
+          Text(
+            copy.isSpanish ? 'TU SELECCION' : 'YOUR SELECTION',
+            style: const TextStyle(
               color: Color(0xFFE3B6A1),
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -277,10 +268,10 @@ class _SmartCartView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Smart Cart',
+          Text(
+            copy.isSpanish ? 'Carrito Inteligente' : 'Smart Cart',
             style: TextStyle(
-              color: Colors.white,
+              color: palette.primaryText,
               fontSize: 40,
               fontWeight: FontWeight.w800,
               height: 1.0,
@@ -289,10 +280,13 @@ class _SmartCartView extends StatelessWidget {
           const SizedBox(height: 18),
           if (order.cartLineItems.isEmpty)
             _EmptyStateCard(
-              title: 'Your cart is empty',
-              subtitle:
-                  'Add dishes from the menu to build your order and unlock AI pairings.',
-              actionLabel: 'Browse Menu',
+              title: copy.isSpanish
+                  ? 'Tu carrito esta vacio'
+                  : 'Your cart is empty',
+              subtitle: copy.isSpanish
+                  ? 'Agrega platos desde el menu para construir tu pedido y desbloquear maridajes de IA.'
+                  : 'Add dishes from the menu to build your order and unlock AI pairings.',
+              actionLabel: copy.isSpanish ? 'Ver Menu' : 'Browse Menu',
               onTap: () => flow.setCustomerScreen(CustomerScreen.menu),
             )
           else
@@ -303,9 +297,9 @@ class _SmartCartView extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 8),
-          const Text(
-            "SOMMELIER'S PAIRINGS",
-            style: TextStyle(
+          Text(
+            copy.isSpanish ? 'MARIDAJES DEL SOMMELIER' : "SOMMELIER'S PAIRINGS",
+            style: const TextStyle(
               color: Color(0xFFEAB8A1),
               fontSize: 14,
               fontWeight: FontWeight.w800,
@@ -314,7 +308,7 @@ class _SmartCartView extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           SizedBox(
-            height: 210,
+            height: 248,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
@@ -340,19 +334,19 @@ class _SmartCartView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A2522),
+              color: palette.surface,
               borderRadius: BorderRadius.circular(28),
             ),
             child: Column(
               children: [
                 _SummaryRow(
-                  label: 'Subtotal',
+                  label: copy.isSpanish ? 'Subtotal' : 'Subtotal',
                   value: _formatPrice(order.cartTotal),
                 ),
                 const SizedBox(height: 10),
-                const _SummaryRow(
-                  label: 'Delivery Fee',
-                  value: 'FREE',
+                _SummaryRow(
+                  label: copy.isSpanish ? 'Tarifa de servicio' : 'Delivery Fee',
+                  value: copy.isSpanish ? 'GRATIS' : 'FREE',
                   valueColor: Color(0xFF7EDB7A),
                 ),
                 const Divider(height: 30, color: Color(0x33FFFFFF)),
@@ -362,9 +356,9 @@ class _SmartCartView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'TOTAL AMOUNT',
-                            style: TextStyle(
+                          Text(
+                            copy.isSpanish ? 'TOTAL' : 'TOTAL AMOUNT',
+                            style: const TextStyle(
                               color: Color(0xFFB7A39A),
                               fontSize: 12,
                               letterSpacing: 1.5,
@@ -384,18 +378,18 @@ class _SmartCartView extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 168,
-                      child: FilledButton(
-                        onPressed: order.cartLineItems.isEmpty
-                            ? null
-                            : () => flow.setCustomerScreen(CustomerScreen.checkout),
+                        child: FilledButton(
+                          onPressed: order.cartLineItems.isEmpty
+                              ? null
+                              : () => flow.setCustomerScreen(CustomerScreen.checkout),
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFFFF8B4A),
                           foregroundColor: const Color(0xFF2D1200),
                           padding: const EdgeInsets.symmetric(vertical: 20),
                         ),
-                        child: const Text(
-                          'CHECKOUT',
-                          style: TextStyle(fontWeight: FontWeight.w800),
+                        child: Text(
+                          copy.isSpanish ? 'PAGAR' : 'CHECKOUT',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),
@@ -440,6 +434,8 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
+    final palette = _CustomerPalette.of(context);
     final ai = context.watch<AiProvider>();
     final flow = context.read<AppDemoProvider>();
 
@@ -465,21 +461,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                 ),
               ),
               const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2B2927),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.language_rounded, size: 16),
-                    SizedBox(width: 6),
-                    Text('EN'),
-                  ],
-                ),
-              ),
+              const _InlineUtilityButtons(compact: true),
               IconButton(
                 onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
                 icon: const Icon(Icons.shopping_bag_outlined),
@@ -487,33 +469,35 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
             ],
           ),
           const SizedBox(height: 18),
-          const Text.rich(
+          Text.rich(
             TextSpan(
               children: [
                 TextSpan(
-                  text: 'Your ',
-                  style: TextStyle(color: Colors.white),
+                  text: copy.isSpanish ? 'Tu ' : 'Your ',
+                  style: TextStyle(color: palette.primaryText),
                 ),
                 TextSpan(
-                  text: 'Sensory',
+                  text: copy.isSpanish ? 'Sommelier' : 'Sensory',
                   style: TextStyle(color: Color(0xFFFF6B00)),
                 ),
                 TextSpan(
-                  text: '\nSommelier.',
-                  style: TextStyle(color: Colors.white),
+                  text: copy.isSpanish ? '\nSensorial.' : '\nSommelier.',
+                  style: TextStyle(color: palette.primaryText),
                 ),
               ],
             ),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 42,
               fontWeight: FontWeight.w300,
               height: 1.05,
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            'Curating the perfect flavors for your mood.\nWhat are you craving today?',
-            style: TextStyle(
+          Text(
+            copy.isSpanish
+                ? 'Curando los sabores perfectos para tu antojo.\nQue deseas pedir hoy?'
+                : 'Curating the perfect flavors for your mood.\nWhat are you craving today?',
+            style: const TextStyle(
               color: Color(0xFFD9C1B7),
               fontSize: 16,
               height: 1.45,
@@ -607,7 +591,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2B2927),
+                    color: palette.surface,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(
@@ -615,11 +599,13 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                       Expanded(
                         child: TextField(
                           controller: _controller,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
+                          style: TextStyle(color: palette.primaryText),
+                          decoration: InputDecoration(
                             border: InputBorder.none,
-                            hintText: 'Describe a flavor or mood...',
-                            hintStyle: TextStyle(color: Color(0xFF7F746D)),
+                            hintText: copy.isSpanish
+                                ? 'Describe un sabor o antojo...'
+                                : 'Describe a flavor or mood...',
+                            hintStyle: TextStyle(color: palette.mutedText),
                           ),
                         ),
                       ),
@@ -1426,8 +1412,8 @@ class _CustomerHeader extends StatelessWidget {
         const SizedBox(width: 12),
         Text(
           title,
-          style: const TextStyle(
-            color: Color(0xFFFF6B00),
+          style: TextStyle(
+            color: const Color(0xFFFF6B00),
             fontSize: 18,
             fontWeight: FontWeight.w800,
           ),
@@ -1436,6 +1422,154 @@ class _CustomerHeader extends StatelessWidget {
         trailing,
       ],
     );
+  }
+}
+
+class _InlineUtilityButtons extends StatelessWidget {
+  const _InlineUtilityButtons({
+    this.compact = false,
+  });
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<AppSettingsProvider>();
+    final palette = _CustomerPalette.of(context);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _UtilityAction(
+          onTap: settings.toggleLanguage,
+          background: palette.surface,
+          width: compact ? 40 : 74,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.translate_rounded, size: 18),
+              if (!compact) ...[
+                const SizedBox(width: 6),
+                Text(
+                  settings.isSpanish ? 'ES' : 'EN',
+                  style: TextStyle(
+                    color: palette.primaryText,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        _UtilityAction(
+          onTap: () => _cycleThemeMode(settings),
+          background: palette.surface,
+          child: Icon(
+            settings.themeMode == ThemeMode.light
+                ? Icons.light_mode_rounded
+                : settings.themeMode == ThemeMode.system
+                    ? Icons.settings_brightness_rounded
+                    : Icons.dark_mode_outlined,
+            size: 18,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _cycleThemeMode(AppSettingsProvider settings) async {
+    switch (settings.themeMode) {
+      case ThemeMode.system:
+        await settings.updateThemeMode(ThemeMode.dark);
+      case ThemeMode.dark:
+        await settings.updateThemeMode(ThemeMode.light);
+      case ThemeMode.light:
+        await settings.updateThemeMode(ThemeMode.system);
+    }
+  }
+}
+
+class _UtilityAction extends StatelessWidget {
+  const _UtilityAction({
+    required this.onTap,
+    required this.child,
+    required this.background,
+    this.width,
+  });
+
+  final Future<void> Function()? onTap;
+  final Widget child;
+  final Color background;
+  final double? width;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _CustomerPalette.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: width ?? 40,
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: palette.outline),
+        ),
+        alignment: Alignment.center,
+        child: IconTheme(
+          data: IconThemeData(color: palette.primaryText),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomerPalette {
+  const _CustomerPalette({
+    required this.background,
+    required this.surface,
+    required this.surfaceStrong,
+    required this.primaryText,
+    required this.mutedText,
+    required this.navBackground,
+    required this.outline,
+  });
+
+  final Color background;
+  final Color surface;
+  final Color surfaceStrong;
+  final Color primaryText;
+  final Color mutedText;
+  final Color navBackground;
+  final Color outline;
+
+  static _CustomerPalette of(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return isDark
+        ? const _CustomerPalette(
+            background: Color(0xFF120F0D),
+            surface: Color(0xFF2A2522),
+            surfaceStrong: Color(0xFF1D1A18),
+            primaryText: Colors.white,
+            mutedText: Color(0xFFB8ADA5),
+            navBackground: Color(0xFF171413),
+            outline: Color(0x22FFFFFF),
+          )
+        : const _CustomerPalette(
+            background: Color(0xFFF7EEE7),
+            surface: Color(0xFFFFFFFF),
+            surfaceStrong: Color(0xFFF1E3D8),
+            primaryText: Color(0xFF2A1C16),
+            mutedText: Color(0xFF7B685E),
+            navBackground: Color(0xFFF6E8DD),
+            outline: Color(0x22A0694B),
+          );
   }
 }
 
@@ -1452,6 +1586,7 @@ class _CustomerBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _CustomerPalette.of(context);
     const icons = [
       Icons.explore_outlined,
       Icons.receipt_long_outlined,
@@ -1464,7 +1599,7 @@ class _CustomerBottomBar extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF171413),
+        color: palette.navBackground,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0x22FFFFFF)),
       ),
@@ -1909,11 +2044,12 @@ class _PairingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _CustomerPalette.of(context);
     return Container(
       width: 185,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF23201E),
+        color: palette.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -1939,9 +2075,9 @@ class _PairingCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
+            style: TextStyle(
+              color: palette.primaryText,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -2307,11 +2443,12 @@ class _EmptyStateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _CustomerPalette.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D1A18),
+        color: palette.surface,
         borderRadius: BorderRadius.circular(26),
       ),
       child: Column(
@@ -2319,8 +2456,8 @@ class _EmptyStateCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: palette.primaryText,
               fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
