@@ -101,6 +101,7 @@ class WelcomeScreen extends StatelessWidget {
                     minHeight: MediaQuery.sizeOf(context).height - 56,
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
@@ -218,7 +219,7 @@ class WelcomeScreen extends StatelessWidget {
                                 onTap: onCustomerDemo,
                                 borderRadius: BorderRadius.circular(18),
                                 child: Padding(
-                                  padding: EdgeInsets.symmetric(
+                                  padding: const EdgeInsets.symmetric(
                                     horizontal: 40,
                                     vertical: 18,
                                   ),
@@ -292,7 +293,6 @@ class WelcomeScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Spacer(),
                       const SizedBox(height: 56),
                       Row(
                         children: [
