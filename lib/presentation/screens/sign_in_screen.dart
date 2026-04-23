@@ -36,14 +36,10 @@ class _SignInScreenState extends State<SignInScreen> {
     final auth = context.read<AuthProvider>();
     final demo = context.read<AppDemoProvider>();
     final copy = AppCopy.of(context);
-
-    if (_role == SignInRole.administrator) {
-      demo.openAdminArea();
-      return;
-    }
+    final normalizedEmail = _emailController.text.trim().toLowerCase();
 
     final success = await auth.login(
-      email: _emailController.text,
+      email: normalizedEmail,
       password: _passwordController.text,
     );
 
@@ -52,7 +48,12 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (success) {
-      demo.openCustomerArea();
+      if (_role == SignInRole.administrator &&
+          normalizedEmail == 'admin@ordenow.com') {
+        demo.openAdminArea();
+      } else {
+        demo.openCustomerArea();
+      }
       return;
     }
 

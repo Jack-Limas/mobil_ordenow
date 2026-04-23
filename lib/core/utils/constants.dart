@@ -35,10 +35,10 @@ class HiveKeys {
 }
 
 class SupabaseTables {
-  static const String user = 'user';
-  static const String menu = 'menu';
-  static const String order = 'order';
-  static const String table = 'table';
+  static const String user = 'users';
+  static const String menu = 'menu_items';
+  static const String order = 'orders';
+  static const String table = 'restaurant_tables';
 }
 
 class OrderStatuses {
