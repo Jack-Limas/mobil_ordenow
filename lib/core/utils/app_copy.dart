@@ -147,4 +147,28 @@ class AppCopy {
   String get unableToSaveProfile => isSpanish
       ? 'No se pudo guardar el perfil inicial.'
       : 'Unable to save the initial profile.';
+  String get tableSelectionTitle => isSpanish
+      ? 'Elige tu mesa'
+      : 'Choose your table';
+  String get tableSelectionDescription => isSpanish
+      ? 'Las mesas ocupadas se bloquean en tiempo real. Selecciona una disponible para iniciar tu experiencia.'
+      : 'Occupied tables are locked in real time. Select an available table to start your experience.';
+  String get tableSelectionBadge => isSpanish
+      ? 'MESAS EN VIVO'
+      : 'LIVE TABLES';
+  String get availableTable => isSpanish ? 'Disponible' : 'Available';
+  String get occupiedTable => isSpanish ? 'Ocupada' : 'Occupied';
+  String get paymentPendingTable => isSpanish ? 'Pago pendiente' : 'Payment pending';
+  String get selectedTable => isSpanish ? 'Mesa seleccionada' : 'Selected table';
+  String get continueToAi => isSpanish ? 'Continuar a la IA' : 'Continue to AI';
+  String get tableReserved => isSpanish
+      ? 'Mesa reservada. Bienvenido a OrdeNow.'
+      : 'Table reserved. Welcome to OrdeNow.';
+  String get unableToReserveTable => isSpanish
+      ? 'No se pudo reservar esta mesa.'
+      : 'Unable to reserve this table.';
+  String get noTablesAvailable => isSpanish
+      ? 'Aun no hay mesas cargadas.'
+      : 'No tables loaded yet.';
+  String get retry => isSpanish ? 'Reintentar' : 'Retry';
 }
