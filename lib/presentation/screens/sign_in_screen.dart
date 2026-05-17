@@ -62,7 +62,7 @@ class _SignInScreenState extends State<SignInScreen> {
           normalizedEmail == 'admin@ordenow.com') {
         demo.openAdminArea();
       } else {
-        demo.openCustomerArea();
+        demo.openTableSelection();
       }
       return;
     }
