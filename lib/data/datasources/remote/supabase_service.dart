@@ -75,4 +75,23 @@ class SupabaseService {
     final res = await client.from(SupabaseTables.table).select();
     return List<Map<String, dynamic>>.from(res);
   }
+
+  static Stream<List<Map<String, dynamic>>> watchTables() {
+    return client
+        .from(SupabaseTables.table)
+        .stream(primaryKey: ['id'])
+        .order('number')
+        .map((rows) => rows.map(Map<String, dynamic>.from).toList());
+  }
+
+  static Future<void> updateTableStatus({
+    required String tableId,
+    required bool occupied,
+    required bool needsPayment,
+  }) async {
+    await client.from(SupabaseTables.table).update({
+      'occupied': occupied,
+      'needs_payment': needsPayment,
+    }).eq('id', tableId);
+  }
 }
