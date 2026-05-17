@@ -75,4 +75,18 @@ class UserRepositoryImpl implements UserRepository {
   Future<void> saveLocal(User user) async {
     await _localDataSource.saveUser(UserModel.fromEntity(user));
   }
+
+  @override
+  Future<User> updateProfile(User user) async {
+    final model = UserModel.fromEntity(user);
+
+    try {
+      final remoteUser = await _remoteDataSource.updateProfile(model);
+      await _localDataSource.saveUser(remoteUser);
+      return remoteUser;
+    } catch (_) {
+      await _localDataSource.saveUser(model);
+      return model;
+    }
+  }
 }

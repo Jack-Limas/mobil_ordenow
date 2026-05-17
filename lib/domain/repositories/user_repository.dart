@@ -9,5 +9,7 @@ abstract class UserRepository {
 
   Future<void> saveLocal(User user);
 
+  Future<User> updateProfile(User user);
+
   Future<void> logout();
 }

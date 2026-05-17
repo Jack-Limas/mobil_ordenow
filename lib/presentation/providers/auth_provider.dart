@@ -6,6 +6,7 @@ import '../../domain/usecases/get_current_user.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/logout_user.dart';
 import '../../domain/usecases/register_user.dart';
+import '../../domain/usecases/update_user_profile.dart';
 
 class AuthProvider extends ChangeNotifier {
   AuthProvider({
@@ -13,15 +14,18 @@ class AuthProvider extends ChangeNotifier {
     required RegisterUser registerUser,
     required GetCurrentUser getCurrentUser,
     required LogoutUser logoutUser,
+    required UpdateUserProfile updateUserProfile,
   })  : _loginUser = loginUser,
         _registerUser = registerUser,
         _getCurrentUser = getCurrentUser,
-        _logoutUser = logoutUser;
+        _logoutUser = logoutUser,
+        _updateUserProfile = updateUserProfile;
 
   final LoginUser _loginUser;
   final RegisterUser _registerUser;
   final GetCurrentUser _getCurrentUser;
   final LogoutUser _logoutUser;
+  final UpdateUserProfile _updateUserProfile;
   final Uuid _uuid = const Uuid();
 
   User? _currentUser;
@@ -123,6 +127,39 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {
       _errorMessage = 'Unable to close the session.';
       notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> updateInitialProfile({
+    required List<String> allergies,
+    required List<String> preferences,
+  }) async {
+    final user = _currentUser;
+    if (user == null) {
+      _errorMessage = 'No active user session.';
+      notifyListeners();
+      return false;
+    }
+
+    _setLoading(true);
+
+    try {
+      _currentUser = await _updateUserProfile(
+        user.copyWith(
+          allergies: allergies,
+          preferences: preferences,
+          updatedAt: DateTime.now(),
+        ),
+      );
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (_) {
+      _errorMessage = 'Unable to update the initial profile.';
+      notifyListeners();
+      return false;
     } finally {
       _setLoading(false);
     }

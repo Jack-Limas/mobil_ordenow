@@ -58,4 +58,10 @@ class AuthRemoteDataSource {
   Future<void> logout() async {
     await SupabaseService.client.auth.signOut();
   }
+
+  Future<UserModel> updateProfile(UserModel user) async {
+    final profileUser = UserModel.fromEntity(user.copyWith(password: ''));
+    await SupabaseService.upsertUser(profileUser.toJson());
+    return user;
+  }
 }

@@ -41,6 +41,7 @@ class OrdeNowApp extends StatelessWidget {
             registerUser: dependencies.registerUser,
             getCurrentUser: dependencies.getCurrentUser,
             logoutUser: dependencies.logoutUser,
+            updateUserProfile: dependencies.updateUserProfile,
           )..loadCurrentUser(),
         ),
         ChangeNotifierProvider(create: (_) => AppDemoProvider()),

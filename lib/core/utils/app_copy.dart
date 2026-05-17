@@ -122,4 +122,29 @@ class AppCopy {
   String get allergiesHint => isSpanish
       ? 'Ej. peanuts, gluten free, low spice'
       : 'E.g. peanuts, gluten free, low spice';
+  String get profileSetupTitle => isSpanish
+      ? 'Tu perfil inicial'
+      : 'Your initial profile';
+  String get profileSetupDescription => isSpanish
+      ? 'Dile a OrdeNow que ingredientes debe evitar para que la IA cuide tus recomendaciones.'
+      : 'Tell OrdeNow which ingredients to avoid so the AI can protect your recommendations.';
+  String get hasAllergiesQuestion => isSpanish
+      ? 'Tienes alergias alimentarias?'
+      : 'Do you have food allergies?';
+  String get yesHasAllergies => isSpanish ? 'Si, tengo' : 'Yes, I do';
+  String get noAllergies => isSpanish ? 'No tengo' : 'No allergies';
+  String get commonAllergies => isSpanish ? 'ALERGIAS COMUNES' : 'COMMON ALLERGIES';
+  String get otherAllergies => isSpanish ? 'OTRAS ALERGIAS' : 'OTHER ALLERGIES';
+  String get preferencesLabel => isSpanish ? 'PREFERENCIAS' : 'PREFERENCES';
+  String get preferencesHint => isSpanish
+      ? 'Ej. poco picante, vegetariano, sin cebolla'
+      : 'E.g. mild spice, vegetarian, no onions';
+  String get saveProfile => isSpanish ? 'Guardar perfil' : 'Save profile';
+  String get skipForNow => isSpanish ? 'Omitir por ahora' : 'Skip for now';
+  String get profileSaved => isSpanish
+      ? 'Perfil guardado. La IA ya podra usar esta informacion.'
+      : 'Profile saved. The AI can now use this information.';
+  String get unableToSaveProfile => isSpanish
+      ? 'No se pudo guardar el perfil inicial.'
+      : 'Unable to save the initial profile.';
 }

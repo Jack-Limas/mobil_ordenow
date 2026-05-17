@@ -4,6 +4,7 @@ enum AppStage {
   welcome,
   signIn,
   signUp,
+  profileSetup,
   customer,
   admin,
 }
@@ -36,6 +37,7 @@ class AppDemoProvider extends ChangeNotifier {
   bool get isWelcome => _stage == AppStage.welcome;
   bool get isSignIn => _stage == AppStage.signIn;
   bool get isSignUp => _stage == AppStage.signUp;
+  bool get isProfileSetup => _stage == AppStage.profileSetup;
   bool get isCustomer => _stage == AppStage.customer;
   bool get isAdmin => _stage == AppStage.admin;
 
@@ -46,6 +48,11 @@ class AppDemoProvider extends ChangeNotifier {
 
   void openSignUp() {
     _stage = AppStage.signUp;
+    notifyListeners();
+  }
+
+  void openProfileSetup() {
+    _stage = AppStage.profileSetup;
     notifyListeners();
   }
 

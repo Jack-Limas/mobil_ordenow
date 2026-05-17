@@ -6,6 +6,7 @@ import '../providers/app_demo_provider.dart';
 import '../providers/order_provider.dart';
 import 'admin_app_screen.dart';
 import 'customer_app_screen.dart';
+import 'profile_setup_screen.dart';
 import 'sign_in_screen.dart';
 import 'sign_up_screen.dart';
 import 'welcome_screen.dart';
@@ -22,6 +23,8 @@ class AppShellScreen extends StatelessWidget {
         return const SignInScreen();
       case AppStage.signUp:
         return const SignUpScreen();
+      case AppStage.profileSetup:
+        return const ProfileSetupScreen();
       case AppStage.customer:
         return const CustomerAppScreen();
       case AppStage.admin:

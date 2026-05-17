@@ -72,7 +72,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           content: Text(copy.accountCreatedNextProfile),
         ),
       );
-      context.read<AppDemoProvider>().openCustomerArea();
+      context.read<AppDemoProvider>().openProfileSetup();
       return;
     }
 

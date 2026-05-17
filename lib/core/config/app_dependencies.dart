@@ -6,6 +6,7 @@ import '../../domain/usecases/get_current_user.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/logout_user.dart';
 import '../../domain/usecases/register_user.dart';
+import '../../domain/usecases/update_user_profile.dart';
 
 class AppDependencies {
   AppDependencies() {
@@ -34,4 +35,6 @@ class AppDependencies {
   GetCurrentUser get getCurrentUser => GetCurrentUser(_userRepository);
 
   LogoutUser get logoutUser => LogoutUser(_userRepository);
+
+  UpdateUserProfile get updateUserProfile => UpdateUserProfile(_userRepository);
 }
