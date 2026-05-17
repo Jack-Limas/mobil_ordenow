@@ -95,6 +95,12 @@ class AppCopy {
       : 'Create your profile to start ordering with AI, recommendations, and live tracking.';
   String get passwordMismatch =>
       isSpanish ? 'Las contrasenas no coinciden.' : 'Passwords do not match.';
+  String get requiredFields => isSpanish
+      ? 'Completa los campos requeridos.'
+      : 'Please complete the required fields.';
+  String get accountCreatedNextProfile => isSpanish
+      ? 'Cuenta creada. En la siguiente pantalla configuraremos tu perfil.'
+      : 'Account created. Your profile setup comes next.';
   String get unableToCreateAccount => isSpanish
       ? 'No se pudo crear la cuenta.'
       : 'Unable to create account.';

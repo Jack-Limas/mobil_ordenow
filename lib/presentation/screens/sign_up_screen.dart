@@ -21,7 +21,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final TextEditingController _preferencesController = TextEditingController();
 
   @override
   void dispose() {
@@ -29,15 +28,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _preferencesController.dispose();
     super.dispose();
   }
 
   Future<void> _handleRegister() async {
     final copy = AppCopy.of(context);
+    final email = _emailController.text.trim().toLowerCase();
+    final fullName = _fullNameController.text.trim();
+    final password = _passwordController.text.trim();
 
-    if (_passwordController.text.trim() !=
-        _confirmPasswordController.text.trim()) {
+    if (fullName.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(copy.requiredFields),
+        ),
+      );
+      return;
+    }
+
+    if (password != _confirmPasswordController.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(copy.passwordMismatch),
@@ -48,9 +57,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     final auth = context.read<AuthProvider>();
     final success = await auth.register(
-      fullName: _fullNameController.text,
-      email: _emailController.text,
-      password: _passwordController.text,
+      fullName: fullName,
+      email: email,
+      password: password,
     );
 
     if (!mounted) {
@@ -58,6 +67,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(copy.accountCreatedNextProfile),
+        ),
+      );
       context.read<AppDemoProvider>().openCustomerArea();
       return;
     }
@@ -191,15 +205,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     controller: _confirmPasswordController,
                                     hint: copy.passwordHint,
                                     obscureText: true,
-                                    isDarkMode: isDarkMode,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _RegisterField(
-                                    label: copy.allergiesPreferences,
-                                    icon: Icons.spa_outlined,
-                                    controller: _preferencesController,
-                                    hint: copy.allergiesHint,
-                                    maxLines: 3,
                                     isDarkMode: isDarkMode,
                                   ),
                                   const SizedBox(height: 22),

@@ -37,10 +37,20 @@ class _SignInScreenState extends State<SignInScreen> {
     final demo = context.read<AppDemoProvider>();
     final copy = AppCopy.of(context);
     final normalizedEmail = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text.trim();
+
+    if (normalizedEmail.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(copy.requiredFields),
+        ),
+      );
+      return;
+    }
 
     final success = await auth.login(
       email: normalizedEmail,
-      password: _passwordController.text,
+      password: password,
     );
 
     if (!mounted) {

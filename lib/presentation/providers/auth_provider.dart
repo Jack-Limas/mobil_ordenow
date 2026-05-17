@@ -99,8 +99,7 @@ class AuthProvider extends ChangeNotifier {
         updatedAt: DateTime.now(),
       );
 
-      await _registerUser(user);
-      _currentUser = user;
+      _currentUser = await _registerUser(user);
       _errorMessage = null;
       notifyListeners();
       return true;

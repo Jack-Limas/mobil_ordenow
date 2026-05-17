@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../datasources/local/auth_local_datasource.dart';
@@ -32,7 +34,9 @@ class UserRepositoryImpl implements UserRepository {
     }
 
     final localUser = await _localDataSource.findUserByEmail(email);
-    if (localUser == null || localUser.password != password) {
+    if (localUser == null ||
+        localUser.password.isEmpty ||
+        localUser.password != password) {
       return null;
     }
 
@@ -42,19 +46,28 @@ class UserRepositoryImpl implements UserRepository {
 
   @override
   Future<void> logout() async {
+    try {
+      await _remoteDataSource.logout();
+    } catch (_) {
+      // Hive still owns the local session cleanup for offline-safe logout.
+    }
+
     await _localDataSource.logout();
   }
 
   @override
-  Future<void> register(User user) async {
+  Future<User> register(User user) async {
     final model = UserModel.fromEntity(user);
 
-    await _localDataSource.saveUser(model);
-
     try {
-      await _remoteDataSource.register(model);
+      final remoteUser = await _remoteDataSource.register(model);
+      await _localDataSource.saveUser(remoteUser);
+      return remoteUser;
+    } on AuthException {
+      rethrow;
     } catch (_) {
-      // The local copy remains available for offline mode.
+      await _localDataSource.saveUser(model);
+      return model;
     }
   }
 

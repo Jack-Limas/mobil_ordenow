@@ -29,6 +29,20 @@ class SupabaseService {
     return Map<String, dynamic>.from(res);
   }
 
+  static Future<Map<String, dynamic>?> getUserById(String id) async {
+    final res = await client
+        .from(SupabaseTables.user)
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+
+    if (res == null) {
+      return null;
+    }
+
+    return Map<String, dynamic>.from(res);
+  }
+
   // ---------- MENU ----------
 
   static Future<List<Map<String, dynamic>>> getMenu() async {
