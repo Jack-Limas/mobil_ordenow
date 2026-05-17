@@ -28,12 +28,7 @@ class AppShellScreen extends StatelessWidget {
         return const AdminAppScreen();
       case AppStage.welcome:
         return WelcomeScreen(
-          onCustomerDemo: () {
-            context.read<OrderProvider>().clearDemoState();
-            context.read<AiProvider>().resetConversation();
-            context.read<AppDemoProvider>().openSignIn();
-          },
-          onAdminDemo: () {
+          onStart: () {
             context.read<OrderProvider>().clearDemoState();
             context.read<AiProvider>().resetConversation();
             context.read<AppDemoProvider>().openSignIn();

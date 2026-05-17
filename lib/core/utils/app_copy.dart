@@ -17,21 +17,21 @@ class AppCopy {
 
   String get appName => 'OrdeNow';
   String get sensorySommelier =>
-      isSpanish ? 'SOMMELIER SENSORIAL' : 'SENSORY SOMMELIER';
+      isSpanish ? 'RESTAURANTE INTELIGENTE' : 'SMART RESTAURANT';
 
   String get welcomeHeadline =>
-      isSpanish ? 'Eleva\nTu Paladar.' : 'Elevate\nYour Palate.';
+      isSpanish ? 'Pide con IA.\nDisfruta sin esperar.' : 'Order with AI.\nEnjoy without waiting.';
 
   String get welcomeDescription => isSpanish
-      ? 'Experiencias gastronomicas guiadas por IA segun tu perfil sensorial.\nBienvenido al futuro del apetito.'
-      : 'AI-curated dining experiences tailored to your unique sensory profile.\nWelcome to the future of appetite.';
+      ? 'OrdeNow conecta tu mesa, tus gustos y la cocina en tiempo real para que cada pedido sea claro, rapido y personalizado.'
+      : 'OrdeNow connects your table, tastes, and kitchen in real time so every order feels clear, fast, and personal.';
 
   String get welcomeBadge =>
-      isSpanish ? 'EXPERIENCIA GASTRONOMICA' : 'DINING EXPERIENCE';
+      isSpanish ? 'BIENVENIDA EXOTICA' : 'EXOTIC WELCOME';
   String get welcomePill => isSpanish
-      ? 'Personalizacion, voz y IA en un solo flujo.'
-      : 'Voice, personalization, and AI in one flow.';
-  String get getStarted => isSpanish ? 'Comenzar' : 'Get Started';
+      ? 'Tema, idioma y sesion local listos con Provider + Hive.'
+      : 'Theme, language, and local session ready with Provider + Hive.';
+  String get getStarted => isSpanish ? 'Iniciar' : 'Start';
   String get openAdminDemo =>
       isSpanish ? 'Abrir demo admin' : 'Open Admin Demo';
   String get aiConciergeOnline =>
@@ -39,13 +39,16 @@ class AppCopy {
   String get switchLanguage =>
       isSpanish ? 'Cambiar a ingles' : 'Switch to Spanish';
   String get switchTheme =>
-      isSpanish ? 'Cambiar tema' : 'Toggle theme';
-  String get aiReady => isSpanish ? 'IA lista para asistir' : 'AI ready to assist';
+      isSpanish ? 'Cambiar tema' : 'Change theme';
+  String get themeDark => isSpanish ? 'Oscuro' : 'Dark';
+  String get themeLight => isSpanish ? 'Claro' : 'Light';
+  String get themeSystem => isSpanish ? 'Sistema' : 'System';
+  String get aiReady => isSpanish ? 'IA lista para tomar tu orden' : 'AI ready to take your order';
 
   String get curatedDishes =>
-      isSpanish ? 'PLATOS CURADOS' : 'CURATED DISHES';
+      isSpanish ? 'PEDIDOS GUIADOS' : 'GUIDED ORDERS';
   String get michelinChefs =>
-      isSpanish ? 'CHEFS MICHELIN' : 'MICHELIN CHEFS';
+      isSpanish ? 'MESAS EN TIEMPO REAL' : 'REAL-TIME TABLES';
 
   String get welcomeBack =>
       isSpanish ? 'Bienvenido de Nuevo' : 'Welcome Back';

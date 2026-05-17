@@ -4,7 +4,7 @@ import '../../core/utils/constants.dart';
 import '../../data/datasources/local/hive_service.dart';
 
 class AppSettingsProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.dark;
   Locale _locale = const Locale('es');
 
   ThemeMode get themeMode => _themeMode;
@@ -45,6 +45,20 @@ class AppSettingsProvider extends ChangeNotifier {
 
   Future<void> toggleLanguage() async {
     await updateLanguage(isSpanish ? 'en' : 'es');
+  }
+
+  Future<void> cycleThemeMode() async {
+    if (_themeMode == ThemeMode.dark) {
+      await updateThemeMode(ThemeMode.light);
+      return;
+    }
+
+    if (_themeMode == ThemeMode.light) {
+      await updateThemeMode(ThemeMode.system);
+      return;
+    }
+
+    await updateThemeMode(ThemeMode.dark);
   }
 
   ThemeMode _themeModeFromValue(String value) {
