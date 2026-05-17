@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/user_repository.dart';
@@ -63,7 +63,7 @@ class UserRepositoryImpl implements UserRepository {
       final remoteUser = await _remoteDataSource.register(model);
       await _localDataSource.saveUser(remoteUser);
       return remoteUser;
-    } on AuthException {
+    } on supabase.AuthException { // <--- AQUÍ SE CORRIGIÓ: Se le agregó 'supabase.'
       rethrow;
     } catch (_) {
       await _localDataSource.saveUser(model);
