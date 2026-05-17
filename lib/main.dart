@@ -10,6 +10,7 @@ import 'presentation/providers/app_demo_provider.dart';
 import 'presentation/providers/app_settings_provider.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/order_provider.dart';
+import 'presentation/providers/table_provider.dart';
 import 'presentation/screens/app_shell_screen.dart';
 
 Future<void> main() async {
@@ -46,6 +47,14 @@ class OrdeNowApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => AppDemoProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider(
+          create: (_) => TableProvider(
+            getTables: dependencies.getTables,
+            watchTables: dependencies.watchTables,
+            reserveTable: dependencies.reserveTable,
+            getSelectedTable: dependencies.getSelectedTable,
+          )..initialize(),
+        ),
         ChangeNotifierProvider(create: (_) => AiProvider()),
       ],
       child: Consumer<AppSettingsProvider>(
