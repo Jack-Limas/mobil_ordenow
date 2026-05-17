@@ -97,6 +97,19 @@ class TableProvider extends ChangeNotifier {
     }
   }
 
+  bool choose(TableEntity table) {
+    if (!table.isSelectable) {
+      _errorMessage = 'This table is not available.';
+      notifyListeners();
+      return false;
+    }
+
+    _selectedTableId = table.id;
+    _errorMessage = null;
+    notifyListeners();
+    return true;
+  }
+
   void clearError() {
     _errorMessage = null;
     notifyListeners();
