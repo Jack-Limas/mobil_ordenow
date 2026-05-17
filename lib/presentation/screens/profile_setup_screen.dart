@@ -64,7 +64,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(copy.profileSaved)),
       );
-      flow.openCustomerArea();
+      flow.openTableSelection();
       return;
     }
 
