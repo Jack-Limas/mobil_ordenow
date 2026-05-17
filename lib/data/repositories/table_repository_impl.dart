@@ -25,12 +25,26 @@ class TableRepositoryImpl implements TableRepository {
   }
 
   @override
+  Stream<List<TableEntity>> watchTables() {
+    return _remoteDataSource.watchTables().map((tables) {
+      _localDataSource.saveTables(tables);
+      return tables;
+    });
+  }
+
+  @override
   Future<TableEntity?> getSelectedTable() async {
     return _localDataSource.getSelectedTable();
   }
 
   @override
   Future<void> selectTable(String tableId) async {
+    await _localDataSource.saveSelectedTableId(tableId);
+  }
+
+  @override
+  Future<void> reserveTable(String tableId) async {
+    await _remoteDataSource.reserveTable(tableId);
     await _localDataSource.saveSelectedTableId(tableId);
   }
 }
