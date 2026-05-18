@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/utils/app_copy.dart';
 import '../../domain/entities/menu.dart';
 import '../providers/ai_provider.dart';
 import '../providers/app_demo_provider.dart';
+import '../providers/app_settings_provider.dart';
 import '../providers/order_provider.dart';
-import '../widgets/app_utility_toggles.dart';
 import '../widgets/menu_item_card.dart';
 
 class MenuCatalogScreen extends StatefulWidget {
@@ -28,22 +27,20 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
 
   String? _selectedCategory;
 
-  List<String> _categories(List<Menu> menu, AppCopy copy) {
-    final allLabel = copy.isSpanish ? 'Todos' : 'All';
-    return [allLabel, ...menu.map((m) => m.category).toSet()];
+  List<String> _categories(List<Menu> menu) {
+    return ['Todos', ...menu.map((m) => m.category).toSet()];
   }
 
-  List<Menu> _filtered(List<Menu> menu, AppCopy copy) {
-    final allLabel = copy.isSpanish ? 'Todos' : 'All';
-    if (_selectedCategory == null || _selectedCategory == allLabel) return menu;
+  List<Menu> _filtered(List<Menu> menu) {
+    if (_selectedCategory == null || _selectedCategory == 'Todos') return menu;
     return menu.where((m) => m.category == _selectedCategory).toList();
   }
 
-  void _orderWithAi(BuildContext context, Menu menu) {
+  void _orderWithAi(Menu menu) {
     final ai = context.read<AiProvider>();
     final order = context.read<OrderProvider>();
     ai.sendMessage(
-      prompt: 'Quiero ordenar ${menu.name}',
+      prompt: 'El cliente quiere saber sobre: ${menu.name}',
       recommendedMenu: order.recommendedMenu,
       cartItems: order.cartItems,
       tableNumber: order.selectedTable?.number,
@@ -54,120 +51,172 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final copy = AppCopy.of(context);
+    final settings = context.watch<AppSettingsProvider>();
     final order = context.watch<OrderProvider>();
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-    final backgroundColor =
-        isDarkMode ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
-    final textColor = isDarkMode ? Colors.white : const Color(0xFF171717);
-    final mutedColor =
-        isDarkMode ? const Color(0xFFC9C2BE) : const Color(0xFF625B56);
-    final categories = _categories(order.menu, copy);
-    final selectedCat = _selectedCategory ?? categories.first;
-    final filtered = _filtered(order.menu, copy);
+    final categories = _categories(order.menu);
+    final selectedCat = _selectedCategory ?? 'Todos';
+    final filtered = _filtered(order.menu);
 
-    return Scaffold(
-      body: Container(
-        color: backgroundColor,
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 18, 22, 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'MENÚ',
-                            style: TextStyle(
-                              color: Color(0xFFFFB48E),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.6,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            copy.isSpanish ? 'Nuestros platos' : 'Our dishes',
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              height: 1,
-                            ),
-                          ),
-                        ],
+    return Container(
+      color: Colors.black,
+      child: SafeArea(
+        child: Column(
+          children: [
+            _CatalogAppBar(settings: settings),
+            SizedBox(
+              height: 48,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: categories.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  final isSelected = cat == selectedCat;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedCategory = cat),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFFF6F22)
+                            : const Color(0xFF1C1C1E),
+                        borderRadius: BorderRadius.circular(999),
+                        border: isSelected
+                            ? null
+                            : Border.all(color: const Color(0xFF3A3A3C)),
+                      ),
+                      child: Text(
+                        cat,
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF8E8E93),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    const AppUtilityToggles(),
-                  ],
-                ),
+                  );
+                },
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 40,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 22),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 10),
-                  itemBuilder: (context, index) {
-                    final cat = categories[index];
-                    final isSelected = cat == selectedCat;
-                    return ChoiceChip(
-                      label: Text(cat),
-                      selected: isSelected,
-                      onSelected: (_) {
-                        setState(() => _selectedCategory = cat);
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: filtered.isEmpty
+                  ? const _EmptyCategory()
+                  : GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        mainAxisExtent: 320,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final item = filtered[index];
+                        return MenuItemCard(
+                          menu: item,
+                          imagePath: _menuImages[item.id] ??
+                              'lib/assets/images/background_bienvenida.png',
+                          onOrderWithAi: () => _orderWithAi(item),
+                        );
                       },
-                      selectedColor: const Color(0xFFFF6F22),
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : mutedColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    );
-                  },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CatalogAppBar extends StatelessWidget {
+  const _CatalogAppBar({required this.settings});
+
+  final AppSettingsProvider settings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6F22),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.restaurant_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'OrdeNow',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: settings.toggleLanguage,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                settings.isSpanish ? 'ES' : 'EN',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: filtered.isEmpty
-                    ? Center(
-                        child: Text(
-                          copy.noTablesAvailable,
-                          style: TextStyle(color: mutedColor),
-                        ),
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          mainAxisExtent: 300,
-                        ),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final item = filtered[index];
-                          return MenuItemCard(
-                            menu: item,
-                            imagePath: _menuImages[item.id] ??
-                                'lib/assets/images/background_bienvenida.png',
-                            onOrderWithAi: () => _orderWithAi(context, item),
-                          );
-                        },
-                      ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyCategory extends StatelessWidget {
+  const _EmptyCategory();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.restaurant_rounded,
+            color: Color(0xFF3A3A3C),
+            size: 56,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'No hay platos en esta categoría',
+            style: TextStyle(
+              color: Color(0xFF8E8E93),
+              fontSize: 15,
+            ),
+          ),
+        ],
       ),
     );
   }
