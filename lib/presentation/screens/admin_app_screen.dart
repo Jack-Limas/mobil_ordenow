@@ -80,6 +80,10 @@ class _AdminDashboardView extends StatelessWidget {
                 _ActiveOrdersCard(dash: dash),
                 const SizedBox(height: 12),
                 _AvgTicketCard(dash: dash),
+                const SizedBox(height: 24),
+                _PopularDishesSection(dash: dash),
+                const SizedBox(height: 24),
+                _OrderFlowSection(dash: dash),
               ],
             ),
           ),
@@ -413,6 +417,301 @@ class _SparklinePainter extends CustomPainter {
   @override
   bool shouldRepaint(_SparklinePainter old) =>
       old.data != data || old.color != color;
+}
+
+class _PopularDishesSection extends StatelessWidget {
+  const _PopularDishesSection({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  static const _menuImages = <String, String>{
+    'menu-1': 'lib/assets/images/saffron_infused_sea_scallops.png',
+    'menu-2': 'lib/assets/images/midnight_pasta.png',
+    'menu-3': 'lib/assets/images/smoked_ribeye.png',
+    'menu-4': 'lib/assets/images/artisan_harvest_bowl.png',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final dishes = dash.popularDishes;
+    final maxSales = dishes.isEmpty
+        ? 1
+        : dishes.map((d) => d.sales).reduce((a, b) => a > b ? a : b);
+
+    return Column(
+      children: [
+        Row(
+          children: const [
+            Text(
+              'Platos Populares',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Spacer(),
+            Text(
+              'Ver todo',
+              style: TextStyle(
+                color: Color(0xFFFF6F22),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              for (var i = 0; i < dishes.length; i++) ...[
+                _DishRow(
+                  dish: dishes[i],
+                  imagePath: _menuImages[dishes[i].menuId] ??
+                      'lib/assets/images/background_bienvenida.png',
+                  fraction: maxSales == 0 ? 0 : dishes[i].sales / maxSales,
+                ),
+                if (i < dishes.length - 1)
+                  const Divider(
+                      height: 1,
+                      color: Color(0xFF2C2C2E),
+                      indent: 16,
+                      endIndent: 16),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DishRow extends StatelessWidget {
+  const _DishRow({
+    required this.dish,
+    required this.imagePath,
+    required this.fraction,
+  });
+
+  final DashPopularDish dish;
+  final String imagePath;
+  final double fraction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              imagePath,
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2E),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.restaurant_rounded,
+                    color: Color(0xFF3A3A3C), size: 20),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dish.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Stack(
+                      children: [
+                        Container(
+                          height: 4,
+                          width: constraints.maxWidth,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2C2C2E),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        Container(
+                          height: 4,
+                          width: constraints.maxWidth * fraction,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF6F22),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${dish.sales}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Text(
+                'Ventas',
+                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 10),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderFlowSection extends StatelessWidget {
+  const _OrderFlowSection({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Flujo de Pedidos',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'Últimas 6 horas',
+          style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 80,
+                child: CustomPaint(
+                  painter: _BarChartPainter(
+                    values: dash.flowBars,
+                    color: const Color(0xFFFF6F22),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: ['7h', '8h', '9h', '10h', '11h', '12h']
+                    .map((l) => Text(l,
+                        style: const TextStyle(
+                            color: Color(0xFF8E8E93), fontSize: 10)))
+                    .toList(),
+              ),
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D2E0D),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.bolt_rounded,
+                          color: Color(0xFF4CAF50), size: 15),
+                      SizedBox(width: 6),
+                      Text(
+                        'Eficiencia de Cocina  94%',
+                        style: TextStyle(
+                          color: Color(0xFF4CAF50),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BarChartPainter extends CustomPainter {
+  final List<double> values;
+  final Color color;
+
+  const _BarChartPainter({required this.values, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final max = values.reduce((a, b) => a > b ? a : b);
+    if (max == 0) return;
+    final barW = size.width / values.length;
+    final gap = barW * 0.35;
+    final paint = Paint()..color = color;
+
+    for (var i = 0; i < values.length; i++) {
+      final x = i * barW + gap / 2;
+      final barH = values[i] / max * size.height * 0.9;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x, size.height - barH, barW - gap, barH),
+          const Radius.circular(4),
+        ),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BarChartPainter old) =>
+      old.values != values || old.color != color;
 }
 
 class _AdminMenuManagementView extends StatelessWidget {
