@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/table.dart';
@@ -65,7 +66,9 @@ class TableProvider extends ChangeNotifier {
 
     try {
       _tables = await _getTables();
-    } catch (_) {
+      debugPrint('✅ Mesas cargadas: ${_tables.length}');
+    } catch (e) {
+      debugPrint('❌ ERROR cargando mesas: $e');
       _errorMessage = 'Unable to load tables.';
     } finally {
       _isLoading = false;
