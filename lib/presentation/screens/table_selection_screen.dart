@@ -10,8 +10,53 @@ import '../providers/order_provider.dart';
 import '../providers/table_provider.dart';
 import '../widgets/app_utility_toggles.dart';
 
-class TableSelectionScreen extends StatelessWidget {
+class TableSelectionScreen extends StatefulWidget {
   const TableSelectionScreen({super.key});
+
+  @override
+  State<TableSelectionScreen> createState() => _TableSelectionScreenState();
+}
+
+class _TableSelectionScreenState extends State<TableSelectionScreen> {
+  final TextEditingController _preferencesController = TextEditingController();
+
+  @override
+  void dispose() {
+    _preferencesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _continue(TableProvider provider) async {
+    final copy = AppCopy.of(context);
+    final selectedTable = provider.selectedTable;
+
+    if (selectedTable == null) return;
+
+    context.read<OrderProvider>().setDiningPreferences(
+          _preferencesController.text.trim(),
+        );
+
+    final success = await provider.reserve(selectedTable);
+
+    if (!mounted) return;
+
+    if (success) {
+      context.read<OrderProvider>().selectTable(selectedTable.id);
+      context.read<AppDemoProvider>().openCustomerArea(
+            screen: CustomerScreen.aiConcierge,
+          );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(copy.tableReserved)),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(provider.errorMessage ?? copy.unableToReserveTable),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +160,6 @@ class TableSelectionScreen extends StatelessWidget {
                           _LegendBar(
                             available: copy.availableTable,
                             occupied: copy.occupiedTable,
-                            payment: copy.paymentPendingTable,
                           ),
                           const SizedBox(height: 18),
                           ClipRRect(
@@ -144,6 +188,14 @@ class TableSelectionScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 18),
+                          _PreferencesField(
+                            controller: _preferencesController,
+                            copy: copy,
+                            isDarkMode: isDarkMode,
+                            textColor: textColor,
+                            mutedColor: mutedColor,
+                          ),
+                          const SizedBox(height: 18),
                           _SelectedTablePanel(
                             table: provider.selectedTable,
                             isLoading: provider.isReserving,
@@ -151,7 +203,7 @@ class TableSelectionScreen extends StatelessWidget {
                             textColor: textColor,
                             mutedColor: mutedColor,
                             isDarkMode: isDarkMode,
-                            onContinue: () => _continue(context, provider),
+                            onContinue: () => _continue(provider),
                           ),
                         ],
                       ),
@@ -162,41 +214,6 @@ class TableSelectionScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Future<void> _continue(
-    BuildContext context,
-    TableProvider provider,
-  ) async {
-    final copy = AppCopy.of(context);
-    final selectedTable = provider.selectedTable;
-
-    if (selectedTable == null) {
-      return;
-    }
-
-    final success = await provider.reserve(selectedTable);
-
-    if (!context.mounted) {
-      return;
-    }
-
-    if (success) {
-      context.read<OrderProvider>().selectTable(selectedTable.id);
-      context.read<AppDemoProvider>().openCustomerArea(
-            screen: CustomerScreen.aiConcierge,
-          );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(copy.tableReserved)),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(provider.errorMessage ?? copy.unableToReserveTable),
       ),
     );
   }
@@ -219,14 +236,14 @@ class _TableGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     if (provider.isLoading && !provider.hasTables) {
       return const SizedBox(
-        height: 260,
+        height: 200,
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (!provider.hasTables) {
       return SizedBox(
-        height: 260,
+        height: 200,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -251,10 +268,10 @@ class _TableGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.06,
+        crossAxisCount: 4,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.88,
       ),
       itemBuilder: (context, index) {
         final table = provider.tables[index];
@@ -285,37 +302,32 @@ class _TableTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = switch (table.statusKey) {
-      'occupied' => const Color(0xFF727272),
-      'payment_pending' => const Color(0xFFFFC14F),
-      _ => const Color(0xFF62D26F),
-    };
-    final statusLabel = switch (table.statusKey) {
-      'occupied' => copy.occupiedTable,
-      'payment_pending' => copy.paymentPendingTable,
-      _ => copy.availableTable,
-    };
-    final disabled = !table.isSelectable;
+    // payment_pending is treated as occupied from the client's perspective
+    final isDisabled = !table.isSelectable;
+    final statusColor =
+        isDisabled ? const Color(0xFF727272) : const Color(0xFF62D26F);
+    final statusLabel =
+        isDisabled ? copy.occupiedTable : copy.availableTable;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFFFF6F22)
-                : disabled
-                    ? const Color(0xFF2A2A2C).withValues(alpha: 0.66)
-                    : const Color(0xFF252528).withValues(alpha: 0.82),
-            borderRadius: BorderRadius.circular(22),
+                : isDisabled
+                    ? const Color(0xFF3A3A3C).withValues(alpha: 0.82)
+                    : const Color(0xFF252528).withValues(alpha: 0.86),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: isSelected
                   ? const Color(0xFFFFB48E)
-                  : statusColor.withValues(alpha: disabled ? 0.22 : 0.55),
+                  : statusColor.withValues(alpha: isDisabled ? 0.22 : 0.50),
             ),
           ),
           child: Column(
@@ -324,8 +336,8 @@ class _TableTile extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 10,
-                    height: 10,
+                    width: 7,
+                    height: 7,
                     decoration: BoxDecoration(
                       color: statusColor,
                       shape: BoxShape.circle,
@@ -333,11 +345,13 @@ class _TableTile extends StatelessWidget {
                   ),
                   const Spacer(),
                   Icon(
-                    disabled
+                    isDisabled
                         ? Icons.lock_rounded
-                        : Icons.event_seat_rounded,
+                        : isSelected
+                            ? Icons.check_circle_rounded
+                            : Icons.event_seat_rounded,
                     color: isSelected ? Colors.white : statusColor,
-                    size: 20,
+                    size: 14,
                   ),
                 ],
               ),
@@ -346,12 +360,12 @@ class _TableTile extends StatelessWidget {
                 '${table.number}',
                 style: TextStyle(
                   color: isSelected ? Colors.white : const Color(0xFFF7F7F8),
-                  fontSize: 34,
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
                   height: 1,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 statusLabel,
                 maxLines: 1,
@@ -360,7 +374,7 @@ class _TableTile extends StatelessWidget {
                   color: isSelected
                       ? Colors.white.withValues(alpha: 0.86)
                       : const Color(0xFFC9C2BE),
-                  fontSize: 12,
+                  fontSize: 9,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -368,6 +382,59 @@ class _TableTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PreferencesField extends StatelessWidget {
+  const _PreferencesField({
+    required this.controller,
+    required this.copy,
+    required this.isDarkMode,
+    required this.textColor,
+    required this.mutedColor,
+  });
+
+  final TextEditingController controller;
+  final AppCopy copy;
+  final bool isDarkMode;
+  final Color textColor;
+  final Color mutedColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          copy.preferencesLabel,
+          style: const TextStyle(
+            color: Color(0xFFFFB48E),
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: 2,
+          style: TextStyle(color: textColor),
+          decoration: InputDecoration(
+            hintText: copy.preferencesHint,
+            hintStyle: TextStyle(color: mutedColor.withValues(alpha: 0.60)),
+            filled: true,
+            fillColor: isDarkMode
+                ? const Color(0xFF1C1C1E).withValues(alpha: 0.86)
+                : const Color(0xFFF4F4F5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.all(16),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -443,7 +510,8 @@ class _SelectedTablePanel extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFFF6F22),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -466,12 +534,10 @@ class _LegendBar extends StatelessWidget {
   const _LegendBar({
     required this.available,
     required this.occupied,
-    required this.payment,
   });
 
   final String available;
   final String occupied;
-  final String payment;
 
   @override
   Widget build(BuildContext context) {
@@ -481,7 +547,6 @@ class _LegendBar extends StatelessWidget {
       children: [
         _LegendChip(label: available, color: const Color(0xFF62D26F)),
         _LegendChip(label: occupied, color: const Color(0xFF727272)),
-        _LegendChip(label: payment, color: const Color(0xFFFFC14F)),
       ],
     );
   }
