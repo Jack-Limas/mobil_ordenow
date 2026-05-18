@@ -5,13 +5,15 @@ class AiChatBox extends StatefulWidget {
   const AiChatBox({
     super.key,
     required this.onSend,
-    this.hintText = 'Describe un sabor o antojo...',
+    this.hintText = 'Habla o escribe aquí...',
     this.isLoading = false,
+    this.onListeningChanged,
   });
 
   final Future<void> Function(String prompt) onSend;
   final String hintText;
   final bool isLoading;
+  final ValueChanged<bool>? onListeningChanged;
 
   @override
   State<AiChatBox> createState() => _AiChatBoxState();
@@ -31,28 +33,27 @@ class _AiChatBoxState extends State<AiChatBox> {
 
   Future<void> _initSpeech() async {
     final available = await _speech.initialize(
-      onError: (_) => setState(() => _isListening = false),
+      onError: (_) => _setListening(false),
       onStatus: (status) {
-        if (status == 'done' || status == 'notListening') {
-          setState(() => _isListening = false);
-        }
+        if (status == 'done' || status == 'notListening') _setListening(false);
       },
     );
-    if (mounted) {
-      setState(() => _speechAvailable = available);
-    }
+    if (mounted) setState(() => _speechAvailable = available);
+  }
+
+  void _setListening(bool value) {
+    setState(() => _isListening = value);
+    widget.onListeningChanged?.call(value);
   }
 
   Future<void> _toggleListening() async {
     if (!_speechAvailable) return;
-
     if (_isListening) {
       await _speech.stop();
-      setState(() => _isListening = false);
+      _setListening(false);
       return;
     }
-
-    setState(() => _isListening = true);
+    _setListening(true);
     await _speech.listen(
       onResult: (result) {
         setState(() {
@@ -88,40 +89,38 @@ class _AiChatBoxState extends State<AiChatBox> {
       children: [
         Expanded(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A2522),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
+              color: const Color(0xFF1C1C1E),
+              borderRadius: BorderRadius.circular(24),
             ),
             child: Row(
               children: [
+                const Icon(
+                  Icons.keyboard_alt_outlined,
+                  color: Color(0xFF636366),
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
                     onSubmitted: (_) => _send(),
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: _isListening ? 'Escuchando...' : widget.hintText,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      hintText: _isListening
+                          ? 'Escuchando...'
+                          : widget.hintText,
                       hintStyle: TextStyle(
                         color: _isListening
                             ? const Color(0xFFFF6F22)
-                            : const Color(0xFF8A7E76),
+                            : const Color(0xFF636366),
+                        fontSize: 14,
                       ),
                     ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: _send,
-                  child: Icon(
-                    Icons.send_rounded,
-                    color: widget.isLoading
-                        ? const Color(0xFF4A4A4A)
-                        : const Color(0xFFFFBBA0),
-                    size: 22,
                   ),
                 ),
               ],
@@ -130,40 +129,34 @@ class _AiChatBoxState extends State<AiChatBox> {
         ),
         const SizedBox(width: 12),
         GestureDetector(
+          onTap: _toggleListening,
           onLongPressStart: (_) => _toggleListening(),
           onLongPressEnd: (_) async {
             if (_isListening) {
               await _speech.stop();
-              setState(() => _isListening = false);
+              _setListening(false);
             }
           },
-          onTap: _toggleListening,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 58,
-            height: 58,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: _isListening
-                    ? const [Color(0xFFFF3B30), Color(0xFFFF6F22)]
-                    : const [Color(0xFFFFA167), Color(0xFFFF6B00)],
-              ),
+              color: const Color(0xFFFF6F22),
               boxShadow: [
                 BoxShadow(
-                  color: (_isListening
-                          ? const Color(0xFFFF3B30)
-                          : const Color(0xFFFF6F22))
-                      .withValues(alpha: 0.40),
-                  blurRadius: _isListening ? 16 : 8,
-                  offset: const Offset(0, 4),
+                  color: const Color(0xFFFF6F22)
+                      .withValues(alpha: _isListening ? 0.6 : 0.25),
+                  blurRadius: _isListening ? 20 : 8,
+                  spreadRadius: _isListening ? 4 : 0,
                 ),
               ],
             ),
             child: Icon(
               _isListening ? Icons.stop_rounded : Icons.mic_rounded,
-              color: Colors.black,
-              size: 26,
+              color: Colors.white,
+              size: 24,
             ),
           ),
         ),
