@@ -36,4 +36,19 @@ class MenuRepositoryImpl implements MenuRepository {
     final remoteMenu = await _remoteDataSource.getMenu();
     await _localDataSource.saveMenu(remoteMenu);
   }
+
+  @override
+  Future<void> createMenuItem(Map<String, dynamic> data) async {
+    await _remoteDataSource.createMenuItem(data);
+  }
+
+  @override
+  Future<void> updateMenuItem(String id, Map<String, dynamic> data) async {
+    await _remoteDataSource.updateMenuItem(id, data);
+  }
+
+  @override
+  Future<void> deleteMenuItem(String id) async {
+    await _remoteDataSource.deleteMenuItem(id);
+  }
 }
