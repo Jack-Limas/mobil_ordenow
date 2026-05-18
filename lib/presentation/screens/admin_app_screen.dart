@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/entities/menu.dart';
+import '../providers/admin_dashboard_provider.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/order_provider.dart';
@@ -45,200 +46,373 @@ class _AdminDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final order = context.watch<OrderProvider>();
-    final recentTotal = order.activeOrder?.totalAmount ?? 142000.0;
-    final pendingCashCount = order.pendingPaymentTables.length;
-    final activeRevenue = order.activeOrder?.totalAmount ?? 0.0;
+    final dash = context.watch<AdminDashboardProvider>();
+    final settings = context.watch<AppSettingsProvider>();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _AdminTopBar(
-            title: 'Dashboard Summary',
-            showAvatar: true,
-          ),
-          const SizedBox(height: 22),
-          if (pendingCashCount > 0)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF252421),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 4,
-                    height: 110,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0B63E),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.payments_outlined, color: Color(0xFFF0B63E)),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Pending Cash\nVerifications',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'There ${pendingCashCount == 1 ? 'is 1 table' : 'are $pendingCashCount tables'} awaiting manual payment confirmation.',
-                          style: const TextStyle(color: Color(0xFFD5C1B8), height: 1.4),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (pendingCashCount > 0) const SizedBox(height: 18),
-          _AdminMetricCard(
-            label: 'INGRESOS SESIÓN',
-            value: activeRevenue > 0 ? _formatCop(activeRevenue) : _formatCop(0),
-            footer: order.hasActiveOrder ? 'Orden activa en curso' : 'Sin órdenes activas',
-            accent: const Color(0xFF7DDB7A),
-          ),
-          const SizedBox(height: 18),
-          _AdminMetricCard(
-            label: 'ÓRDENES ACTIVAS',
-            value: order.hasActiveOrder ? '1' : '0',
-            footer: 'Mesas con pago pendiente: $pendingCashCount',
-            accent: const Color(0xFFD7C1B7),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF6B00),
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: const Column(
+    return Column(
+      children: [
+        _DashboardAppBar(settings: settings),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'AI CONCIERGE ALERT',
+                const Text(
+                  'Resumen del Día',
                   style: TextStyle(
-                    color: Color(0x8C2B1600),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Stock Warning: Wagyu\nRibeye',
-                  style: TextStyle(
-                    color: Color(0xFF281508),
-                    fontSize: 18,
+                    color: Colors.white,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 4),
                 Text(
-                  'Projected to sell out in 45 mins based on current ordering velocity. Suggest adjusting featured listings.',
-                  style: TextStyle(
-                    color: Color(0xCC2B1600),
-                    height: 1.5,
+                  _todaySubtitle(),
+                  style: const TextStyle(
+                    color: Color(0xFF8E8E93),
+                    fontSize: 13,
                   ),
                 ),
+                const SizedBox(height: 20),
+                _SalesCard(dash: dash),
+                const SizedBox(height: 12),
+                _ActiveOrdersCard(dash: dash),
+                const SizedBox(height: 12),
+                _AvgTicketCard(dash: dash),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          const Row(
-            children: [
-              Text(
-                'Recent Activity',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Spacer(),
-              Text(
-                'VIEW LOG',
-                style: TextStyle(
-                  color: Color(0xFFE6B49D),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _ActivityCard(
-            icon: Icons.check_circle_outline_rounded,
-            title: 'Order #8492\nCompleted',
-            subtitle: 'Mesa 3 • hace 4 min',
-            amount: _formatCop(recentTotal),
-            status: 'CREDIT CARD',
-            accent: const Color(0xFF7DDB7A),
-          ),
-          const SizedBox(height: 14),
-          const _ActivityCard(
-            icon: Icons.warning_amber_rounded,
-            title: 'New Cash Order\n#8495',
-            subtitle: 'Awaiting courier arrival • 12 mins ago',
-            amount: '\$54.20',
-            status: 'PENDING',
-            accent: Color(0xFFF0B63E),
-          ),
-          const SizedBox(height: 14),
-          const _ActivityCard(
-            icon: Icons.schedule_rounded,
-            title: 'Pre-order Logged',
-            subtitle: 'Scheduled for 8:00 PM tonight • 22 mins ago',
-            amount: '\$210.00',
-            status: 'CORPORATE',
-            accent: Color(0xFFE5B49D),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Top Dishes',
-            style: TextStyle(
+        ),
+      ],
+    );
+  }
+
+  String _todaySubtitle() {
+    final now = DateTime.now();
+    const weekdays = [
+      'Lunes', 'Martes', 'Miércoles', 'Jueves',
+      'Viernes', 'Sábado', 'Domingo'
+    ];
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return '${weekdays[now.weekday - 1]}, ${now.day} de ${months[now.month - 1]} • Tiempo Real';
+  }
+}
+
+class _DashboardAppBar extends StatelessWidget {
+  const _DashboardAppBar({required this.settings});
+
+  final AppSettingsProvider settings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6F22),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.restaurant_rounded,
               color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+              size: 18,
             ),
           ),
-          const SizedBox(height: 16),
-          const _TopDishCard(
-            title: 'Smoked Brisket',
-            subtitle: '84 ORDERS TODAY',
-            imagePath: 'lib/assets/images/smoked_ribeye.png',
-            rank: '#1',
+          const SizedBox(width: 10),
+          const Text(
+            'OrdeNow',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-          const SizedBox(height: 16),
-          const _TopDishCard(
-            title: 'Truffle Gnocchi',
-            subtitle: '62 ORDERS TODAY',
-            imagePath: 'lib/assets/images/midnight_pasta.png',
-            rank: '#2',
+          const Spacer(),
+          GestureDetector(
+            onTap: settings.toggleLanguage,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                settings.isSpanish ? 'ES' : 'EN',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+class _SalesCard extends StatelessWidget {
+  const _SalesCard({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Text(
+                      'VENTAS DEL DÍA',
+                      style: TextStyle(
+                        color: Color(0xFF8E8E93),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    Spacer(),
+                    Icon(Icons.show_chart_rounded,
+                        color: Color(0xFF8E8E93), size: 18),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _formatCop(dash.salesToday),
+                  style: const TextStyle(
+                    color: Color(0xFF4CAF50),
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Row(
+                  children: [
+                    Icon(Icons.arrow_upward_rounded,
+                        color: Color(0xFF4CAF50), size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      '+11.5% vs ayer',
+                      style: TextStyle(
+                        color: Color(0xFF4CAF50),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 48,
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(16)),
+              child: CustomPaint(
+                painter: _SparklinePainter(
+                  data: dash.salesSparkline,
+                  color: const Color(0xFF4CAF50),
+                ),
+                size: const Size(double.infinity, 48),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveOrdersCard extends StatelessWidget {
+  const _ActiveOrdersCard({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Text(
+                'PEDIDOS ACTIVOS',
+                style: TextStyle(
+                  color: Color(0xFF8E8E93),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Spacer(),
+              Icon(Icons.list_alt_rounded, color: Color(0xFF8E8E93), size: 18),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${dash.activeOrders}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Row(
+            children: [
+              Icon(Icons.timer_outlined, color: Color(0xFF8E8E93), size: 14),
+              SizedBox(width: 4),
+              Text(
+                'Promedio 26 min',
+                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AvgTicketCard extends StatelessWidget {
+  const _AvgTicketCard({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Text(
+                'TICKET PROMEDIO',
+                style: TextStyle(
+                  color: Color(0xFF8E8E93),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Spacer(),
+              Icon(Icons.receipt_long_rounded,
+                  color: Color(0xFF8E8E93), size: 18),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _formatCop(dash.avgTicket),
+            style: const TextStyle(
+              color: Color(0xFFFF6F22),
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '12 Comandas/hora',
+            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SparklinePainter extends CustomPainter {
+  final List<double> data;
+  final Color color;
+
+  const _SparklinePainter({required this.data, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.length < 2) return;
+    final max = data.reduce((a, b) => a > b ? a : b);
+    final min = data.reduce((a, b) => a < b ? a : b);
+    final range = (max - min) == 0 ? 1.0 : max - min;
+
+    final linePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          color.withValues(alpha: 0.3),
+          color.withValues(alpha: 0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+
+    final linePath = Path();
+    final fillPath = Path();
+
+    for (var i = 0; i < data.length; i++) {
+      final x = i / (data.length - 1) * size.width;
+      final y =
+          (1 - (data[i] - min) / range) * (size.height * 0.8) +
+          size.height * 0.1;
+      if (i == 0) {
+        linePath.moveTo(x, y);
+        fillPath.moveTo(x, size.height);
+        fillPath.lineTo(x, y);
+      } else {
+        linePath.lineTo(x, y);
+        fillPath.lineTo(x, y);
+      }
+    }
+
+    fillPath.lineTo(size.width, size.height);
+    fillPath.close();
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(linePath, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(_SparklinePainter old) =>
+      old.data != data || old.color != color;
 }
 
 class _AdminMenuManagementView extends StatelessWidget {
@@ -1056,247 +1230,6 @@ class _AdminTopBar extends StatelessWidget {
             child: Icon(Icons.person, color: Color(0xFFE6B49D)),
           ),
         ],
-      ],
-    );
-  }
-}
-
-class _AdminMetricCard extends StatelessWidget {
-  const _AdminMetricCard({
-    required this.label,
-    required this.value,
-    required this.footer,
-    required this.accent,
-  });
-
-  final String label;
-  final String value;
-  final String footer;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1C1A),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF7E726B),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.8,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            footer,
-            style: TextStyle(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.amount,
-    required this.status,
-    required this.accent,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String amount;
-  final String status;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1C1A),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2D2A27),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: accent),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFFB6A49D),
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                status,
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopDishCard extends StatelessWidget {
-  const _TopDishCard({
-    required this.title,
-    required this.subtitle,
-    required this.imagePath,
-    required this.rank,
-  });
-
-  final String title;
-  final String subtitle;
-  final String imagePath;
-  final String rank;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: Image.asset(
-            imagePath,
-            width: double.infinity,
-            height: 170,
-            fit: BoxFit.cover,
-          ),
-        ),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.78),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 20,
-          right: 20,
-          bottom: 20,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFFD7C1B7),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  rank,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
