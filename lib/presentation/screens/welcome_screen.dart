@@ -14,11 +14,11 @@ class WelcomeScreen extends StatelessWidget {
   });
 
   static const _backgroundImage =
-      'lib/assets/images/background_bienvenida.png';
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1080&q=80';
   static const _featuredImages = [
-    'lib/assets/images/smoked_ribeye.png',
-    'lib/assets/images/artisan_harvest_bowl.png',
-    'lib/assets/images/midnight_pasta.png',
+    'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80',
+    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80',
+    'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=80',
   ];
 
   final VoidCallback onStart;
@@ -41,10 +41,16 @@ class WelcomeScreen extends StatelessWidget {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
+            child: Image.network(
               _backgroundImage,
               fit: BoxFit.cover,
               alignment: Alignment.center,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return const ColoredBox(color: Color(0xFF121212));
+              },
+              errorBuilder: (_, __, ___) =>
+                  const ColoredBox(color: Color(0xFF121212)),
             ),
           ),
           Positioned.fill(
@@ -371,9 +377,15 @@ class _DishStrip extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(
+                  Image.network(
                     images[index],
                     fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const ColoredBox(color: Color(0xFF1C1C1E));
+                    },
+                    errorBuilder: (_, __, ___) =>
+                        const ColoredBox(color: Color(0xFF1C1C1E)),
                   ),
                   DecoratedBox(
                     decoration: BoxDecoration(
