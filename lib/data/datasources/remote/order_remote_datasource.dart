@@ -39,6 +39,21 @@ class OrderRemoteDataSource {
     return SupabaseService.watchCashRequests(tableId);
   }
 
+  Stream<List<Map<String, dynamic>>> watchAllPendingCashRequests() {
+    return SupabaseService.watchAllCashRequests()
+        .map((rows) => rows.where((r) => r['status'] == 'pending').toList());
+  }
+
+  Future<void> updateCashRequestStatus({
+    required String requestId,
+    required String status,
+  }) async {
+    await SupabaseService.updateCashRequestStatus(
+      requestId: requestId,
+      status: status,
+    );
+  }
+
   Stream<List<Map<String, dynamic>>> watchAllOrders() {
     return SupabaseService.watchAllOrders();
   }

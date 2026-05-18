@@ -109,6 +109,24 @@ class SupabaseService {
         .map((rows) => rows.map(Map<String, dynamic>.from).toList());
   }
 
+  static Stream<List<Map<String, dynamic>>> watchAllCashRequests() {
+    return client
+        .from(SupabaseTables.cashRequest)
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((rows) => rows.map(Map<String, dynamic>.from).toList());
+  }
+
+  static Future<void> updateCashRequestStatus({
+    required String requestId,
+    required String status,
+  }) async {
+    await client.from(SupabaseTables.cashRequest).update({
+      'status': status,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', requestId);
+  }
+
   // ---------- TABLE ----------
 
   static Future<List<Map<String, dynamic>>> getTables() async {
