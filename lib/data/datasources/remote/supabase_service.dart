@@ -50,6 +50,21 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(res);
   }
 
+  static Future<void> createMenuItem(Map<String, dynamic> data) async {
+    await client.from(SupabaseTables.menu).insert(data);
+  }
+
+  static Future<void> updateMenuItem(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    await client.from(SupabaseTables.menu).update(data).eq('id', id);
+  }
+
+  static Future<void> deleteMenuItem(String id) async {
+    await client.from(SupabaseTables.menu).delete().eq('id', id);
+  }
+
   // ---------- ORDER ----------
 
   static Future<void> upsertOrder(Map<String, dynamic> data) async {
