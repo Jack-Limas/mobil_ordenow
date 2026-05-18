@@ -25,10 +25,10 @@ class CustomerAppScreen extends StatelessWidget {
   };
 
   static const List<String> _customerLabels = [
-    'Discover',
-    'Orders',
-    'AI Concierge',
-    'Profile',
+    'IA',
+    'Menú',
+    'Pedidos',
+    'Perfil',
   ];
 
   @override
@@ -57,11 +57,11 @@ class CustomerAppScreen extends StatelessWidget {
         onTap: (index) {
           switch (index) {
             case 0:
-              flow.setCustomerScreen(CustomerScreen.menu);
-            case 1:
-              flow.setCustomerScreen(CustomerScreen.cart);
-            case 2:
               flow.setCustomerScreen(CustomerScreen.aiConcierge);
+            case 1:
+              flow.setCustomerScreen(CustomerScreen.menu);
+            case 2:
+              flow.setCustomerScreen(CustomerScreen.tracking);
             case 3:
               flow.setCustomerScreen(CustomerScreen.profile);
           }
@@ -76,13 +76,13 @@ class CustomerAppScreen extends StatelessWidget {
 
   int _navigationIndex(CustomerScreen screen) {
     switch (screen) {
-      case CustomerScreen.menu:
+      case CustomerScreen.aiConcierge:
         return 0;
+      case CustomerScreen.menu:
       case CustomerScreen.cart:
       case CustomerScreen.checkout:
-      case CustomerScreen.tracking:
         return 1;
-      case CustomerScreen.aiConcierge:
+      case CustomerScreen.tracking:
         return 2;
       case CustomerScreen.profile:
         return 3;
@@ -90,14 +90,7 @@ class CustomerAppScreen extends StatelessWidget {
   }
 
   String _highlightedLabel(CustomerScreen screen) {
-    switch (screen) {
-      case CustomerScreen.checkout:
-        return 'Checkout';
-      case CustomerScreen.tracking:
-        return 'Orders';
-      default:
-        return _customerLabels[_navigationIndex(screen)];
-    }
+    return _customerLabels[_navigationIndex(screen)];
   }
 }
 
@@ -1635,20 +1628,19 @@ class _CustomerBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = _CustomerPalette.of(context);
     const icons = [
-      Icons.explore_outlined,
-      Icons.receipt_long_outlined,
       Icons.auto_awesome_outlined,
+      Icons.restaurant_menu_outlined,
+      Icons.receipt_long_outlined,
       Icons.person_outline_rounded,
     ];
-    const labels = ['Discover', 'Orders', 'AI Concierge', 'Profile'];
+    const labels = ['IA', 'Menú', 'Pedidos', 'Perfil'];
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: palette.navBackground,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0x22FFFFFF)),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        border: Border(top: BorderSide(color: Color(0xFF1C1C1E), width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
