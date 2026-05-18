@@ -171,4 +171,11 @@ class AppCopy {
       ? 'Aun no hay mesas cargadas.'
       : 'No tables loaded yet.';
   String get retry => isSpanish ? 'Reintentar' : 'Retry';
+
+  String get roleLabel => isSpanish ? 'ROL DE CUENTA' : 'ACCOUNT ROLE';
+  String get roleCustomer => isSpanish ? '🍽 Cliente' : '🍽 Customer';
+  String get roleAdministrator => isSpanish ? '⚙ Administrador' : '⚙ Administrator';
+  String get accountCreatedAdminArea => isSpanish
+      ? 'Cuenta admin creada. Bienvenido al panel.'
+      : 'Admin account created. Welcome to the panel.';
 }
