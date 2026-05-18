@@ -8,6 +8,7 @@ class AuthRemoteDataSource {
       password: user.password,
       data: {
         'full_name': user.fullName,
+        'role': user.role,
       },
     );
 
@@ -39,8 +40,14 @@ class AuthRemoteDataSource {
     final rawUser = await SupabaseService.getUserById(authUser.id) ??
         await SupabaseService.getUserByEmail(email);
 
+    final roleFromMeta = authUser.userMetadata?['role'] as String? ?? 'client';
+
     if (rawUser != null) {
-      return UserModel.fromJson(rawUser);
+      final model = UserModel.fromJson(rawUser);
+      if (model.role == 'client' && roleFromMeta != 'client') {
+        return UserModel.fromEntity(model.copyWith(role: roleFromMeta));
+      }
+      return model;
     }
 
     return UserModel(
@@ -48,6 +55,7 @@ class AuthRemoteDataSource {
       email: authUser.email ?? email,
       fullName: authUser.userMetadata?['full_name'] as String? ?? '',
       password: '',
+      role: roleFromMeta,
       allergies: const [],
       preferences: const [],
       createdAt: DateTime.tryParse(authUser.createdAt) ?? DateTime.now(),
