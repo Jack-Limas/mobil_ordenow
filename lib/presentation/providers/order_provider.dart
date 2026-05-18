@@ -7,10 +7,7 @@ import '../../domain/entities/order.dart';
 import '../../domain/entities/table.dart';
 
 class CartLineItem {
-  const CartLineItem({
-    required this.menu,
-    required this.quantity,
-  });
+  const CartLineItem({required this.menu, required this.quantity});
 
   final Menu menu;
   final int quantity;
@@ -125,7 +122,8 @@ class OrderProvider extends ChangeNotifier {
   bool get hasSelectedTable => _selectedTableId != null;
   bool get isPaid => _activeOrder?.paid ?? false;
 
-  String get currentOrderStatus => _activeOrder?.status ?? OrderStatuses.pending;
+  String get currentOrderStatus =>
+      _activeOrder?.status ?? OrderStatuses.pending;
 
   int get orderStepIndex {
     switch (_activeOrder?.status) {
@@ -181,6 +179,18 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void selectTableEntity(TableEntity table) {
+    final index = _tables.indexWhere((item) => item.id == table.id);
+    if (index == -1) {
+      _tables.add(table);
+    } else {
+      _tables[index] = table;
+    }
+
+    _selectedTableId = table.id;
+    notifyListeners();
+  }
+
   void setDiningPreferences(String value) {
     _diningPreferences = value;
     notifyListeners();
@@ -211,10 +221,7 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void placeDemoOrder({
-    required String userId,
-    String notes = '',
-  }) {
+  void placeDemoOrder({required String userId, String notes = ''}) {
     if (_selectedTableId == null || _cartMenuIds.isEmpty) {
       return;
     }
@@ -332,7 +339,13 @@ class OrderProvider extends ChangeNotifier {
       return null;
     }
 
-    return _tables.firstWhere((table) => table.id == _selectedTableId);
+    for (final table in _tables) {
+      if (table.id == _selectedTableId) {
+        return table;
+      }
+    }
+
+    return null;
   }
 
   List<Menu> get orderedItems {
@@ -345,10 +358,7 @@ class OrderProvider extends ChangeNotifier {
         .toList();
   }
 
-  void _updateTableState({
-    required bool occupied,
-    required bool needsPayment,
-  }) {
+  void _updateTableState({required bool occupied, required bool needsPayment}) {
     if (_selectedTableId == null) {
       return;
     }
