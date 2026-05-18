@@ -228,7 +228,7 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                     menu: item,
                     imagePath:
                         _menuImages[item.id] ?? 'lib/assets/images/background_bienvenida.png',
-                    onAdd: () => order.addItemToCart(item.id),
+                    onOrderWithAi: () => order.addItemToCart(item.id),
                   );
                 },
               ),
