@@ -8,6 +8,7 @@ import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
+import '../widgets/ai_chat_box.dart';
 import '../widgets/ai_message_bubble.dart';
 import '../widgets/order_progress.dart';
 
@@ -412,16 +413,9 @@ class _AiConciergeView extends StatefulWidget {
 }
 
 class _AiConciergeViewState extends State<_AiConciergeView> {
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   Future<void> _sendPrompt(BuildContext context, String prompt) async {
     final order = context.read<OrderProvider>();
+    final auth = context.read<AuthProvider>();
     final ai = context.read<AiProvider>();
     await ai.sendMessage(
       prompt: prompt,
@@ -429,6 +423,8 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
       cartItems: order.cartItems,
       tableNumber: order.selectedTable?.number,
       orderStatus: order.currentOrderStatus,
+      allergies: auth.currentUser?.allergies ?? [],
+      diningPreferences: order.diningPreferences,
     );
   }
 
@@ -584,59 +580,11 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: palette.surface,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          style: TextStyle(color: palette.primaryText),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: copy.isSpanish
-                                ? 'Describe un sabor o antojo...'
-                                : 'Describe a flavor or mood...',
-                            hintStyle: TextStyle(color: palette.mutedText),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          final prompt = _controller.text;
-                          _controller.clear();
-                          _sendPrompt(context, prompt);
-                        },
-                        icon: const Icon(
-                          Icons.send_outlined,
-                          color: Color(0xFFFFBBA0),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                width: 68,
-                height: 68,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFFA167), Color(0xFFFF6B00)],
-                  ),
-                ),
-                child: const Icon(Icons.mic_rounded, color: Colors.black),
-              ),
-            ],
+          AiChatBox(
+            hintText: copy.isSpanish
+                ? 'Describe un sabor o antojo...'
+                : 'Describe a flavor or mood...',
+            onSend: (prompt) => _sendPrompt(context, prompt),
           ),
         ],
       ),
@@ -2542,5 +2490,10 @@ class _Tag extends StatelessWidget {
 }
 
 String _formatPrice(double value) {
-  return '\$${value.toStringAsFixed(2)}';
+  final intVal = value.toInt();
+  final formatted = intVal.toString().replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]}.',
+      );
+  return '\$$formatted';
 }
