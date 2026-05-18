@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart'; // Importante para debugPrint
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../data/datasources/local/hive_service.dart';
@@ -11,8 +12,21 @@ class AppBootstrap {
     await Hive.initFlutter();
     await HiveService.init();
     await Environment.init();
+    
+    // 1. Inicializamos la configuración de Supabase
     await SupabaseConfig.init();
-    await TableRemoteDataSource().seedTablesIfEmpty();
+    
+    // 2. Le damos un respiro de 300 milisegundos al sistema para que el SDK se asiente bien
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // 3. Ejecutamos la siembra de tablas de forma segura
+    try {
+      await TableRemoteDataSource().seedTablesIfEmpty();
+    } catch (e) {
+      debugPrint("⚠️ Supabase aún se está conectando, se reintentará en la siguiente consulta: $e");
+    }
+
+    // 4. Inicializamos las notificaciones al final
     await NotificationService.initialize();
   }
 }
