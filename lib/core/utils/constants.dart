@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFFFF6B00);
+  static const Color primary = Color(0xFFFF6F22);
   static const Color secondary = Color(0xFFE53935);
   static const Color error = Color(0xFFD32F2F);
 
-  static const Color lightBackground = Color(0xFFFFF7F2);
-  static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightOnSurface = Color(0xFF221B17);
+  static const Color lightBackground = Color(0xFFFFFFFF);
+  static const Color lightSurface = Color(0xFFF4F4F5);
+  static const Color lightOnSurface = Color(0xFF171717);
 
-  static const Color darkBackground = Color(0xFF18110D);
-  static const Color darkSurface = Color(0xFF2A211C);
-  static const Color darkOnSurface = Color(0xFFF9EDE5);
+  static const Color darkBackground = Color(0xFF000000);
+  static const Color darkSurface = Color(0xFF1C1C1E);
+  static const Color darkOnSurface = Color(0xFFF7F7F8);
 }
 
 class AppStrings {
@@ -39,6 +39,7 @@ class SupabaseTables {
   static const String menu = 'menu_items';
   static const String order = 'orders';
   static const String table = 'restaurant_tables';
+  static const String cashRequest = 'cash_requests';
 }
 
 class OrderStatuses {

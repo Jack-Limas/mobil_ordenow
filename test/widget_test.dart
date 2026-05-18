@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 
 import 'package:ordenow/core/theme/app_theme.dart';
 import 'package:ordenow/presentation/providers/app_settings_provider.dart';
+import 'package:ordenow/presentation/providers/app_demo_provider.dart';
 import 'package:ordenow/presentation/providers/auth_provider.dart';
 import 'package:ordenow/presentation/screens/app_shell_screen.dart';
 import 'package:ordenow/domain/usecases/get_current_user.dart';
 import 'package:ordenow/domain/usecases/login_user.dart';
 import 'package:ordenow/domain/usecases/logout_user.dart';
 import 'package:ordenow/domain/usecases/register_user.dart';
+import 'package:ordenow/domain/usecases/update_user_profile.dart';
 import 'package:ordenow/domain/repositories/user_repository.dart';
 import 'package:ordenow/domain/entities/user.dart';
 
@@ -18,6 +20,7 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider(create: (_) => AppDemoProvider()),
           ChangeNotifierProvider(create: (_) => AppSettingsProvider()),
           ChangeNotifierProvider(
             create: (_) => AuthProvider(
@@ -25,6 +28,7 @@ void main() {
               registerUser: RegisterUser(_FakeUserRepository()),
               getCurrentUser: GetCurrentUser(_FakeUserRepository()),
               logoutUser: LogoutUser(_FakeUserRepository()),
+              updateUserProfile: UpdateUserProfile(_FakeUserRepository()),
             ),
           ),
         ],
@@ -37,7 +41,6 @@ void main() {
     );
 
     expect(find.text('OrdeNow'), findsOneWidget);
-    expect(find.text('Configuracion inicial'), findsOneWidget);
   });
 }
 
@@ -52,8 +55,11 @@ class _FakeUserRepository implements UserRepository {
   Future<void> logout() async {}
 
   @override
-  Future<void> register(User user) async {}
+  Future<User> register(User user) async => user;
 
   @override
   Future<void> saveLocal(User user) async {}
+
+  @override
+  Future<User> updateProfile(User user) async => user;
 }

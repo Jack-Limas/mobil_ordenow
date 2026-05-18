@@ -6,4 +6,10 @@ abstract class MenuRepository {
   Future<void> saveLocal(List<Menu> menu);
 
   Future<void> syncMenu();
+
+  Future<void> createMenuItem(Map<String, dynamic> data);
+
+  Future<void> updateMenuItem(String id, Map<String, dynamic> data);
+
+  Future<void> deleteMenuItem(String id);
 }

@@ -8,8 +8,12 @@ import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
+import '../widgets/ai_chat_box.dart';
 import '../widgets/ai_message_bubble.dart';
-import '../widgets/order_progress.dart';
+import 'client_profile_screen.dart';
+import 'menu_catalog_screen.dart';
+import 'order_tracking_screen.dart';
+import 'payment_screen.dart';
 
 class CustomerAppScreen extends StatelessWidget {
   const CustomerAppScreen({super.key});
@@ -24,10 +28,11 @@ class CustomerAppScreen extends StatelessWidget {
   };
 
   static const List<String> _customerLabels = [
-    'Discover',
-    'Orders',
-    'AI Concierge',
-    'Profile',
+    'IA',
+    'Menú',
+    'Pedidos',
+    'Historial',
+    'Perfil',
   ];
 
   @override
@@ -45,7 +50,8 @@ class CustomerAppScreen extends StatelessWidget {
             _SmartCartView(),
             _AiConciergeView(),
             _CheckoutView(),
-            _TrackingView(),
+            OrderTrackingScreen(),
+            _HistoryView(),
             _CustomerProfileView(),
           ],
         ),
@@ -56,12 +62,14 @@ class CustomerAppScreen extends StatelessWidget {
         onTap: (index) {
           switch (index) {
             case 0:
-              flow.setCustomerScreen(CustomerScreen.menu);
-            case 1:
-              flow.setCustomerScreen(CustomerScreen.cart);
-            case 2:
               flow.setCustomerScreen(CustomerScreen.aiConcierge);
+            case 1:
+              flow.setCustomerScreen(CustomerScreen.menu);
+            case 2:
+              flow.setCustomerScreen(CustomerScreen.tracking);
             case 3:
+              flow.setCustomerScreen(CustomerScreen.history);
+            case 4:
               flow.setCustomerScreen(CustomerScreen.profile);
           }
         },
@@ -75,162 +83,31 @@ class CustomerAppScreen extends StatelessWidget {
 
   int _navigationIndex(CustomerScreen screen) {
     switch (screen) {
-      case CustomerScreen.menu:
+      case CustomerScreen.aiConcierge:
         return 0;
+      case CustomerScreen.menu:
       case CustomerScreen.cart:
       case CustomerScreen.checkout:
-      case CustomerScreen.tracking:
         return 1;
-      case CustomerScreen.aiConcierge:
+      case CustomerScreen.tracking:
         return 2;
-      case CustomerScreen.profile:
+      case CustomerScreen.history:
         return 3;
+      case CustomerScreen.profile:
+        return 4;
     }
   }
 
   String _highlightedLabel(CustomerScreen screen) {
-    switch (screen) {
-      case CustomerScreen.checkout:
-        return 'Checkout';
-      case CustomerScreen.tracking:
-        return 'Orders';
-      default:
-        return _customerLabels[_navigationIndex(screen)];
-    }
+    return _customerLabels[_navigationIndex(screen)];
   }
 }
 
-class _MenuCatalogView extends StatefulWidget {
+class _MenuCatalogView extends StatelessWidget {
   const _MenuCatalogView();
 
   @override
-  State<_MenuCatalogView> createState() => _MenuCatalogViewState();
-}
-
-class _MenuCatalogViewState extends State<_MenuCatalogView> {
-  final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'All Dishes';
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = _CustomerPalette.of(context);
-    final copy = AppCopy.of(context);
-    final order = context.watch<OrderProvider>();
-    final flow = context.read<AppDemoProvider>();
-    final categories = <String>[
-      copy.isSpanish ? 'Todos' : 'All Dishes',
-      ...order.menu.map((item) => item.category).toSet(),
-    ];
-    final search = _searchController.text.trim().toLowerCase();
-    final filteredMenu = order.menu.where((item) {
-      final matchesCategory =
-          _selectedCategory == (copy.isSpanish ? 'Todos' : 'All Dishes') ||
-          item.category == _selectedCategory;
-      final matchesSearch = search.isEmpty ||
-          item.name.toLowerCase().contains(search) ||
-          item.description.toLowerCase().contains(search);
-      return matchesCategory && matchesSearch;
-    }).toList();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CustomerHeader(
-            title: 'OrdeNow',
-            leading: const CircleAvatar(
-              radius: 18,
-              backgroundImage:
-                  AssetImage('lib/assets/images/background_bienvenida.png'),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const _InlineUtilityButtons(),
-                IconButton(
-                  onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
-                  icon: const Icon(Icons.shopping_bag_outlined),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(
-              color: palette.surface,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFFBCA1)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (_) => setState(() {}),
-                    style: TextStyle(color: palette.primaryText),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: copy.isSpanish
-                          ? 'Que se te antoja hoy?'
-                          : 'What are you craving today?',
-                      hintStyle: TextStyle(color: palette.mutedText),
-                    ),
-                  ),
-                ),
-                Icon(Icons.search_rounded, color: palette.mutedText),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 44,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final isSelected = category == _selectedCategory;
-                return ChoiceChip(
-                  selected: isSelected,
-                  label: Text(category),
-                  onSelected: (_) {
-                    setState(() {
-                      _selectedCategory = category;
-                    });
-                  },
-                );
-              },
-              separatorBuilder: (_, index) => const SizedBox(width: 10),
-              itemCount: categories.length,
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (filteredMenu.isNotEmpty)
-            _FeaturedDishCard(menu: filteredMenu.first),
-          const SizedBox(height: 18),
-          ...filteredMenu.skip(1).map(
-            (menu) => Padding(
-              padding: const EdgeInsets.only(bottom: 18),
-              child: _MenuListCard(
-                menu: menu,
-                onAdd: () => order.addItemToCart(menu.id),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const _AllergyAwarenessCard(),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const MenuCatalogScreen();
 }
 
 class _SmartCartView extends StatelessWidget {
@@ -412,16 +289,30 @@ class _AiConciergeView extends StatefulWidget {
 }
 
 class _AiConciergeViewState extends State<_AiConciergeView> {
-  final TextEditingController _controller = TextEditingController();
+  bool _isListening = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
-    _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _sendPrompt(BuildContext context, String prompt) async {
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _sendPrompt(String prompt) async {
     final order = context.read<OrderProvider>();
+    final auth = context.read<AuthProvider>();
     final ai = context.read<AiProvider>();
     await ai.sendMessage(
       prompt: prompt,
@@ -429,216 +320,248 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
       cartItems: order.cartItems,
       tableNumber: order.selectedTable?.number,
       orderStatus: order.currentOrderStatus,
+      allergies: auth.currentUser?.allergies ?? [],
+      diningPreferences: order.diningPreferences,
     );
+    _scrollToBottom();
+  }
+
+  String _initials(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return '?';
+    final parts = fullName.trim().split(' ');
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
-    final copy = AppCopy.of(context);
-    final palette = _CustomerPalette.of(context);
     final ai = context.watch<AiProvider>();
-    final flow = context.read<AppDemoProvider>();
+    final auth = context.watch<AuthProvider>();
+    final settings = context.watch<AppSettingsProvider>();
+    final initials = _initials(auth.currentUser?.fullName);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      children: [
+        // App bar
+        Container(
+          color: Colors.black,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Row(
             children: [
-              const CircleAvatar(
-                radius: 20,
-                backgroundImage:
-                    AssetImage('lib/assets/images/background_bienvenida.png'),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6F22),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.restaurant_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               const Text(
                 'OrdeNow',
                 style: TextStyle(
-                  color: Color(0xFFFF6B00),
-                  fontSize: 20,
+                  color: Colors.white,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const Spacer(),
-              const _InlineUtilityButtons(compact: true),
-              IconButton(
-                onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
-                icon: const Icon(Icons.shopping_bag_outlined),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: copy.isSpanish ? 'Tu ' : 'Your ',
-                  style: TextStyle(color: palette.primaryText),
-                ),
-                TextSpan(
-                  text: copy.isSpanish ? 'Sommelier' : 'Sensory',
-                  style: TextStyle(color: Color(0xFFFF6B00)),
-                ),
-                TextSpan(
-                  text: copy.isSpanish ? '\nSensorial.' : '\nSommelier.',
-                  style: TextStyle(color: palette.primaryText),
-                ),
-              ],
-            ),
-            style: const TextStyle(
-              fontSize: 42,
-              fontWeight: FontWeight.w300,
-              height: 1.05,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            copy.isSpanish
-                ? 'Curando los sabores perfectos para tu antojo.\nQue deseas pedir hoy?'
-                : 'Curating the perfect flavors for your mood.\nWhat are you craving today?',
-            style: const TextStyle(
-              color: Color(0xFFD9C1B7),
-              fontSize: 16,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Expanded(
-            child: ListView(
-              children: [
-                ...ai.messages.map(
-                  (message) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: AiMessageBubble(
-                      text: message.text,
-                      isUser: message.isUser,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Image.asset(
-                        'lib/assets/images/midnight_pasta.png',
-                        height: 185,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.72),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Positioned(
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Wild Mushroom & Truffle\nLinguine',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              _Tag(text: "CHEF'S CHOICE", color: Color(0xFF1F8D3A)),
-                              SizedBox(width: 8),
-                              _Tag(text: 'PREMIUM', color: Color(0xFF7C5A2B)),
-                              Spacer(),
-                              Text(
-                                '\$34',
-                                style: TextStyle(
-                                  color: Color(0xFFFF6B00),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
+              GestureDetector(
+                onTap: settings.toggleLanguage,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: palette.surface,
-                    borderRadius: BorderRadius.circular(999),
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          style: TextStyle(color: palette.primaryText),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: copy.isSpanish
-                                ? 'Describe un sabor o antojo...'
-                                : 'Describe a flavor or mood...',
-                            hintStyle: TextStyle(color: palette.mutedText),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          final prompt = _controller.text;
-                          _controller.clear();
-                          _sendPrompt(context, prompt);
-                        },
-                        icon: const Icon(
-                          Icons.send_outlined,
-                          color: Color(0xFFFFBBA0),
-                        ),
-                      ),
-                    ],
+                  child: const Text(
+                    'XA',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Container(
-                width: 68,
-                height: 68,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFFA167), Color(0xFFFF6B00)],
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => _cycleTheme(settings),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.settings_outlined,
+                    color: Colors.white,
+                    size: 18,
                   ),
                 ),
-                child: const Icon(Icons.mic_rounded, color: Colors.black),
               ),
             ],
+          ),
+        ),
+        // Messages list
+        Expanded(
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            itemCount: ai.messages.length,
+            itemBuilder: (context, index) {
+              final msg = ai.messages[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: AiMessageBubble(
+                  text: msg.text,
+                  isUser: msg.isUser,
+                  userInitials: initials,
+                ),
+              );
+            },
+          ),
+        ),
+        // Animated orb — visible when mic is active
+        ClipRect(
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            child: _isListening ? const _OrbSection() : const SizedBox.shrink(),
+          ),
+        ),
+        // Quick suggestion chips
+        _QuickChips(onSend: _sendPrompt),
+        const SizedBox(height: 8),
+        // Input bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: AiChatBox(
+            hintText: settings.isSpanish
+                ? 'Habla o escribe aquí...'
+                : 'Talk or type here...',
+            onSend: _sendPrompt,
+            onListeningChanged: (v) => setState(() => _isListening = v),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _cycleTheme(AppSettingsProvider settings) async {
+    switch (settings.themeMode) {
+      case ThemeMode.system:
+        await settings.updateThemeMode(ThemeMode.dark);
+      case ThemeMode.dark:
+        await settings.updateThemeMode(ThemeMode.light);
+      case ThemeMode.light:
+        await settings.updateThemeMode(ThemeMode.system);
+    }
+  }
+}
+
+class _OrbSection extends StatelessWidget {
+  const _OrbSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 190,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 130,
+            height: 130,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFF6F22),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF6F22).withValues(alpha: 0.55),
+                  blurRadius: 50,
+                  spreadRadius: 12,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: Colors.white,
+              size: 52,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'ESCUCHANDO TUS ANTOJOS...',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2.0,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickChips extends StatelessWidget {
+  const _QuickChips({required this.onSend});
+
+  final ValueChanged<String> onSend;
+
+  static const List<(IconData, String)> _chips = [
+    (Icons.eco_outlined, 'Recomiéndame algo saludable'),
+    (Icons.whatshot_outlined, 'Quiero algo con mucho sabor'),
+    (Icons.local_cafe_outlined, 'Una bebida refrescante'),
+    (Icons.star_outline_rounded, 'El plato especial del chef'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _chips.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final (icon, label) = _chips[index];
+          return GestureDetector(
+            onTap: () => onSend(label),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: const Color(0xFF2C2C2E)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: const Color(0xFF62D26F), size: 13),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -648,414 +571,179 @@ class _CheckoutView extends StatelessWidget {
   const _CheckoutView();
 
   @override
-  Widget build(BuildContext context) {
-    final order = context.watch<OrderProvider>();
-    final auth = context.watch<AuthProvider>();
-    final flow = context.read<AppDemoProvider>();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CustomerHeader(
-            title: 'OrdeNow',
-            leading: IconButton(
-              onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
-              icon: const Icon(Icons.arrow_back_rounded),
-            ),
-            trailing: const CircleAvatar(
-              radius: 18,
-              backgroundImage:
-                  AssetImage('lib/assets/images/smoked_ribeye.png'),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                colors: [Color(0xFF3B261F), Color(0xFF231F1D)],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Finalize Order',
-                  style: TextStyle(
-                    color: Color(0xFFFFBCA1),
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Selected: Tasting Menu for Two',
-                  style: TextStyle(color: Color(0xFFB6A198)),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  _formatPrice(order.checkoutTotal),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 42,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _PaymentMethodCard(
-                  selected: order.paymentMethod == 'card',
-                  label: 'Card / Wallet',
-                  icon: Icons.credit_card_rounded,
-                  onTap: () => order.setPaymentMethod('card'),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _PaymentMethodCard(
-                  selected: order.paymentMethod == 'cash',
-                  label: 'Cash',
-                  icon: Icons.payments_outlined,
-                  onTap: () => order.setPaymentMethod('cash'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const _CheckoutField(label: 'CARDHOLDER NAME', hint: 'ALEXANDER SOMMELIER'),
-          const SizedBox(height: 16),
-          const _CheckoutField(label: 'CARD NUMBER', hint: '**** **** **** 8829'),
-          const SizedBox(height: 16),
-          const Row(
-            children: [
-              Expanded(
-                child: _CheckoutField(label: 'EXPIRY DATE', hint: 'MM/YY'),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: _CheckoutField(label: 'CVV', hint: '***'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'OR PAY WITH',
-            style: TextStyle(
-              color: Color(0xFFAF9E96),
-              fontSize: 12,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            decoration: BoxDecoration(
-              color: const Color(0xFF381C2B),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF6B3451)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.account_balance_wallet_rounded,
-                    color: Color(0xFFFF72B0)),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Nequi Digital Wallet',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2C2A28),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.payments_rounded, color: Color(0xFF7EDB7A)),
-                SizedBox(width: 10),
-                Text(
-                  'Pay in Cash',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Text(
-              'Selecting "Pay in Cash" will immediately notify the restaurant administrator.',
-              style: TextStyle(color: Color(0xFFAF9E96), height: 1.5),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: order.cartLineItems.isEmpty
-                  ? null
-                  : () {
-                      if (!order.hasSelectedTable) {
-                        order.selectTable(order.tables.first.id);
-                      }
-
-                      if (!order.hasActiveOrder) {
-                        order.placeDemoOrder(
-                          userId: auth.currentUser?.id ?? 'customer-preview',
-                          notes: 'Created from checkout flow.',
-                        );
-                      }
-
-                      if (order.paymentMethod == 'card') {
-                        order.markAsPaid(paymentMethod: 'card');
-                      } else {
-                        order.requestCashDesk();
-                      }
-
-                      flow.setCustomerScreen(CustomerScreen.tracking);
-                    },
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFFF8B4A),
-                foregroundColor: const Color(0xFF2D1200),
-                padding: const EdgeInsets.symmetric(vertical: 24),
-              ),
-              child: const Text(
-                'CONFIRM PAYMENT',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const PaymentScreen();
 }
 
-class _TrackingView extends StatelessWidget {
-  const _TrackingView();
+class _HistoryView extends StatelessWidget {
+  const _HistoryView();
 
   @override
   Widget build(BuildContext context) {
     final order = context.watch<OrderProvider>();
-    final flow = context.read<AppDemoProvider>();
+    final settings = context.watch<AppSettingsProvider>();
+    final items = order.orderedItems;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+    return Column(
+      children: [
+        Container(
+          color: Colors.black,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6F22),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.restaurant_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'OrdeNow',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: settings.toggleLanguage,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'XA',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: items.isEmpty
+              ? const _EmptyHistory()
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+                  children: [
+                    const Text(
+                      'Historial de pedidos',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...items.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1C1C1E),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF6F22)
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.restaurant_rounded,
+                                  color: Color(0xFFFF6F22),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                      item.category,
+                                      style: const TextStyle(
+                                        color: Color(0xFF8E8E93),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                _formatPrice(item.price),
+                                style: const TextStyle(
+                                  color: Color(0xFFFF6F22),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyHistory extends StatelessWidget {
+  const _EmptyHistory();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _CustomerHeader(
-            title: 'OrdeNow',
-            leading: const CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.black,
-              child: Icon(Icons.person_outline, color: Colors.white70),
-            ),
-            trailing: IconButton(
-              onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
-              icon: const Icon(Icons.shopping_bag_outlined),
-            ),
+          Icon(
+            Icons.receipt_long_outlined,
+            color: Color(0xFF3A3A3C),
+            size: 64,
           ),
-          const SizedBox(height: 28),
-          Container(
-            height: 275,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              image: const DecorationImage(
-                image: AssetImage('lib/assets/images/background_bienvenida.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.85),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: const Padding(
-                padding: EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _Tag(text: 'ORDER #8821', color: Color(0xFF188A31)),
-                    SizedBox(height: 14),
-                    Text(
-                      'Preparing your\nSignature\nCourse',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        height: 1.1,
-                        fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Estimated arrival at your table: 12 mins',
-                      style: TextStyle(
-                        color: Color(0xFFD5C8C1),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2E2B28),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Text(
-                      'Live Status',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Spacer(),
-                    Text(
-                      'LIVE KITCHEN FEED',
-                      style: TextStyle(
-                        color: Color(0xFF84D975),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                OrderProgress(currentStep: order.orderStepIndex),
-                const SizedBox(height: 16),
-                if (order.activeOrder != null)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: OutlinedButton(
-                      onPressed: order.advanceKitchenStatus,
-                      child: const Text('Advance Status'),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D1B1A),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.qr_code_2_rounded, size: 120, color: Colors.white),
-                SizedBox(height: 16),
-                Text(
-                  'Digital Receipt',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Scan to pay or split the bill with your party',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFFB5A59D)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2B2927),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'AI Concierge',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Need to add another drink? Allergies? Just ask me anything about your current order.',
-                  style: TextStyle(color: Color(0xFFD9C1B7), height: 1.5),
-                ),
-                const SizedBox(height: 18),
-                FilledButton(
-                  onPressed: () => flow.setCustomerScreen(CustomerScreen.aiConcierge),
-                  child: const Text('Talk to AI'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'Order Details',
+          SizedBox(height: 16),
+          Text(
+            'Sin historial',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
+              color: Color(0xFF636366),
+              fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 14),
-          ...order.orderedItems.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _OrderDetailRow(menu: item),
-            ),
+          SizedBox(height: 8),
+          Text(
+            'Tus pedidos anteriores\naparecerán aquí.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF3A3A3C)),
           ),
         ],
       ),
@@ -1067,330 +755,7 @@ class _CustomerProfileView extends StatelessWidget {
   const _CustomerProfileView();
 
   @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final settings = context.watch<AppSettingsProvider>();
-    final flow = context.read<AppDemoProvider>();
-    final order = context.watch<OrderProvider>();
-    final copy = AppCopy.of(context);
-    final user = auth.currentUser;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CustomerHeader(
-            title: 'OrdeNow',
-            leading: const CircleAvatar(
-              radius: 18,
-              child: Icon(Icons.person),
-            ),
-            trailing: IconButton(
-              onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
-              icon: const Icon(Icons.shopping_bag_outlined),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            height: 260,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              image: const DecorationImage(
-                image: AssetImage('lib/assets/images/background_bienvenida.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.82),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      width: 92,
-                      height: 92,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF181A23),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: const Color(0x334E6484)),
-                      ),
-                      child: const Icon(Icons.badge_rounded,
-                          size: 52, color: Colors.white70),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      user?.fullName ?? 'Julian Rossi',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      user?.email ?? 'julian.rossi@aesthetic.com',
-                      style: const TextStyle(
-                        color: Color(0xFFE6B6A1),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'My Allergy\nPreferences',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _PreferenceTile(
-                  title: 'Gluten-Free',
-                  value: true,
-                  onChanged: (_) {},
-                ),
-                const SizedBox(height: 12),
-                _PreferenceTile(
-                  title: 'Egg Allergy',
-                  value: false,
-                  onChanged: (_) {},
-                ),
-                const SizedBox(height: 12),
-                _PreferenceTile(
-                  title: 'Shellfish',
-                  value: true,
-                  onChanged: (_) {},
-                ),
-                const SizedBox(height: 12),
-                _PreferenceTile(
-                  title: 'Peanuts',
-                  value: false,
-                  onChanged: (_) {},
-                ),
-                const SizedBox(height: 18),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4C2D22),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0x66B56E4E)),
-                  ),
-                  child: const Text(
-                    'Our AI Concierge will automatically flag any dishes containing these ingredients across all menus.',
-                    style: TextStyle(
-                      color: Color(0xFFFFD0BB),
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Text(
-                      'Recent Orders',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Spacer(),
-                    Text(
-                      'View All',
-                      style: TextStyle(color: Color(0xFFE5B49D)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                ...order.orderedItems.take(2).map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: _RecentOrderTile(menu: item),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'App Settings',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'LANGUAGE',
-                  style: TextStyle(
-                    color: Color(0xFF8C7E76),
-                    fontSize: 12,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2D2B29),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _SegmentButton(
-                          label: 'English',
-                          selected: !copy.isSpanish,
-                          onTap: () => settings.updateLanguage('en'),
-                        ),
-                      ),
-                      Expanded(
-                        child: _SegmentButton(
-                          label: 'Spanish',
-                          selected: copy.isSpanish,
-                          onTap: () => settings.updateLanguage('es'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'DISPLAY THEME',
-                  style: TextStyle(
-                    color: Color(0xFF8C7E76),
-                    fontSize: 12,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ThemeOption(
-                        label: 'Dark',
-                        icon: Icons.dark_mode_outlined,
-                        selected: settings.themeMode == ThemeMode.dark,
-                        onTap: () => settings.updateThemeMode(ThemeMode.dark),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _ThemeOption(
-                        label: 'Light',
-                        icon: Icons.light_mode_outlined,
-                        selected: settings.themeMode == ThemeMode.light,
-                        onTap: () => settings.updateThemeMode(ThemeMode.light),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _ThemeOption(
-                        label: 'System',
-                        icon: Icons.settings_brightness_outlined,
-                        selected: settings.themeMode == ThemeMode.system,
-                        onTap: () => settings.updateThemeMode(ThemeMode.system),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF281E21),
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.logout_rounded, color: Color(0xFFE4B6A1)),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          "Sign Out\nWe'll save your palate settings for next time.",
-                          style: TextStyle(color: Colors.white70, height: 1.4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              SizedBox(
-                width: 126,
-                child: FilledButton(
-                  onPressed: () async {
-                    await auth.logout();
-                    flow.backToWelcome();
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFA10014),
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                  ),
-                  child: const Text('Log out'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const ClientProfileScreen();
 }
 
 class _CustomerHeader extends StatelessWidget {
@@ -1588,20 +953,20 @@ class _CustomerBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = _CustomerPalette.of(context);
     const icons = [
-      Icons.explore_outlined,
-      Icons.receipt_long_outlined,
       Icons.auto_awesome_outlined,
+      Icons.restaurant_menu_outlined,
+      Icons.receipt_long_outlined,
+      Icons.history_outlined,
       Icons.person_outline_rounded,
     ];
-    const labels = ['Discover', 'Orders', 'AI Concierge', 'Profile'];
+    const labels = ['IA', 'Menú', 'Pedidos', 'Historial', 'Perfil'];
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: palette.navBackground,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0x22FFFFFF)),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        border: Border(top: BorderSide(color: Color(0xFF1C1C1E), width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1646,279 +1011,6 @@ class _CustomerBottomBar extends StatelessWidget {
             ),
           );
         }),
-      ),
-    );
-  }
-}
-
-class _FeaturedDishCard extends StatelessWidget {
-  const _FeaturedDishCard({
-    required this.menu,
-  });
-
-  final Menu menu;
-
-  @override
-  Widget build(BuildContext context) {
-    final order = context.read<OrderProvider>();
-
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: Image.asset(
-            CustomerAppScreen.imageFor(menu.id),
-            height: 260,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
-        ),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.82),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 20,
-          right: 20,
-          bottom: 20,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'CHEF SIGNATURE',
-                style: TextStyle(
-                  color: Color(0xFF8FD37B),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.7,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                menu.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    _formatPrice(menu.price),
-                    style: const TextStyle(
-                      color: Color(0xFFFFC3A5),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: () => order.addItemToCart(menu.id),
-                    child: const Text('Add'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MenuListCard extends StatelessWidget {
-  const _MenuListCard({
-    required this.menu,
-    required this.onAdd,
-  });
-
-  final Menu menu;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF191716),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            child: Image.asset(
-              CustomerAppScreen.imageFor(menu.id),
-              height: 210,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        menu.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      _formatPrice(menu.price),
-                      style: const TextStyle(
-                        color: Color(0xFFEAB8A1),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  menu.description,
-                  style: const TextStyle(
-                    color: Color(0xFFB8ABA3),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    ...menu.tags.take(2).map(
-                      (tag) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _MiniIconTag(tag: tag),
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: onAdd,
-                      child: const Text('DETAILS'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniIconTag extends StatelessWidget {
-  const _MiniIconTag({
-    required this.tag,
-  });
-
-  final String tag;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xFF2C2B26),
-        border: Border.all(color: const Color(0x33FFFFFF)),
-      ),
-      child: Center(
-        child: Text(
-          tag.characters.first.toUpperCase(),
-          style: const TextStyle(
-            color: Color(0xFFE5B9A2),
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AllergyAwarenessCard extends StatelessWidget {
-  const _AllergyAwarenessCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2B2927),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'ALLERGY AWARENESS',
-            style: TextStyle(
-              color: Color(0xFF8BD270),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.8,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Informed Dining',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Each of our creations is meticulously documented. Select any dish to view its molecular ingredient breakdown.',
-            style: TextStyle(
-              color: Color(0xFFD7C5BC),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: const [
-              _Tag(text: 'Nut Free Options', color: Color(0xFF43341B)),
-              _Tag(text: 'Plant-Based Focus', color: Color(0xFF213722)),
-            ],
-          ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.asset(
-              'lib/assets/images/background_bienvenida.png',
-              height: 140,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -2113,320 +1205,7 @@ class _PairingCard extends StatelessWidget {
   }
 }
 
-class _PaymentMethodCard extends StatelessWidget {
-  const _PaymentMethodCard({
-    required this.selected,
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
 
-  final bool selected;
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 28),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF261A13) : const Color(0xFF2E2B29),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? const Color(0xFFFF6B00) : Colors.transparent,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: const Color(0xFFFFBFA3)),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CheckoutField extends StatelessWidget {
-  const _CheckoutField({
-    required this.label,
-    required this.hint,
-  });
-
-  final String label;
-  final String hint;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFFAF9E96),
-            fontSize: 12,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          height: 58,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF34312E),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          alignment: Alignment.centerLeft,
-          child: Text(
-            hint,
-            style: const TextStyle(color: Color(0xFF7D746F)),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OrderDetailRow extends StatelessWidget {
-  const _OrderDetailRow({
-    required this.menu,
-  });
-
-  final Menu menu;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Image.asset(
-            CustomerAppScreen.imageFor(menu.id),
-            width: 82,
-            height: 82,
-            fit: BoxFit.cover,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                menu.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                menu.description,
-                style: const TextStyle(color: Color(0xFFB7A39A), height: 1.4),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          _formatPrice(menu.price),
-          style: const TextStyle(
-            color: Color(0xFFEAB8A1),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PreferenceTile extends StatelessWidget {
-  const _PreferenceTile({
-    required this.title,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2F2C29),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.spa_outlined, color: Color(0xFFC9AEA0)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: const Color(0xFF72DB6E),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecentOrderTile extends StatelessWidget {
-  const _RecentOrderTile({
-    required this.menu,
-  });
-
-  final Menu menu;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Image.asset(
-            CustomerAppScreen.imageFor(menu.id),
-            width: 52,
-            height: 52,
-            fit: BoxFit.cover,
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                menu.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Delivered',
-                style: TextStyle(
-                  color: const Color(0xFF7EDB7A).withValues(alpha: 0.9),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          _formatPrice(menu.price),
-          style: const TextStyle(color: Color(0xFFCFAF9F)),
-        ),
-      ],
-    );
-  }
-}
-
-class _SegmentButton extends StatelessWidget {
-  const _SegmentButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF4B433E) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: selected ? const Color(0xFFFFC0A5) : const Color(0xFF9D8F87),
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ThemeOption extends StatelessWidget {
-  const _ThemeOption({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF2B2320) : const Color(0xFF2F2C29),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? const Color(0xFFE5B39C) : Colors.transparent,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon,
-                color: selected
-                    ? const Color(0xFFE5B39C)
-                    : const Color(0xFF90827A)),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected
-                    ? const Color(0xFFE5B39C)
-                    : const Color(0xFF90827A),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _EmptyStateCard extends StatelessWidget {
   const _EmptyStateCard({
@@ -2511,36 +1290,11 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-class _Tag extends StatelessWidget {
-  const _Tag({
-    required this.text,
-    required this.color,
-  });
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.7,
-        ),
-      ),
-    );
-  }
-}
-
 String _formatPrice(double value) {
-  return '\$${value.toStringAsFixed(2)}';
+  final intVal = value.toInt();
+  final formatted = intVal.toString().replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]}.',
+      );
+  return '\$$formatted';
 }

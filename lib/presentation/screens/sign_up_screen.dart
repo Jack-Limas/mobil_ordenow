@@ -21,7 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final TextEditingController _preferencesController = TextEditingController();
+  String _selectedRole = 'client';
 
   @override
   void dispose() {
@@ -29,15 +29,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _preferencesController.dispose();
     super.dispose();
   }
 
   Future<void> _handleRegister() async {
     final copy = AppCopy.of(context);
+    final email = _emailController.text.trim().toLowerCase();
+    final fullName = _fullNameController.text.trim();
+    final password = _passwordController.text.trim();
 
-    if (_passwordController.text.trim() !=
-        _confirmPasswordController.text.trim()) {
+    if (fullName.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(copy.requiredFields),
+        ),
+      );
+      return;
+    }
+
+    if (password != _confirmPasswordController.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(copy.passwordMismatch),
@@ -47,10 +57,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     final auth = context.read<AuthProvider>();
+    final demo = context.read<AppDemoProvider>();
     final success = await auth.register(
-      fullName: _fullNameController.text,
-      email: _emailController.text,
-      password: _passwordController.text,
+      fullName: fullName,
+      email: email,
+      password: password,
+      role: _selectedRole,
     );
 
     if (!mounted) {
@@ -58,7 +70,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     if (success) {
-      context.read<AppDemoProvider>().openCustomerArea();
+      if (auth.isAdmin) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(copy.accountCreatedAdminArea)),
+        );
+        demo.openAdminArea();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(copy.accountCreatedNextProfile)),
+        );
+        demo.openProfileSetup();
+      }
       return;
     }
 
@@ -117,11 +139,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             SafeArea(
               child: Stack(
                 children: [
-                  const Positioned(
-                    top: 16,
-                    right: 20,
-                    child: AppUtilityToggles(),
-                  ),
                   Align(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(24, 76, 24, 76),
@@ -159,7 +176,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       height: 1.45,
                                     ),
                                   ),
-                                  const SizedBox(height: 28),
+                                  const SizedBox(height: 24),
+                                  _RoleSelector(
+                                    copy: copy,
+                                    selectedRole: _selectedRole,
+                                    onChanged: (role) => setState(() => _selectedRole = role),
+                                    isDarkMode: isDarkMode,
+                                  ),
+                                  const SizedBox(height: 20),
                                   _RegisterField(
                                     label: copy.fullName,
                                     icon: Icons.person_outline_rounded,
@@ -191,15 +215,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     controller: _confirmPasswordController,
                                     hint: copy.passwordHint,
                                     obscureText: true,
-                                    isDarkMode: isDarkMode,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _RegisterField(
-                                    label: copy.allergiesPreferences,
-                                    icon: Icons.spa_outlined,
-                                    controller: _preferencesController,
-                                    hint: copy.allergiesHint,
-                                    maxLines: 3,
                                     isDarkMode: isDarkMode,
                                   ),
                                   const SizedBox(height: 22),
@@ -264,10 +279,120 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ),
+                  const Positioned(
+                    top: 16,
+                    right: 20,
+                    child: AppUtilityToggles(),
+                  ),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleSelector extends StatelessWidget {
+  const _RoleSelector({
+    required this.copy,
+    required this.selectedRole,
+    required this.onChanged,
+    required this.isDarkMode,
+  });
+
+  final AppCopy copy;
+  final String selectedRole;
+  final ValueChanged<String> onChanged;
+  final bool isDarkMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          copy.roleLabel,
+          style: const TextStyle(
+            color: Color(0xCCFFB599),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _RolePill(
+                label: copy.roleCustomer,
+                isSelected: selectedRole == 'client',
+                isDarkMode: isDarkMode,
+                onTap: () => onChanged('client'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _RolePill(
+                label: copy.roleAdministrator,
+                isSelected: selectedRole == 'admin',
+                isDarkMode: isDarkMode,
+                onTap: () => onChanged('admin'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RolePill extends StatelessWidget {
+  const _RolePill({
+    required this.label,
+    required this.isSelected,
+    required this.isDarkMode,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final bool isDarkMode;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFFF6F22)
+              : isDarkMode
+                  ? const Color(0xFF2A2A2A).withValues(alpha: 0.50)
+                  : const Color(0xFFF3E4D8),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFFFB48E)
+                : Colors.transparent,
+          ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : isDarkMode
+                    ? const Color(0xFFE5E2E1)
+                    : const Color(0xFF221813),
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );

@@ -5,51 +5,122 @@ class AiMessageBubble extends StatelessWidget {
     super.key,
     required this.text,
     required this.isUser,
+    this.userInitials = '',
   });
 
   final String text;
   final bool isUser;
+  final String userInitials;
 
   @override
   Widget build(BuildContext context) {
-    final background = isUser
-        ? const LinearGradient(
-            colors: [Color(0xFFFF6B00), Color(0xFF9A3500)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )
-        : const LinearGradient(
-            colors: [Color(0xFF2B2421), Color(0xFF1C1816)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          );
+    return isUser
+        ? _UserBubble(text: text, initials: userInitials)
+        : _AiBubble(text: text);
+  }
+}
 
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 320),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          gradient: background,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(18),
-            bottomLeft: Radius.circular(isUser ? 18 : 6),
-            bottomRight: Radius.circular(isUser ? 6 : 18),
+class _AiBubble extends StatelessWidget {
+  const _AiBubble({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: const BoxDecoration(
+            color: Color(0xFFFF6F22),
+            shape: BoxShape.circle,
           ),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: isUser ? 0.0 : 0.06),
+          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+        ),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 280),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1C1C1E),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+            ),
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
           ),
         ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            height: 1.5,
+      ],
+    );
+  }
+}
+
+class _UserBubble extends StatelessWidget {
+  const _UserBubble({required this.text, required this.initials});
+  final String text;
+  final String initials;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Flexible(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 280),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFF6F22),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(4),
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+            ),
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(width: 10),
+        Container(
+          width: 34,
+          height: 34,
+          decoration: const BoxDecoration(
+            color: Color(0xFF2C2C2E),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              initials.isEmpty ? '?' : initials,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

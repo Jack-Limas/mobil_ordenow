@@ -17,21 +17,21 @@ class AppCopy {
 
   String get appName => 'OrdeNow';
   String get sensorySommelier =>
-      isSpanish ? 'SOMMELIER SENSORIAL' : 'SENSORY SOMMELIER';
+      isSpanish ? 'RESTAURANTE INTELIGENTE' : 'SMART RESTAURANT';
 
   String get welcomeHeadline =>
-      isSpanish ? 'Eleva\nTu Paladar.' : 'Elevate\nYour Palate.';
+      isSpanish ? 'Pide con IA.\nDisfruta sin esperar.' : 'Order with AI.\nEnjoy without waiting.';
 
   String get welcomeDescription => isSpanish
-      ? 'Experiencias gastronomicas guiadas por IA segun tu perfil sensorial.\nBienvenido al futuro del apetito.'
-      : 'AI-curated dining experiences tailored to your unique sensory profile.\nWelcome to the future of appetite.';
+      ? 'OrdeNow conecta tu mesa, tus gustos y la cocina en tiempo real para que cada pedido sea claro, rapido y personalizado.'
+      : 'OrdeNow connects your table, tastes, and kitchen in real time so every order feels clear, fast, and personal.';
 
   String get welcomeBadge =>
-      isSpanish ? 'EXPERIENCIA GASTRONOMICA' : 'DINING EXPERIENCE';
+      isSpanish ? 'BIENVENIDA EXOTICA' : 'EXOTIC WELCOME';
   String get welcomePill => isSpanish
-      ? 'Personalizacion, voz y IA en un solo flujo.'
-      : 'Voice, personalization, and AI in one flow.';
-  String get getStarted => isSpanish ? 'Comenzar' : 'Get Started';
+      ? 'Tema, idioma y sesion local listos con Provider + Hive.'
+      : 'Theme, language, and local session ready with Provider + Hive.';
+  String get getStarted => isSpanish ? 'Iniciar' : 'Start';
   String get openAdminDemo =>
       isSpanish ? 'Abrir demo admin' : 'Open Admin Demo';
   String get aiConciergeOnline =>
@@ -39,13 +39,16 @@ class AppCopy {
   String get switchLanguage =>
       isSpanish ? 'Cambiar a ingles' : 'Switch to Spanish';
   String get switchTheme =>
-      isSpanish ? 'Cambiar tema' : 'Toggle theme';
-  String get aiReady => isSpanish ? 'IA lista para asistir' : 'AI ready to assist';
+      isSpanish ? 'Cambiar tema' : 'Change theme';
+  String get themeDark => isSpanish ? 'Oscuro' : 'Dark';
+  String get themeLight => isSpanish ? 'Claro' : 'Light';
+  String get themeSystem => isSpanish ? 'Sistema' : 'System';
+  String get aiReady => isSpanish ? 'IA lista para tomar tu orden' : 'AI ready to take your order';
 
   String get curatedDishes =>
-      isSpanish ? 'PLATOS CURADOS' : 'CURATED DISHES';
+      isSpanish ? 'PEDIDOS GUIADOS' : 'GUIDED ORDERS';
   String get michelinChefs =>
-      isSpanish ? 'CHEFS MICHELIN' : 'MICHELIN CHEFS';
+      isSpanish ? 'MESAS EN TIEMPO REAL' : 'REAL-TIME TABLES';
 
   String get welcomeBack =>
       isSpanish ? 'Bienvenido de Nuevo' : 'Welcome Back';
@@ -92,6 +95,12 @@ class AppCopy {
       : 'Create your profile to start ordering with AI, recommendations, and live tracking.';
   String get passwordMismatch =>
       isSpanish ? 'Las contrasenas no coinciden.' : 'Passwords do not match.';
+  String get requiredFields => isSpanish
+      ? 'Completa los campos requeridos.'
+      : 'Please complete the required fields.';
+  String get accountCreatedNextProfile => isSpanish
+      ? 'Cuenta creada. En la siguiente pantalla configuraremos tu perfil.'
+      : 'Account created. Your profile setup comes next.';
   String get unableToCreateAccount => isSpanish
       ? 'No se pudo crear la cuenta.'
       : 'Unable to create account.';
@@ -113,4 +122,60 @@ class AppCopy {
   String get allergiesHint => isSpanish
       ? 'Ej. peanuts, gluten free, low spice'
       : 'E.g. peanuts, gluten free, low spice';
+  String get profileSetupTitle => isSpanish
+      ? 'Tu perfil inicial'
+      : 'Your initial profile';
+  String get profileSetupDescription => isSpanish
+      ? 'Dile a OrdeNow que ingredientes debe evitar para que la IA cuide tus recomendaciones.'
+      : 'Tell OrdeNow which ingredients to avoid so the AI can protect your recommendations.';
+  String get hasAllergiesQuestion => isSpanish
+      ? 'Tienes alergias alimentarias?'
+      : 'Do you have food allergies?';
+  String get yesHasAllergies => isSpanish ? 'Si, tengo' : 'Yes, I do';
+  String get noAllergies => isSpanish ? 'No tengo' : 'No allergies';
+  String get commonAllergies => isSpanish ? 'ALERGIAS COMUNES' : 'COMMON ALLERGIES';
+  String get otherAllergies => isSpanish ? 'OTRAS ALERGIAS' : 'OTHER ALLERGIES';
+  String get preferencesLabel => isSpanish ? 'PREFERENCIAS' : 'PREFERENCES';
+  String get preferencesHint => isSpanish
+      ? 'Ej. poco picante, vegetariano, sin cebolla'
+      : 'E.g. mild spice, vegetarian, no onions';
+  String get saveProfile => isSpanish ? 'Guardar perfil' : 'Save profile';
+  String get skipForNow => isSpanish ? 'Omitir por ahora' : 'Skip for now';
+  String get profileSaved => isSpanish
+      ? 'Perfil guardado. La IA ya podra usar esta informacion.'
+      : 'Profile saved. The AI can now use this information.';
+  String get unableToSaveProfile => isSpanish
+      ? 'No se pudo guardar el perfil inicial.'
+      : 'Unable to save the initial profile.';
+  String get tableSelectionTitle => isSpanish
+      ? 'Elige tu mesa'
+      : 'Choose your table';
+  String get tableSelectionDescription => isSpanish
+      ? 'Las mesas ocupadas se bloquean en tiempo real. Selecciona una disponible para iniciar tu experiencia.'
+      : 'Occupied tables are locked in real time. Select an available table to start your experience.';
+  String get tableSelectionBadge => isSpanish
+      ? 'MESAS EN VIVO'
+      : 'LIVE TABLES';
+  String get availableTable => isSpanish ? 'Disponible' : 'Available';
+  String get occupiedTable => isSpanish ? 'Ocupada' : 'Occupied';
+  String get paymentPendingTable => isSpanish ? 'Pago pendiente' : 'Payment pending';
+  String get selectedTable => isSpanish ? 'Mesa seleccionada' : 'Selected table';
+  String get continueToAi => isSpanish ? 'Continuar a la IA' : 'Continue to AI';
+  String get tableReserved => isSpanish
+      ? 'Mesa reservada. Bienvenido a OrdeNow.'
+      : 'Table reserved. Welcome to OrdeNow.';
+  String get unableToReserveTable => isSpanish
+      ? 'No se pudo reservar esta mesa.'
+      : 'Unable to reserve this table.';
+  String get noTablesAvailable => isSpanish
+      ? 'Aun no hay mesas cargadas.'
+      : 'No tables loaded yet.';
+  String get retry => isSpanish ? 'Reintentar' : 'Retry';
+
+  String get roleLabel => isSpanish ? 'ROL DE CUENTA' : 'ACCOUNT ROLE';
+  String get roleCustomer => isSpanish ? '🍽 Cliente' : '🍽 Customer';
+  String get roleAdministrator => isSpanish ? '⚙ Administrador' : '⚙ Administrator';
+  String get accountCreatedAdminArea => isSpanish
+      ? 'Cuenta admin creada. Bienvenido al panel.'
+      : 'Admin account created. Welcome to the panel.';
 }

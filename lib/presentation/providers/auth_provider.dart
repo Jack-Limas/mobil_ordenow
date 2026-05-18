@@ -6,6 +6,9 @@ import '../../domain/usecases/get_current_user.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/logout_user.dart';
 import '../../domain/usecases/register_user.dart';
+import '../../domain/usecases/update_user_profile.dart';
+
+enum AuthState { idle, loading, authenticated, unauthenticated, error }
 
 class AuthProvider extends ChangeNotifier {
   AuthProvider({
@@ -13,36 +16,47 @@ class AuthProvider extends ChangeNotifier {
     required RegisterUser registerUser,
     required GetCurrentUser getCurrentUser,
     required LogoutUser logoutUser,
+    required UpdateUserProfile updateUserProfile,
   })  : _loginUser = loginUser,
         _registerUser = registerUser,
         _getCurrentUser = getCurrentUser,
-        _logoutUser = logoutUser;
+        _logoutUser = logoutUser,
+        _updateUserProfile = updateUserProfile;
 
   final LoginUser _loginUser;
   final RegisterUser _registerUser;
   final GetCurrentUser _getCurrentUser;
   final LogoutUser _logoutUser;
+  final UpdateUserProfile _updateUserProfile;
   final Uuid _uuid = const Uuid();
 
   User? _currentUser;
-  bool _isLoading = false;
+  AuthState _state = AuthState.idle;
   String? _errorMessage;
 
   User? get currentUser => _currentUser;
-  bool get isLoading => _isLoading;
+  AuthState get state => _state;
   String? get errorMessage => _errorMessage;
-  bool get isAuthenticated => _currentUser != null;
+  bool get isLoading => _state == AuthState.loading;
+  bool get isAuthenticated => _state == AuthState.authenticated;
+  bool get hasCompletedProfile =>
+      _currentUser != null && _currentUser!.fullName.isNotEmpty;
+  String get userRole => _currentUser?.role ?? 'client';
+  bool get isAdmin => userRole == 'admin';
+  bool get isClient => userRole == 'client';
 
   Future<void> loadCurrentUser() async {
-    _setLoading(true);
+    _setState(AuthState.loading);
 
     try {
       _currentUser = await _getCurrentUser();
       _errorMessage = null;
+      _setState(
+        _currentUser != null ? AuthState.authenticated : AuthState.unauthenticated,
+      );
     } catch (_) {
       _errorMessage = 'Unable to restore the current session.';
-    } finally {
-      _setLoading(false);
+      _setState(AuthState.error);
     }
   }
 
@@ -50,7 +64,7 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
-    _setLoading(true);
+    _setState(AuthState.loading);
 
     try {
       final user = await _loginUser(
@@ -60,19 +74,18 @@ class AuthProvider extends ChangeNotifier {
 
       if (user == null) {
         _errorMessage = 'Invalid email or password.';
+        _setState(AuthState.error);
         return false;
       }
 
       _currentUser = user;
       _errorMessage = null;
-      notifyListeners();
+      _setState(AuthState.authenticated);
       return true;
     } catch (_) {
       _errorMessage = 'The login process failed.';
-      notifyListeners();
+      _setState(AuthState.error);
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 
@@ -80,62 +93,90 @@ class AuthProvider extends ChangeNotifier {
     required String fullName,
     required String email,
     required String password,
+    String role = 'client',
   }) async {
-    _setLoading(true);
+    _setState(AuthState.loading);
 
     try {
-      final normalizedEmail = email.trim().toLowerCase();
-      final normalizedName = fullName.trim();
-      final normalizedPassword = password.trim();
-
       final user = User(
         id: _uuid.v4(),
-        email: normalizedEmail,
-        fullName: normalizedName,
-        password: normalizedPassword,
+        email: email.trim().toLowerCase(),
+        fullName: fullName.trim(),
+        password: password.trim(),
+        role: role,
         allergies: const [],
         preferences: const [],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
-      await _registerUser(user);
-      _currentUser = user;
+      _currentUser = await _registerUser(user);
       _errorMessage = null;
-      notifyListeners();
+      _setState(AuthState.authenticated);
       return true;
     } catch (_) {
       _errorMessage = 'The register process failed.';
-      notifyListeners();
+      _setState(AuthState.error);
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 
   Future<void> logout() async {
-    _setLoading(true);
+    _setState(AuthState.loading);
 
     try {
       await _logoutUser();
       _currentUser = null;
       _errorMessage = null;
-      notifyListeners();
+      _setState(AuthState.unauthenticated);
     } catch (_) {
       _errorMessage = 'Unable to close the session.';
+      _setState(AuthState.error);
+    }
+  }
+
+  Future<bool> updateInitialProfile({
+    required List<String> allergies,
+    required List<String> preferences,
+  }) async {
+    final user = _currentUser;
+    if (user == null) {
+      _errorMessage = 'No active user session.';
       notifyListeners();
-    } finally {
-      _setLoading(false);
+      return false;
+    }
+
+    _setState(AuthState.loading);
+
+    try {
+      _currentUser = await _updateUserProfile(
+        user.copyWith(
+          allergies: allergies,
+          preferences: preferences,
+          updatedAt: DateTime.now(),
+        ),
+      );
+      _errorMessage = null;
+      _setState(AuthState.authenticated);
+      return true;
+    } catch (_) {
+      _errorMessage = 'Unable to update the initial profile.';
+      _setState(AuthState.error);
+      return false;
     }
   }
 
   void clearError() {
     _errorMessage = null;
-    notifyListeners();
+    if (_state == AuthState.error) {
+      _setState(
+        _currentUser != null ? AuthState.authenticated : AuthState.unauthenticated,
+      );
+    }
   }
 
-  void _setLoading(bool value) {
-    _isLoading = value;
+  void _setState(AuthState newState) {
+    _state = newState;
     notifyListeners();
   }
 }

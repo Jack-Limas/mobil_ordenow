@@ -1,12 +1,12 @@
 import '../entities/user.dart';
 import '../repositories/user_repository.dart';
 
-class RegisterUser {
-  RegisterUser(this._repository);
+class UpdateUserProfile {
+  UpdateUserProfile(this._repository);
 
   final UserRepository _repository;
 
   Future<User> call(User user) {
-    return _repository.register(user);
+    return _repository.updateProfile(user);
   }
 }

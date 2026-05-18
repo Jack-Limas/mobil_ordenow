@@ -1,21 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../domain/entities/menu.dart';
+import '../providers/admin_dashboard_provider.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
-import 'customer_app_screen.dart';
+import 'admin_profile_screen.dart';
+import 'menu_management_screen.dart';
+import 'orders_kds_screen.dart';
 
-class AdminAppScreen extends StatelessWidget {
+String _formatCop(double value) {
+  final intVal = value.toInt();
+  return '\$${intVal.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+}
+
+class AdminAppScreen extends StatefulWidget {
   const AdminAppScreen({super.key});
+
+  @override
+  State<AdminAppScreen> createState() => _AdminAppScreenState();
+}
+
+class _AdminAppScreenState extends State<AdminAppScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (context.read<AuthProvider>().isClient) {
+        context.read<AppDemoProvider>().openTableSelection();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final flow = context.watch<AppDemoProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120F0D),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: IndexedStack(
           index: flow.adminScreen.index,
@@ -31,6 +55,17 @@ class AdminAppScreen extends StatelessWidget {
         selectedIndex: flow.adminScreen.index,
         onTap: (index) => flow.setAdminScreen(AdminScreen.values[index]),
       ),
+      floatingActionButton: flow.adminScreen == AdminScreen.dashboard
+          ? FloatingActionButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const OrdersKdsScreen()),
+              ),
+              backgroundColor: const Color(0xFFFF6F22),
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
     );
   }
 }
@@ -40,194 +75,937 @@ class _AdminDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final order = context.watch<OrderProvider>();
-    final recentTotal = order.activeOrder?.totalAmount ?? 142.0;
+    final dash = context.watch<AdminDashboardProvider>();
+    final settings = context.watch<AppSettingsProvider>();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+    return Column(
+      children: [
+        _DashboardAppBar(settings: settings),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Resumen del Día',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _todaySubtitle(),
+                  style: const TextStyle(
+                    color: Color(0xFF8E8E93),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _SalesCard(dash: dash),
+                const SizedBox(height: 12),
+                _ActiveOrdersCard(dash: dash),
+                const SizedBox(height: 12),
+                _AvgTicketCard(dash: dash),
+                const SizedBox(height: 24),
+                _PopularDishesSection(dash: dash),
+                const SizedBox(height: 24),
+                _OrderFlowSection(dash: dash),
+                const SizedBox(height: 24),
+                _RecentOrdersSection(dash: dash),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _todaySubtitle() {
+    final now = DateTime.now();
+    const weekdays = [
+      'Lunes', 'Martes', 'Miércoles', 'Jueves',
+      'Viernes', 'Sábado', 'Domingo'
+    ];
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return '${weekdays[now.weekday - 1]}, ${now.day} de ${months[now.month - 1]} • Tiempo Real';
+  }
+}
+
+class _DashboardAppBar extends StatelessWidget {
+  const _DashboardAppBar({required this.settings});
+
+  final AppSettingsProvider settings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6F22),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.restaurant_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'OrdeNow',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: settings.toggleLanguage,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                settings.isSpanish ? 'ES' : 'EN',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SalesCard extends StatelessWidget {
+  const _SalesCard({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _AdminTopBar(
-            title: 'Dashboard Summary',
-            showAvatar: true,
-          ),
-          const SizedBox(height: 22),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF252421),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 4,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0B63E),
-                    borderRadius: BorderRadius.circular(999),
+                Row(
+                  children: const [
+                    Text(
+                      'VENTAS DEL DÍA',
+                      style: TextStyle(
+                        color: Color(0xFF8E8E93),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    Spacer(),
+                    Icon(Icons.show_chart_rounded,
+                        color: Color(0xFF8E8E93), size: 18),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _formatCop(dash.salesToday),
+                  style: const TextStyle(
+                    color: Color(0xFF4CAF50),
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.payments_outlined, color: Color(0xFFF0B63E)),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Pending Cash\nVerifications',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
+                const SizedBox(height: 4),
+                const Row(
+                  children: [
+                    Icon(Icons.arrow_upward_rounded,
+                        color: Color(0xFF4CAF50), size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      '+11.5% vs ayer',
+                      style: TextStyle(
+                        color: Color(0xFF4CAF50),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
-                      SizedBox(height: 10),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 48,
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(16)),
+              child: CustomPaint(
+                painter: _SparklinePainter(
+                  data: dash.salesSparkline,
+                  color: const Color(0xFF4CAF50),
+                ),
+                size: const Size(double.infinity, 48),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveOrdersCard extends StatelessWidget {
+  const _ActiveOrdersCard({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Text(
+                'PEDIDOS ACTIVOS',
+                style: TextStyle(
+                  color: Color(0xFF8E8E93),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Spacer(),
+              Icon(Icons.list_alt_rounded, color: Color(0xFF8E8E93), size: 18),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${dash.activeOrders}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Row(
+            children: [
+              Icon(Icons.timer_outlined, color: Color(0xFF8E8E93), size: 14),
+              SizedBox(width: 4),
+              Text(
+                'Promedio 26 min',
+                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AvgTicketCard extends StatelessWidget {
+  const _AvgTicketCard({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Text(
+                'TICKET PROMEDIO',
+                style: TextStyle(
+                  color: Color(0xFF8E8E93),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Spacer(),
+              Icon(Icons.receipt_long_rounded,
+                  color: Color(0xFF8E8E93), size: 18),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _formatCop(dash.avgTicket),
+            style: const TextStyle(
+              color: Color(0xFFFF6F22),
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '12 Comandas/hora',
+            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SparklinePainter extends CustomPainter {
+  final List<double> data;
+  final Color color;
+
+  const _SparklinePainter({required this.data, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.length < 2) return;
+    final max = data.reduce((a, b) => a > b ? a : b);
+    final min = data.reduce((a, b) => a < b ? a : b);
+    final range = (max - min) == 0 ? 1.0 : max - min;
+
+    final linePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          color.withValues(alpha: 0.3),
+          color.withValues(alpha: 0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+
+    final linePath = Path();
+    final fillPath = Path();
+
+    for (var i = 0; i < data.length; i++) {
+      final x = i / (data.length - 1) * size.width;
+      final y =
+          (1 - (data[i] - min) / range) * (size.height * 0.8) +
+          size.height * 0.1;
+      if (i == 0) {
+        linePath.moveTo(x, y);
+        fillPath.moveTo(x, size.height);
+        fillPath.lineTo(x, y);
+      } else {
+        linePath.lineTo(x, y);
+        fillPath.lineTo(x, y);
+      }
+    }
+
+    fillPath.lineTo(size.width, size.height);
+    fillPath.close();
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(linePath, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(_SparklinePainter old) =>
+      old.data != data || old.color != color;
+}
+
+class _PopularDishesSection extends StatelessWidget {
+  const _PopularDishesSection({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  static const _menuImages = <String, String>{
+    'menu-1': 'lib/assets/images/saffron_infused_sea_scallops.png',
+    'menu-2': 'lib/assets/images/midnight_pasta.png',
+    'menu-3': 'lib/assets/images/smoked_ribeye.png',
+    'menu-4': 'lib/assets/images/artisan_harvest_bowl.png',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final dishes = dash.popularDishes;
+    final maxSales = dishes.isEmpty
+        ? 1
+        : dishes.map((d) => d.sales).reduce((a, b) => a > b ? a : b);
+
+    return Column(
+      children: [
+        Row(
+          children: const [
+            Text(
+              'Platos Populares',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Spacer(),
+            Text(
+              'Ver todo',
+              style: TextStyle(
+                color: Color(0xFFFF6F22),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              for (var i = 0; i < dishes.length; i++) ...[
+                _DishRow(
+                  dish: dishes[i],
+                  imagePath: _menuImages[dishes[i].menuId] ??
+                      'lib/assets/images/background_bienvenida.png',
+                  fraction: maxSales == 0 ? 0 : dishes[i].sales / maxSales,
+                ),
+                if (i < dishes.length - 1)
+                  const Divider(
+                      height: 1,
+                      color: Color(0xFF2C2C2E),
+                      indent: 16,
+                      endIndent: 16),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DishRow extends StatelessWidget {
+  const _DishRow({
+    required this.dish,
+    required this.imagePath,
+    required this.fraction,
+  });
+
+  final DashPopularDish dish;
+  final String imagePath;
+  final double fraction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              imagePath,
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2E),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.restaurant_rounded,
+                    color: Color(0xFF3A3A3C), size: 20),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dish.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Stack(
+                      children: [
+                        Container(
+                          height: 4,
+                          width: constraints.maxWidth,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2C2C2E),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        Container(
+                          height: 4,
+                          width: constraints.maxWidth * fraction,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF6F22),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${dish.sales}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Text(
+                'Ventas',
+                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 10),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderFlowSection extends StatelessWidget {
+  const _OrderFlowSection({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Flujo de Pedidos',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'Últimas 6 horas',
+          style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 80,
+                child: CustomPaint(
+                  painter: _BarChartPainter(
+                    values: dash.flowBars,
+                    color: const Color(0xFFFF6F22),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: ['7h', '8h', '9h', '10h', '11h', '12h']
+                    .map((l) => Text(l,
+                        style: const TextStyle(
+                            color: Color(0xFF8E8E93), fontSize: 10)))
+                    .toList(),
+              ),
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D2E0D),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.bolt_rounded,
+                          color: Color(0xFF4CAF50), size: 15),
+                      SizedBox(width: 6),
                       Text(
-                        'There are 4 orders awaiting manual payment confirmation from the courier.',
-                        style: TextStyle(color: Color(0xFFD5C1B8), height: 1.4),
+                        'Eficiencia de Cocina  94%',
+                        style: TextStyle(
+                          color: Color(0xFF4CAF50),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          const _AdminMetricCard(
-            label: 'REVENUE TODAY',
-            value: '\$12,482.50',
-            footer: '+14.2% from yesterday',
-            accent: Color(0xFF7DDB7A),
-          ),
-          const SizedBox(height: 18),
-          _AdminMetricCard(
-            label: 'ACTIVE ORDERS',
-            value: '${order.hasActiveOrder ? 42 : 18}',
-            footer: 'Avg. Prep: 18 mins',
-            accent: const Color(0xFFD7C1B7),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF6B00),
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'AI CONCIERGE ALERT',
-                  style: TextStyle(
-                    color: Color(0x8C2B1600),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Stock Warning: Wagyu\nRibeye',
-                  style: TextStyle(
-                    color: Color(0xFF281508),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Projected to sell out in 45 mins based on current ordering velocity. Suggest adjusting featured listings.',
-                  style: TextStyle(
-                    color: Color(0xCC2B1600),
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Row(
-            children: [
-              Text(
-                'Recent Activity',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Spacer(),
-              Text(
-                'VIEW LOG',
-                style: TextStyle(
-                  color: Color(0xFFE6B49D),
-                  fontWeight: FontWeight.w700,
-                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _ActivityCard(
-            icon: Icons.check_circle_outline_rounded,
-            title: 'Order #8492\nCompleted',
-            subtitle: 'Delivery to Upper East Side • 4 mins ago',
-            amount: '\$${recentTotal.toStringAsFixed(2)}',
-            status: 'CREDIT CARD',
-            accent: const Color(0xFF7DDB7A),
-          ),
-          const SizedBox(height: 14),
-          const _ActivityCard(
-            icon: Icons.warning_amber_rounded,
-            title: 'New Cash Order\n#8495',
-            subtitle: 'Awaiting courier arrival • 12 mins ago',
-            amount: '\$54.20',
-            status: 'PENDING',
-            accent: Color(0xFFF0B63E),
-          ),
-          const SizedBox(height: 14),
-          const _ActivityCard(
-            icon: Icons.schedule_rounded,
-            title: 'Pre-order Logged',
-            subtitle: 'Scheduled for 8:00 PM tonight • 22 mins ago',
-            amount: '\$210.00',
-            status: 'CORPORATE',
-            accent: Color(0xFFE5B49D),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Top Dishes',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+        ),
+      ],
+    );
+  }
+}
+
+class _BarChartPainter extends CustomPainter {
+  final List<double> values;
+  final Color color;
+
+  const _BarChartPainter({required this.values, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final max = values.reduce((a, b) => a > b ? a : b);
+    if (max == 0) return;
+    final barW = size.width / values.length;
+    final gap = barW * 0.35;
+    final paint = Paint()..color = color;
+
+    for (var i = 0; i < values.length; i++) {
+      final x = i * barW + gap / 2;
+      final barH = values[i] / max * size.height * 0.9;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x, size.height - barH, barW - gap, barH),
+          const Radius.circular(4),
+        ),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BarChartPainter old) =>
+      old.values != values || old.color != color;
+}
+
+class _RecentOrdersSection extends StatelessWidget {
+  const _RecentOrdersSection({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    const activeStatuses = {'accepted', 'preparing', 'ready'};
+    final orders = dash.showActive
+        ? dash.recentOrders
+            .where((o) => activeStatuses.contains(o.status))
+            .toList()
+        : dash.recentOrders
+            .where((o) =>
+                o.status == 'delivered' || o.status == 'completed')
+            .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Pedidos Recientes',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
             ),
+            const Spacer(),
+            _TabPill(
+              label: 'Activos',
+              isSelected: dash.showActive,
+              onTap: () => context
+                  .read<AdminDashboardProvider>()
+                  .setTab(showActive: true),
+            ),
+            const SizedBox(width: 8),
+            _TabPill(
+              label: 'Historial',
+              isSelected: !dash.showActive,
+              onTap: () => context
+                  .read<AdminDashboardProvider>()
+                  .setTab(showActive: false),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.circular(16),
           ),
-          const SizedBox(height: 16),
-          const _TopDishCard(
-            title: 'Smoked Brisket',
-            subtitle: '84 ORDERS TODAY',
-            imagePath: 'lib/assets/images/smoked_ribeye.png',
-            rank: '#1',
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                child: Row(
+                  children: const [
+                    SizedBox(
+                      width: 44,
+                      child: Text('ID',
+                          style: TextStyle(
+                              color: Color(0xFF8E8E93),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700)),
+                    ),
+                    Expanded(
+                        child: Text('Mesa/Cliente',
+                            style: TextStyle(
+                                color: Color(0xFF8E8E93),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700))),
+                    Text('Estado',
+                        style: TextStyle(
+                            color: Color(0xFF8E8E93),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700)),
+                    SizedBox(width: 8),
+                    Text('Total',
+                        style: TextStyle(
+                            color: Color(0xFF8E8E93),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700)),
+                    SizedBox(width: 32),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFF2C2C2E)),
+              if (orders.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: Text('Sin pedidos',
+                        style: TextStyle(color: Color(0xFF8E8E93))),
+                  ),
+                )
+              else
+                ...orders.map((o) => _OrderTableRow(order: o)),
+            ],
           ),
-          const SizedBox(height: 16),
-          const _TopDishCard(
-            title: 'Truffle Gnocchi',
-            subtitle: '62 ORDERS TODAY',
-            imagePath: 'lib/assets/images/midnight_pasta.png',
-            rank: '#2',
+        ),
+      ],
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  const _TabPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFFF6F22)
+              : const Color(0xFF2C2C2E),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF8E8E93),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OrderTableRow extends StatelessWidget {
+  const _OrderTableRow({required this.order});
+
+  final DashRecentOrder order;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 44,
+                child: Text(
+                  order.shortId,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  order.label,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _StatusBadge(status: order.status),
+              const SizedBox(width: 8),
+              Text(
+                _formatCop(order.total),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert_rounded,
+                    color: Color(0xFF8E8E93), size: 18),
+                color: const Color(0xFF2C2C2E),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: 'detail',
+                    child: Text('Ver detalle',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  PopupMenuItem(
+                    value: 'status',
+                    child: Text('Cambiar estado',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+                onSelected: (_) {},
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: Color(0xFF2C2C2E)),
+      ],
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, bg, fg) = switch (status) {
+      'preparing' => (
+          'Preparación',
+          const Color(0xFF2D2000),
+          const Color(0xFFFFB800)
+        ),
+      'ready' => (
+          'Listo',
+          const Color(0xFF00213D),
+          const Color(0xFF5AC8FA)
+        ),
+      'accepted' => (
+          'Aceptado',
+          const Color(0xFF1A1A00),
+          const Color(0xFFFFD700)
+        ),
+      'delivered' || 'completed' => (
+          'Servido',
+          const Color(0xFF0D2E0D),
+          const Color(0xFF4CAF50)
+        ),
+      _ => (
+          'Pendiente',
+          const Color(0xFF1C1C1E),
+          const Color(0xFF8E8E93)
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -237,305 +1015,7 @@ class _AdminMenuManagementView extends StatelessWidget {
   const _AdminMenuManagementView();
 
   @override
-  Widget build(BuildContext context) {
-    final order = context.watch<OrderProvider>();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _AdminTopBar(
-            title: 'OrdeNow',
-            showAvatar: true,
-            showMenuIcon: true,
-          ),
-          const SizedBox(height: 22),
-          const Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Curate the ',
-                  style: TextStyle(color: Colors.white),
-                ),
-                TextSpan(
-                  text: 'Palate',
-                  style: TextStyle(color: Color(0xFFFFB9A0)),
-                ),
-              ],
-            ),
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Refine your culinary offerings and manage real-time availability for your diners.',
-            style: TextStyle(
-              color: Color(0xFFD8C2B8),
-              fontSize: 16,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.add_circle_outline_rounded),
-              label: const Text('Add New Dish'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 18),
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Dish Essence',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3A2D29),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'EDITING MODE',
-                        style: TextStyle(
-                          color: Color(0xFFE7B49F),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                const _AdminField(
-                  label: 'DISH NAME',
-                  hint: 'e.g. Saffron Risotto',
-                ),
-                const SizedBox(height: 16),
-                const _AdminField(
-                  label: 'BASE PRICE (\$)',
-                  hint: '24.00',
-                ),
-                const SizedBox(height: 16),
-                const _AdminField(
-                  label: 'DESCRIPTION (THE NARRATIVE)',
-                  hint: 'Describe the sensory experience, textures, and origins...',
-                  minHeight: 110,
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'INGREDIENTS & ALLERGENS',
-                  style: TextStyle(
-                    color: Color(0xFF8C7E76),
-                    fontSize: 12,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: const [
-                    _AdminTag(text: 'Vegan', accent: true),
-                    _AdminTag(text: 'Gluten-Free'),
-                    _AdminTag(text: 'Dairy'),
-                    _AdminTag(text: 'Nuts'),
-                    _AdminTag(text: 'Manage All', accent: true),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2E2C29),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Live Availability',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Toggle visibility on the customer app.',
-                              style: TextStyle(color: Color(0xFFB5A49C)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: true,
-                        onChanged: (_) {},
-                        activeThumbColor: const Color(0xFF72DB6E),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        child: const Text('Discard Draft'),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () {},
-                        child: const Text('SAVE DISH CHANGES'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'DISH PORTRAIT',
-                  style: TextStyle(
-                    color: Color(0xFF8C7E76),
-                    fontSize: 12,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        'lib/assets/images/midnight_pasta.png',
-                        height: 220,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Container(
-                      width: 130,
-                      height: 130,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.camera_alt_outlined, color: Colors.white),
-                          SizedBox(height: 8),
-                          Text(
-                            'Change Image',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF473515),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.auto_awesome_rounded,
-                          color: Color(0xFFF0B63E)),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'AI Pricing Insight\nDishes with this description perform 22% better at \$23.00.',
-                          style: TextStyle(
-                            color: Color(0xFFF4D7A8),
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Row(
-            children: [
-              Text(
-                'Current Selection',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Spacer(),
-              Icon(Icons.tune_rounded, color: Color(0xFF8C7E76)),
-              SizedBox(width: 14),
-              Icon(Icons.search_rounded, color: Color(0xFF8C7E76)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...order.menu.take(4).map(
-            (menu) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: _AdminDishCard(menu: menu),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const MenuManagementScreen();
 }
 
 class _AdminOrderManagementView extends StatelessWidget {
@@ -683,251 +1163,7 @@ class _AdminProfileView extends StatelessWidget {
   const _AdminProfileView();
 
   @override
-  Widget build(BuildContext context) {
-    final settings = context.watch<AppSettingsProvider>();
-    final flow = context.read<AppDemoProvider>();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _AdminTopBar(
-            title: 'OrdeNow',
-            showAvatar: false,
-            leadingImage: 'lib/assets/images/artisan_harvest_bowl.png',
-          ),
-          const SizedBox(height: 22),
-          const Text(
-            'Admin Profile',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Configure your culinary ecosystem, manage staff access, and fine-tune your digital storefront.',
-            style: TextStyle(
-              color: Color(0xFFD7C2B8),
-              fontSize: 16,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Business Settings',
-                      style: TextStyle(
-                        color: Color(0xFFFFC0A5),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(Icons.edit_outlined, color: Color(0xFF9F9088)),
-                  ],
-                ),
-                SizedBox(height: 20),
-                _InfoBlock(
-                  label: 'RESTAURANT NAME',
-                  value: "L'Essence de Paris",
-                ),
-                SizedBox(height: 16),
-                _InfoBlock(
-                  label: 'TAX ID',
-                  value: 'FR-8820491823',
-                ),
-                SizedBox(height: 16),
-                _InfoBlock(
-                  label: 'BUSINESS ADDRESS',
-                  value: '14 Avenue des Champs-\nÉlysées, 75008 Paris, France',
-                  icon: Icons.place_outlined,
-                ),
-                SizedBox(height: 16),
-                _MapPlaceholder(),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2E2C29),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'System Preferences',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _SettingTile(
-                  icon: Icons.language_rounded,
-                  label: 'Language',
-                  value: settings.isSpanish ? 'Spanish (CO)' : 'English (US)',
-                  accent: const Color(0xFFF0B63E),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                ),
-                const SizedBox(height: 14),
-                _SettingTile(
-                  icon: Icons.dark_mode_outlined,
-                  label: 'Dark Theme',
-                  value: '',
-                  accent: const Color(0xFFE5B49D),
-                  trailing: Switch(
-                    value: settings.themeMode == ThemeMode.dark,
-                    onChanged: (value) => settings.updateThemeMode(
-                      value ? ThemeMode.dark : ThemeMode.light,
-                    ),
-                    activeThumbColor: const Color(0xFFFF6B00),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _SettingTile(
-                  icon: Icons.insights_outlined,
-                  label: 'AI Insights',
-                  value: '',
-                  accent: const Color(0xFF7DDB7A),
-                  trailing: Switch(
-                    value: true,
-                    onChanged: (_) {},
-                    activeThumbColor: const Color(0xFF72DB6E),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Support',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 18),
-                _SupportRow(label: 'Knowledge Base', icon: Icons.open_in_new),
-                SizedBox(height: 14),
-                _SupportRow(label: 'Direct Chat', icon: Icons.chat_bubble_outline),
-                SizedBox(height: 14),
-                _SupportRow(label: 'API Documentation', icon: Icons.code),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1C1A),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Staff\nManagement',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Manage roles and permissions for 12 active members.',
-                            style: TextStyle(color: Color(0xFFB6A59D), height: 1.4),
-                          ),
-                        ],
-                      ),
-                    ),
-                    FilledButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.group_add_outlined),
-                      label: const Text('Add Member'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                ...const [
-                  _StaffMemberRow(
-                    name: 'Marco Rossi',
-                    role: 'EXECUTIVE CHEF',
-                    imagePath: 'lib/assets/images/smoked_ribeye.png',
-                    online: true,
-                  ),
-                  _StaffMemberRow(
-                    name: 'Elena Vance',
-                    role: 'GENERAL MANAGER',
-                    imagePath: 'lib/assets/images/artisan_harvest_bowl.png',
-                    online: true,
-                  ),
-                  _StaffMemberRow(
-                    name: 'Simon Wright',
-                    role: 'FLOOR SUPERVISOR',
-                    imagePath: 'lib/assets/images/background_bienvenida.png',
-                    online: true,
-                  ),
-                  _StaffMemberRow(
-                    name: 'Clara J.',
-                    role: 'SOMMELIER ASSISTANT',
-                    imagePath: 'lib/assets/images/midnight_pasta.png',
-                    online: false,
-                  ),
-                  _StaffMemberRow(
-                    name: 'David Chen',
-                    role: 'LEAD MIXOLOGIST',
-                    imagePath: 'lib/assets/images/saffron_infused_sea_scallops.png',
-                    online: true,
-                  ),
-                ],
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: () => flow.setAdminScreen(AdminScreen.dashboard),
-                  icon: const Icon(Icons.add_circle_outline_rounded),
-                  label: const Text('Add Team Member'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const AdminProfileScreen();
 }
 
 class _AdminBottomBar extends StatelessWidget {
@@ -941,63 +1177,55 @@ class _AdminBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Dashboard', 'Inventory', 'Kitchen', 'Settings'];
+    const labels = ['Inicio', 'Menú', 'Comandas', 'Perfil'];
     const icons = [
-      Icons.dashboard_outlined,
-      Icons.inventory_2_outlined,
-      Icons.auto_awesome_outlined,
-      Icons.settings_outlined,
+      Icons.home_rounded,
+      Icons.restaurant_menu_rounded,
+      Icons.receipt_long_rounded,
+      Icons.person_rounded,
     ];
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF171413),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0x22FFFFFF)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(labels.length, (index) {
-          final isSelected = selectedIndex == index;
-
-          return GestureDetector(
-            onTap: () => onTap(index),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color:
-                    isSelected ? const Color(0xFF3A2517) : Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icons[index],
-                    color: isSelected
-                        ? const Color(0xFFFF7B1A)
-                        : const Color(0xFF98908A),
-                    size: 20,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    labels[index].toUpperCase(),
-                    style: TextStyle(
+      color: Colors.black,
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(labels.length, (index) {
+            final isSelected = selectedIndex == index;
+            return GestureDetector(
+              onTap: () => onTap(index),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icons[index],
                       color: isSelected
-                          ? const Color(0xFFFF7B1A)
-                          : const Color(0xFF98908A),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
+                          ? const Color(0xFFFF6F22)
+                          : const Color(0xFF8E8E93),
+                      size: 22,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      labels[index],
+                      style: TextStyle(
+                        color: isSelected
+                            ? const Color(0xFFFF6F22)
+                            : const Color(0xFF8E8E93),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -1049,389 +1277,6 @@ class _AdminTopBar extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _AdminMetricCard extends StatelessWidget {
-  const _AdminMetricCard({
-    required this.label,
-    required this.value,
-    required this.footer,
-    required this.accent,
-  });
-
-  final String label;
-  final String value;
-  final String footer;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1C1A),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF7E726B),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.8,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            footer,
-            style: TextStyle(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.amount,
-    required this.status,
-    required this.accent,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String amount;
-  final String status;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1C1A),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2D2A27),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: accent),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFFB6A49D),
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                status,
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopDishCard extends StatelessWidget {
-  const _TopDishCard({
-    required this.title,
-    required this.subtitle,
-    required this.imagePath,
-    required this.rank,
-  });
-
-  final String title;
-  final String subtitle;
-  final String imagePath;
-  final String rank;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: Image.asset(
-            imagePath,
-            width: double.infinity,
-            height: 170,
-            fit: BoxFit.cover,
-          ),
-        ),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.78),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 20,
-          right: 20,
-          bottom: 20,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFFD7C1B7),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  rank,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AdminField extends StatelessWidget {
-  const _AdminField({
-    required this.label,
-    required this.hint,
-    this.minHeight = 64,
-  });
-
-  final String label;
-  final String hint;
-  final double minHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF8C7E76),
-            fontSize: 12,
-            letterSpacing: 1.4,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          constraints: BoxConstraints(minHeight: minHeight),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF34312E),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          alignment: Alignment.centerLeft,
-          child: Text(
-            hint,
-            style: const TextStyle(color: Color(0xFF716964)),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AdminTag extends StatelessWidget {
-  const _AdminTag({
-    required this.text,
-    this.accent = false,
-  });
-
-  final String text;
-  final bool accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: accent ? const Color(0xFF2F3B24) : const Color(0xFF2B2927),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: accent ? const Color(0xFF9ADB83) : const Color(0xFFD4C0B7),
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _AdminDishCard extends StatelessWidget {
-  const _AdminDishCard({
-    required this.menu,
-  });
-
-  final Menu menu;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1C1A),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              CustomerAppScreen.imageFor(menu.id),
-              width: 110,
-              height: 90,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        menu.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '\$${menu.price.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        color: Color(0xFFEAB8A1),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  menu.category.toUpperCase(),
-                  style: const TextStyle(
-                    color: Color(0xFF8C7E76),
-                    fontSize: 11,
-                    letterSpacing: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -1542,7 +1387,7 @@ class _ActiveCommandCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '\$${(activeOrder?.totalAmount ?? 142.50).toStringAsFixed(2)}',
+                    _formatCop(activeOrder?.totalAmount ?? 142000),
                     style: const TextStyle(
                       color: Color(0xFFF0B63E),
                       fontSize: 28,
@@ -1633,232 +1478,3 @@ class _ActiveCommandCard extends StatelessWidget {
   }
 }
 
-class _InfoBlock extends StatelessWidget {
-  const _InfoBlock({
-    required this.label,
-    required this.value,
-    this.icon,
-  });
-
-  final String label;
-  final String value;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF8C7E76),
-            fontSize: 12,
-            letterSpacing: 1.3,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, color: const Color(0xFF72DB6E)),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _MapPlaceholder extends StatelessWidget {
-  const _MapPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 120,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: const Color(0xFF3B3937),
-      ),
-      child: Row(
-        children: List.generate(
-          3,
-          (index) => Expanded(
-            child: Container(
-              margin: EdgeInsets.only(
-                left: index == 0 ? 0 : 1,
-                right: index == 2 ? 0 : 1,
-              ),
-              decoration: BoxDecoration(
-                color: index == 1 ? const Color(0xFF6B6967) : const Color(0xFFB3B1AF),
-                borderRadius: BorderRadius.horizontal(
-                  left: index == 0 ? const Radius.circular(18) : Radius.zero,
-                  right: index == 2 ? const Radius.circular(18) : Radius.zero,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SettingTile extends StatelessWidget {
-  const _SettingTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.accent,
-    required this.trailing,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color accent;
-  final Widget trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1C1A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: accent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ),
-          if (value.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Text(
-                value,
-                style: const TextStyle(color: Color(0xFFE5B49D)),
-              ),
-            ),
-          trailing,
-        ],
-      ),
-    );
-  }
-}
-
-class _SupportRow extends StatelessWidget {
-  const _SupportRow({
-    required this.label,
-    required this.icon,
-  });
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(color: Color(0xFFD2C0B7), fontSize: 16),
-          ),
-        ),
-        Icon(icon, size: 18, color: const Color(0xFF9C8E86)),
-      ],
-    );
-  }
-}
-
-class _StaffMemberRow extends StatelessWidget {
-  const _StaffMemberRow({
-    required this.name,
-    required this.role,
-    required this.imagePath,
-    required this.online,
-  });
-
-  final String name;
-  final String role;
-  final String imagePath;
-  final bool online;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundImage: AssetImage(imagePath),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: online
-                        ? const Color(0xFF1DB954)
-                        : const Color(0xFF7A7A7A),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  role,
-                  style: const TextStyle(
-                    color: Color(0xFF8C7E76),
-                    fontSize: 12,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

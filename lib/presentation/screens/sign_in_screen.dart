@@ -37,10 +37,20 @@ class _SignInScreenState extends State<SignInScreen> {
     final demo = context.read<AppDemoProvider>();
     final copy = AppCopy.of(context);
     final normalizedEmail = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text.trim();
+
+    if (normalizedEmail.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(copy.requiredFields),
+        ),
+      );
+      return;
+    }
 
     final success = await auth.login(
       email: normalizedEmail,
-      password: _passwordController.text,
+      password: password,
     );
 
     if (!mounted) {
@@ -48,11 +58,12 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (success) {
-      if (_role == SignInRole.administrator &&
-          normalizedEmail == 'admin@ordenow.com') {
+      if (auth.isAdmin) {
         demo.openAdminArea();
+      } else if (auth.hasCompletedProfile) {
+        demo.openTableSelection();
       } else {
-        demo.openCustomerArea();
+        demo.openProfileSetup();
       }
       return;
     }
@@ -115,11 +126,6 @@ class _SignInScreenState extends State<SignInScreen> {
             SafeArea(
               child: Stack(
                 children: [
-                  const Positioned(
-                    top: 16,
-                    right: 20,
-                    child: AppUtilityToggles(),
-                  ),
                   Align(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(24, 76, 24, 76),
@@ -426,6 +432,11 @@ class _SignInScreenState extends State<SignInScreen> {
                         ],
                       ),
                     ),
+                  ),
+                  const Positioned(
+                    top: 16,
+                    right: 20,
+                    child: AppUtilityToggles(),
                   ),
                 ],
               ),
