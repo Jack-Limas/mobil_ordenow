@@ -7,6 +7,7 @@ import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/order_provider.dart';
 import 'customer_app_screen.dart';
+import 'orders_kds_screen.dart';
 
 String _formatCop(double value) {
   final intVal = value.toInt();
@@ -21,7 +22,7 @@ class AdminAppScreen extends StatelessWidget {
     final flow = context.watch<AppDemoProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120F0D),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: IndexedStack(
           index: flow.adminScreen.index,
@@ -37,6 +38,17 @@ class AdminAppScreen extends StatelessWidget {
         selectedIndex: flow.adminScreen.index,
         onTap: (index) => flow.setAdminScreen(AdminScreen.values[index]),
       ),
+      floatingActionButton: flow.adminScreen == AdminScreen.dashboard
+          ? FloatingActionButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const OrdersKdsScreen()),
+              ),
+              backgroundColor: const Color(0xFFFF6F22),
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
     );
   }
 }
@@ -84,6 +96,8 @@ class _AdminDashboardView extends StatelessWidget {
                 _PopularDishesSection(dash: dash),
                 const SizedBox(height: 24),
                 _OrderFlowSection(dash: dash),
+                const SizedBox(height: 24),
+                _RecentOrdersSection(dash: dash),
               ],
             ),
           ),
@@ -712,6 +726,272 @@ class _BarChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(_BarChartPainter old) =>
       old.values != values || old.color != color;
+}
+
+class _RecentOrdersSection extends StatelessWidget {
+  const _RecentOrdersSection({required this.dash});
+
+  final AdminDashboardProvider dash;
+
+  @override
+  Widget build(BuildContext context) {
+    const activeStatuses = {'accepted', 'preparing', 'ready'};
+    final orders = dash.showActive
+        ? dash.recentOrders
+            .where((o) => activeStatuses.contains(o.status))
+            .toList()
+        : dash.recentOrders
+            .where((o) =>
+                o.status == 'delivered' || o.status == 'completed')
+            .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Pedidos Recientes',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const Spacer(),
+            _TabPill(
+              label: 'Activos',
+              isSelected: dash.showActive,
+              onTap: () => context
+                  .read<AdminDashboardProvider>()
+                  .setTab(showActive: true),
+            ),
+            const SizedBox(width: 8),
+            _TabPill(
+              label: 'Historial',
+              isSelected: !dash.showActive,
+              onTap: () => context
+                  .read<AdminDashboardProvider>()
+                  .setTab(showActive: false),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                child: Row(
+                  children: const [
+                    SizedBox(
+                      width: 44,
+                      child: Text('ID',
+                          style: TextStyle(
+                              color: Color(0xFF8E8E93),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700)),
+                    ),
+                    Expanded(
+                        child: Text('Mesa/Cliente',
+                            style: TextStyle(
+                                color: Color(0xFF8E8E93),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700))),
+                    Text('Estado',
+                        style: TextStyle(
+                            color: Color(0xFF8E8E93),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700)),
+                    SizedBox(width: 8),
+                    Text('Total',
+                        style: TextStyle(
+                            color: Color(0xFF8E8E93),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700)),
+                    SizedBox(width: 32),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFF2C2C2E)),
+              if (orders.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: Text('Sin pedidos',
+                        style: TextStyle(color: Color(0xFF8E8E93))),
+                  ),
+                )
+              else
+                ...orders.map((o) => _OrderTableRow(order: o)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  const _TabPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFFF6F22)
+              : const Color(0xFF2C2C2E),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF8E8E93),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OrderTableRow extends StatelessWidget {
+  const _OrderTableRow({required this.order});
+
+  final DashRecentOrder order;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 44,
+                child: Text(
+                  order.shortId,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  order.label,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _StatusBadge(status: order.status),
+              const SizedBox(width: 8),
+              Text(
+                _formatCop(order.total),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert_rounded,
+                    color: Color(0xFF8E8E93), size: 18),
+                color: const Color(0xFF2C2C2E),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: 'detail',
+                    child: Text('Ver detalle',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  PopupMenuItem(
+                    value: 'status',
+                    child: Text('Cambiar estado',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+                onSelected: (_) {},
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: Color(0xFF2C2C2E)),
+      ],
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, bg, fg) = switch (status) {
+      'preparing' => (
+          'Preparación',
+          const Color(0xFF2D2000),
+          const Color(0xFFFFB800)
+        ),
+      'ready' => (
+          'Listo',
+          const Color(0xFF00213D),
+          const Color(0xFF5AC8FA)
+        ),
+      'accepted' => (
+          'Aceptado',
+          const Color(0xFF1A1A00),
+          const Color(0xFFFFD700)
+        ),
+      'delivered' || 'completed' => (
+          'Servido',
+          const Color(0xFF0D2E0D),
+          const Color(0xFF4CAF50)
+        ),
+      _ => (
+          'Pendiente',
+          const Color(0xFF1C1C1E),
+          const Color(0xFF8E8E93)
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 }
 
 class _AdminMenuManagementView extends StatelessWidget {
@@ -1422,63 +1702,55 @@ class _AdminBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Dashboard', 'Inventory', 'Kitchen', 'Settings'];
+    const labels = ['Inicio', 'Menú', 'Comandas', 'Perfil'];
     const icons = [
-      Icons.dashboard_outlined,
-      Icons.inventory_2_outlined,
-      Icons.auto_awesome_outlined,
-      Icons.settings_outlined,
+      Icons.home_rounded,
+      Icons.restaurant_menu_rounded,
+      Icons.receipt_long_rounded,
+      Icons.person_rounded,
     ];
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF171413),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0x22FFFFFF)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(labels.length, (index) {
-          final isSelected = selectedIndex == index;
-
-          return GestureDetector(
-            onTap: () => onTap(index),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color:
-                    isSelected ? const Color(0xFF3A2517) : Colors.transparent,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icons[index],
-                    color: isSelected
-                        ? const Color(0xFFFF7B1A)
-                        : const Color(0xFF98908A),
-                    size: 20,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    labels[index].toUpperCase(),
-                    style: TextStyle(
+      color: Colors.black,
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(labels.length, (index) {
+            final isSelected = selectedIndex == index;
+            return GestureDetector(
+              onTap: () => onTap(index),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icons[index],
                       color: isSelected
-                          ? const Color(0xFFFF7B1A)
-                          : const Color(0xFF98908A),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
+                          ? const Color(0xFFFF6F22)
+                          : const Color(0xFF8E8E93),
+                      size: 22,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      labels[index],
+                      style: TextStyle(
+                        color: isSelected
+                            ? const Color(0xFFFF6F22)
+                            : const Color(0xFF8E8E93),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
