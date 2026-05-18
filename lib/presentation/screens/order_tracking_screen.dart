@@ -1,288 +1,263 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/utils/app_copy.dart';
 import '../../core/utils/constants.dart';
+import '../../domain/entities/menu.dart';
 import '../providers/app_demo_provider.dart';
+import '../providers/app_settings_provider.dart';
 import '../providers/order_provider.dart';
-import '../widgets/app_utility_toggles.dart';
 import '../widgets/order_progress.dart';
 
 class OrderTrackingScreen extends StatelessWidget {
   const OrderTrackingScreen({super.key});
 
+  static const _images = <String, String>{
+    'menu-1': 'lib/assets/images/saffron_infused_sea_scallops.png',
+    'menu-2': 'lib/assets/images/midnight_pasta.png',
+    'menu-3': 'lib/assets/images/smoked_ribeye.png',
+    'menu-4': 'lib/assets/images/artisan_harvest_bowl.png',
+    'menu-5': 'lib/assets/images/background_bienvenida.png',
+    'menu-6': 'lib/assets/images/background_bienvenida.png',
+  };
+
+  static String imageFor(String id) =>
+      _images[id] ?? 'lib/assets/images/background_bienvenida.png';
+
   @override
   Widget build(BuildContext context) {
     final order = context.watch<OrderProvider>();
     final flow = context.read<AppDemoProvider>();
-    final copy = AppCopy.of(context);
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-    final backgroundColor =
-        isDarkMode ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
-    final textColor = isDarkMode ? Colors.white : const Color(0xFF171717);
-    final surfaceColor = isDarkMode ? const Color(0xFF1C1C1E) : const Color(0xFFF4F4F5);
-    final mutedColor =
-        isDarkMode ? const Color(0xFFC9C2BE) : const Color(0xFF625B56);
+    final settings = context.watch<AppSettingsProvider>();
 
-    final isReady = order.currentOrderStatus == OrderStatuses.ready ||
-        order.currentOrderStatus == OrderStatuses.delivered ||
-        order.currentOrderStatus == OrderStatuses.completed;
-
-    return Scaffold(
-      body: Container(
-        color: backgroundColor,
-        child: SafeArea(
-          child: Column(
+    return Column(
+      children: [
+        _TrackingAppBar(settings: settings),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 18, 22, 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'SEGUIMIENTO',
-                            style: TextStyle(
-                              color: Color(0xFFFFB48E),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.6,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            copy.isSpanish ? 'Tu pedido' : 'Your order',
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              height: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const AppUtilityToggles(),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(22, 8, 22, 22),
-                  children: [
-                    _StatusHeroCard(
-                      status: order.currentOrderStatus,
-                      tableNumber: order.selectedTable?.number,
-                      isDarkMode: isDarkMode,
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: surfaceColor,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                copy.isSpanish
-                                    ? 'Estado en vivo'
-                                    : 'Live status',
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF188A31)
-                                      .withValues(alpha: 0.18),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Text(
-                                  '● LIVE',
-                                  style: TextStyle(
-                                    color: Color(0xFF62D26F),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          OrderProgress(currentStep: order.orderStepIndex),
-                          if (order.activeOrder != null) ...[
-                            const SizedBox(height: 16),
-                            OutlinedButton.icon(
-                              onPressed: order.advanceKitchenStatus,
-                              icon: const Icon(Icons.skip_next_rounded),
-                              label: Text(copy.isSpanish
-                                  ? 'Simular avance'
-                                  : 'Simulate advance'),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    if (order.orderedItems.isNotEmpty) ...[
-                      Text(
-                        copy.isSpanish ? 'Detalle del pedido' : 'Order detail',
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      ...order.orderedItems.map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: surfaceColor,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6F22)
-                                        .withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: const Icon(
-                                    Icons.restaurant_rounded,
-                                    color: Color(0xFFFF6F22),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Text(
-                                    item.name,
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  _formatCop(item.price),
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFB48E),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    _ActionButtons(
-                      isReady: isReady,
-                      mutedColor: mutedColor,
-                      copy: copy,
-                      onAddMore: () =>
-                          flow.setCustomerScreen(CustomerScreen.aiConcierge),
-                      onPay: () =>
-                          flow.setCustomerScreen(CustomerScreen.checkout),
-                    ),
-                  ],
-                ),
+              _TrackingCard(order: order),
+              const SizedBox(height: 20),
+              if (order.orderedItems.isNotEmpty) ...[
+                _SelectionSection(order: order),
+                const SizedBox(height: 24),
+              ],
+              _ExploreMenuSection(
+                menu: order.menu,
+                onExplore: () =>
+                    flow.setCustomerScreen(CustomerScreen.menu),
+                onAiOrder: () =>
+                    flow.setCustomerScreen(CustomerScreen.aiConcierge),
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+// ─── App bar ────────────────────────────────────────────────────────────────
+
+class _TrackingAppBar extends StatelessWidget {
+  const _TrackingAppBar({required this.settings});
+
+  final AppSettingsProvider settings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6F22),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.restaurant_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'OrdeNow',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: settings.toggleLanguage,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'XA',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _StatusHeroCard extends StatelessWidget {
-  const _StatusHeroCard({
-    required this.status,
-    required this.tableNumber,
-    required this.isDarkMode,
-  });
+// ─── Tracking card ───────────────────────────────────────────────────────────
 
-  final String status;
-  final int? tableNumber;
-  final bool isDarkMode;
+class _TrackingCard extends StatelessWidget {
+  const _TrackingCard({required this.order});
+
+  final OrderProvider order;
+
+  ({Color color, String label}) _badge(String status) {
+    switch (status) {
+      case OrderStatuses.preparing:
+        return (color: const Color(0xFFFF6F22), label: 'En Cocina');
+      case OrderStatuses.ready:
+        return (color: const Color(0xFF62D26F), label: 'Listo');
+      case OrderStatuses.delivered:
+      case OrderStatuses.completed:
+        return (color: const Color(0xFF5E9FFF), label: 'Entregado');
+      default:
+        return (color: const Color(0xFFF0B63E), label: 'Recibido');
+    }
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final m = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$h:$m $period';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final config = _statusConfig(status);
+    final activeOrder = order.activeOrder;
+    final status = order.currentOrderStatus;
+    final badge = _badge(status);
+    final orderId = activeOrder != null
+        ? '#${activeOrder.id.substring(0, 4).toUpperCase()}'
+        : '#—';
+    final timeStr = activeOrder != null
+        ? 'Iniciado a las ${_formatTime(activeOrder.createdAt)}'
+        : 'Sin pedido activo';
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      padding: const EdgeInsets.all(24),
+    return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: config.gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(config.icon, color: Colors.white, size: 28),
-              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  config.label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    height: 1.1,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'SEGUIMIENTO',
+                      style: TextStyle(
+                        color: Color(0xFF8E8E93),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Pedido $orderId',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      timeStr,
+                      style: const TextStyle(
+                        color: Color(0xFF8E8E93),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2E),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: badge.color,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      badge.label,
+                      style: TextStyle(
+                        color: badge.color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            config.subtitle,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-          if (tableNumber != null) ...[
+          const SizedBox(height: 20),
+          OrderProgress(currentStep: order.trackingStep),
+          if (activeOrder != null) ...[
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                'Mesa #$tableNumber',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: order.advanceKitchenStatus,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C2C2E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Simular avance →',
+                    style: TextStyle(
+                      color: Color(0xFF8E8E93),
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -291,114 +266,405 @@ class _StatusHeroCard extends StatelessWidget {
       ),
     );
   }
-
-  _StatusConfig _statusConfig(String status) {
-    switch (status) {
-      case OrderStatuses.preparing:
-        return _StatusConfig(
-          gradientColors: const [Color(0xFF1565C0), Color(0xFF0D47A1)],
-          icon: Icons.soup_kitchen_rounded,
-          label: 'Preparando tu pedido...',
-          subtitle: 'El chef está trabajando en tus platos. Pronto estará listo.',
-        );
-      case OrderStatuses.ready:
-      case OrderStatuses.delivered:
-        return _StatusConfig(
-          gradientColors: const [Color(0xFF1B5E20), Color(0xFF2E7D32)],
-          icon: Icons.check_circle_rounded,
-          label: '¡Listo para recoger!',
-          subtitle: 'Tu pedido está listo. Dirígete a la barra o espera al mesero.',
-        );
-      case OrderStatuses.completed:
-        return _StatusConfig(
-          gradientColors: const [Color(0xFF4A148C), Color(0xFF6A1B9A)],
-          icon: Icons.celebration_rounded,
-          label: '¡Pedido completado!',
-          subtitle: 'Gracias por visitar OrdeNow. ¡Buen provecho!',
-        );
-      default:
-        return _StatusConfig(
-          gradientColors: const [Color(0xFFF57F17), Color(0xFFE65100)],
-          icon: Icons.hourglass_top_rounded,
-          label: 'Pedido recibido',
-          subtitle: 'Tu orden ha sido registrada. El chef la tomará en breve.',
-        );
-    }
-  }
 }
 
-class _StatusConfig {
-  const _StatusConfig({
-    required this.gradientColors,
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-  });
+// ─── Tu Selección ────────────────────────────────────────────────────────────
 
-  final List<Color> gradientColors;
-  final IconData icon;
-  final String label;
-  final String subtitle;
-}
+class _SelectionSection extends StatelessWidget {
+  const _SelectionSection({required this.order});
 
-class _ActionButtons extends StatelessWidget {
-  const _ActionButtons({
-    required this.isReady,
-    required this.mutedColor,
-    required this.copy,
-    required this.onAddMore,
-    required this.onPay,
-  });
-
-  final bool isReady;
-  final Color mutedColor;
-  final AppCopy copy;
-  final VoidCallback onAddMore;
-  final VoidCallback onPay;
+  final OrderProvider order;
 
   @override
   Widget build(BuildContext context) {
+    final items = order.orderedItems;
+    final unique = _deduped(items);
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: onAddMore,
-            icon: const Icon(Icons.add_rounded),
-            label: Text(
-              copy.isSpanish ? 'Agregar algo más' : 'Add something else',
+        Row(
+          children: [
+            const Icon(Icons.content_cut_rounded,
+                color: Color(0xFFFF6F22), size: 18),
+            const SizedBox(width: 8),
+            const Text(
+              'Tu Selección',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              '${items.length} artículo${items.length == 1 ? '' : 's'}',
+              style: const TextStyle(
+                color: Color(0xFF8E8E93),
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...unique.map((entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _SelectionItem(menu: entry.key, qty: entry.value),
+            )),
+      ],
+    );
+  }
+
+  List<MapEntry<Menu, int>> _deduped(List<Menu> items) {
+    final counts = <String, int>{};
+    final seen = <String, Menu>{};
+    for (final m in items) {
+      counts.update(m.id, (v) => v + 1, ifAbsent: () => 1);
+      seen.putIfAbsent(m.id, () => m);
+    }
+    return counts.entries
+        .map((e) => MapEntry(seen[e.key]!, e.value))
+        .toList();
+  }
+}
+
+class _SelectionItem extends StatelessWidget {
+  const _SelectionItem({required this.menu, required this.qty});
+
+  final Menu menu;
+  final int qty;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              OrderTrackingScreen.imageFor(menu.id),
+              width: 64,
+              height: 64,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 64,
+                height: 64,
+                color: const Color(0xFF2C2C2E),
+                child: const Icon(Icons.restaurant_rounded,
+                    color: Color(0xFF636366), size: 28),
+              ),
             ),
           ),
-        ),
-        if (isReady) ...[
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onPay,
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6F22),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  qty > 1 ? '${menu.name} ×$qty' : menu.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  menu.description,
+                  style: const TextStyle(
+                    color: Color(0xFF8E8E93),
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            _formatCop(menu.price * qty),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Explora el Menú ─────────────────────────────────────────────────────────
+
+class _ExploreMenuSection extends StatelessWidget {
+  const _ExploreMenuSection({
+    required this.menu,
+    required this.onExplore,
+    required this.onAiOrder,
+  });
+
+  final List<Menu> menu;
+  final VoidCallback onExplore;
+  final VoidCallback onAiOrder;
+
+  @override
+  Widget build(BuildContext context) {
+    if (menu.isEmpty) return const SizedBox.shrink();
+    final featured = menu.first;
+    final rest = menu.skip(1).take(2).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Explora el Menú',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
-              icon: const Icon(Icons.payment_rounded),
-              label: Text(
-                copy.isSpanish ? 'Ver cuenta y pagar' : 'See bill and pay',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: onExplore,
+              child: const Text(
+                'Solo consulta ›',
+                style: TextStyle(
+                  color: Color(0xFFFF6F22),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _LargeMenuCard(
+            menu: featured, onExplore: onExplore, onAiOrder: onAiOrder),
+        if (rest.length >= 2) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _SmallMenuCard(
+                    menu: rest[0], onAction: onExplore, actionLabel: 'Explorar'),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SmallMenuCard(
+                    menu: rest[1], onAction: onAiOrder, actionLabel: '✦ IA Order'),
+              ),
+            ],
           ),
         ],
       ],
     );
   }
 }
+
+class _LargeMenuCard extends StatelessWidget {
+  const _LargeMenuCard({
+    required this.menu,
+    required this.onExplore,
+    required this.onAiOrder,
+  });
+
+  final Menu menu;
+  final VoidCallback onExplore;
+  final VoidCallback onAiOrder;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        children: [
+          Image.asset(
+            OrderTrackingScreen.imageFor(menu.id),
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              height: 180,
+              color: const Color(0xFF1C1C1E),
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.8),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 12,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6F22),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          menu.category.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        menu.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: onAiOrder,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1C1C1E).withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      '✦ IA Order',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SmallMenuCard extends StatelessWidget {
+  const _SmallMenuCard({
+    required this.menu,
+    required this.onAction,
+    required this.actionLabel,
+  });
+
+  final Menu menu;
+  final VoidCallback onAction;
+  final String actionLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Stack(
+        children: [
+          Image.asset(
+            OrderTrackingScreen.imageFor(menu.id),
+            height: 140,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              height: 140,
+              color: const Color(0xFF1C1C1E),
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.75),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 10,
+            right: 10,
+            bottom: 10,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  menu.category,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: onAction,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1C1C1E).withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      actionLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
 String _formatCop(double value) {
   final intVal = value.toInt();
