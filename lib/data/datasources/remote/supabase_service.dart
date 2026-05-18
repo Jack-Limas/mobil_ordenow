@@ -87,6 +87,14 @@ class SupabaseService {
         .map((rows) => rows.map(Map<String, dynamic>.from).toList());
   }
 
+  static Stream<List<Map<String, dynamic>>> watchAllOrders() {
+    return client
+        .from(SupabaseTables.order)
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((rows) => rows.map(Map<String, dynamic>.from).toList());
+  }
+
   // ---------- CASH REQUESTS ----------
 
   static Future<void> insertCashRequest(Map<String, dynamic> data) async {

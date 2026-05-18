@@ -38,4 +38,8 @@ class OrderRemoteDataSource {
   Stream<List<Map<String, dynamic>>> watchCashRequests(String tableId) {
     return SupabaseService.watchCashRequests(tableId);
   }
+
+  Stream<List<Map<String, dynamic>>> watchAllOrders() {
+    return SupabaseService.watchAllOrders();
+  }
 }
