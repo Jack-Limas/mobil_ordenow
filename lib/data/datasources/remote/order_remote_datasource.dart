@@ -42,4 +42,21 @@ class OrderRemoteDataSource {
   Stream<List<Map<String, dynamic>>> watchAllOrders() {
     return SupabaseService.watchAllOrders();
   }
+
+  Stream<List<Map<String, dynamic>>> watchActiveOrders() {
+    const active = {'pending', 'accepted', 'preparing', 'ready'};
+    return SupabaseService.watchAllOrders().map((rows) {
+      final filtered = rows
+          .where((r) => active.contains(r['status']?.toString()))
+          .toList()
+        ..sort((a, b) {
+          final ca =
+              DateTime.tryParse(a['created_at'] as String? ?? '') ?? DateTime(0);
+          final cb =
+              DateTime.tryParse(b['created_at'] as String? ?? '') ?? DateTime(0);
+          return ca.compareTo(cb);
+        });
+      return filtered;
+    });
+  }
 }
