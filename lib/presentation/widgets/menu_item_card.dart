@@ -7,12 +7,17 @@ class MenuItemCard extends StatelessWidget {
     super.key,
     required this.menu,
     required this.imagePath,
-    required this.onAdd,
+    required this.onOrderWithAi,
   });
 
   final Menu menu;
   final String imagePath;
-  final VoidCallback onAdd;
+  final VoidCallback onOrderWithAi;
+
+  String _formatCop(double value) {
+    final intVal = value.toInt();
+    return '\$${intVal.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +37,12 @@ class MenuItemCard extends StatelessWidget {
               height: 136,
               width: double.infinity,
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 136,
+                color: const Color(0xFF2A2522),
+                child: const Icon(Icons.restaurant_rounded,
+                    color: Color(0xFF4A4440), size: 48),
+              ),
             ),
           ),
           Padding(
@@ -80,7 +91,7 @@ class MenuItemCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '\$${menu.price.toStringAsFixed(0)} COP',
+                      _formatCop(menu.price),
                       style: const TextStyle(
                         color: Color(0xFFFFC3A5),
                         fontSize: 14,
@@ -88,17 +99,22 @@ class MenuItemCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    FilledButton(
-                      onPressed: onAdd,
+                    FilledButton.icon(
+                      onPressed: onOrderWithAi,
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B00),
-                        foregroundColor: const Color(0xFF2D1200),
+                        backgroundColor: const Color(0xFFFF6F22),
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
+                          horizontal: 12,
                           vertical: 10,
                         ),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                      child: const Text('Add'),
+                      icon: const Icon(Icons.auto_awesome_rounded, size: 14),
+                      label: const Text('Pedir con IA'),
                     ),
                   ],
                 ),
