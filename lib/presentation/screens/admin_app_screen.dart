@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
 import 'admin_profile_screen.dart';
 import 'menu_management_screen.dart';
@@ -14,8 +15,24 @@ String _formatCop(double value) {
   return '\$${intVal.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
 }
 
-class AdminAppScreen extends StatelessWidget {
+class AdminAppScreen extends StatefulWidget {
   const AdminAppScreen({super.key});
+
+  @override
+  State<AdminAppScreen> createState() => _AdminAppScreenState();
+}
+
+class _AdminAppScreenState extends State<AdminAppScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (context.read<AuthProvider>().isClient) {
+        context.read<AppDemoProvider>().openTableSelection();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
