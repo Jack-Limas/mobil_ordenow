@@ -126,11 +126,6 @@ class _SignInScreenState extends State<SignInScreen> {
             SafeArea(
               child: Stack(
                 children: [
-                  const Positioned(
-                    top: 16,
-                    right: 20,
-                    child: AppUtilityToggles(),
-                  ),
                   Align(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(24, 76, 24, 76),
@@ -437,6 +432,11 @@ class _SignInScreenState extends State<SignInScreen> {
                         ],
                       ),
                     ),
+                  ),
+                  const Positioned(
+                    top: 16,
+                    right: 20,
+                    child: AppUtilityToggles(),
                   ),
                 ],
               ),
