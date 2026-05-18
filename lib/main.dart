@@ -6,6 +6,7 @@ import 'core/config/app_dependencies.dart';
 import 'core/config/app_bootstrap.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/providers/admin_dashboard_provider.dart';
+import 'presentation/providers/orders_kds_provider.dart';
 import 'presentation/providers/ai_provider.dart';
 import 'presentation/providers/app_demo_provider.dart';
 import 'presentation/providers/app_settings_provider.dart';
@@ -58,6 +59,7 @@ class OrdeNowApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => AiProvider()),
         ChangeNotifierProvider(create: (_) => AdminDashboardProvider()),
+        ChangeNotifierProvider(create: (_) => OrdersKdsProvider()),
       ],
       child: Consumer<AppSettingsProvider>(
         builder: (context, settingsProvider, _) {
