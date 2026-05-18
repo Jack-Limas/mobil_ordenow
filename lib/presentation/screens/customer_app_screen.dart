@@ -413,7 +413,28 @@ class _AiConciergeView extends StatefulWidget {
 }
 
 class _AiConciergeViewState extends State<_AiConciergeView> {
-  Future<void> _sendPrompt(BuildContext context, String prompt) async {
+  bool _isListening = false;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _sendPrompt(String prompt) async {
     final order = context.read<OrderProvider>();
     final auth = context.read<AuthProvider>();
     final ai = context.read<AiProvider>();
@@ -426,167 +447,245 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
       allergies: auth.currentUser?.allergies ?? [],
       diningPreferences: order.diningPreferences,
     );
+    _scrollToBottom();
+  }
+
+  String _initials(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return '?';
+    final parts = fullName.trim().split(' ');
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
-    final copy = AppCopy.of(context);
-    final palette = _CustomerPalette.of(context);
     final ai = context.watch<AiProvider>();
-    final flow = context.read<AppDemoProvider>();
+    final auth = context.watch<AuthProvider>();
+    final settings = context.watch<AppSettingsProvider>();
+    final initials = _initials(auth.currentUser?.fullName);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      children: [
+        // App bar
+        Container(
+          color: Colors.black,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Row(
             children: [
-              const CircleAvatar(
-                radius: 20,
-                backgroundImage:
-                    AssetImage('lib/assets/images/background_bienvenida.png'),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6F22),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.restaurant_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               const Text(
                 'OrdeNow',
                 style: TextStyle(
-                  color: Color(0xFFFF6B00),
-                  fontSize: 20,
+                  color: Colors.white,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const Spacer(),
-              const _InlineUtilityButtons(compact: true),
-              IconButton(
-                onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
-                icon: const Icon(Icons.shopping_bag_outlined),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: copy.isSpanish ? 'Tu ' : 'Your ',
-                  style: TextStyle(color: palette.primaryText),
-                ),
-                TextSpan(
-                  text: copy.isSpanish ? 'Sommelier' : 'Sensory',
-                  style: TextStyle(color: Color(0xFFFF6B00)),
-                ),
-                TextSpan(
-                  text: copy.isSpanish ? '\nSensorial.' : '\nSommelier.',
-                  style: TextStyle(color: palette.primaryText),
-                ),
-              ],
-            ),
-            style: const TextStyle(
-              fontSize: 42,
-              fontWeight: FontWeight.w300,
-              height: 1.05,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            copy.isSpanish
-                ? 'Curando los sabores perfectos para tu antojo.\nQue deseas pedir hoy?'
-                : 'Curating the perfect flavors for your mood.\nWhat are you craving today?',
-            style: const TextStyle(
-              color: Color(0xFFD9C1B7),
-              fontSize: 16,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Expanded(
-            child: ListView(
-              children: [
-                ...ai.messages.map(
-                  (message) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: AiMessageBubble(
-                      text: message.text,
-                      isUser: message.isUser,
+              GestureDetector(
+                onTap: settings.toggleLanguage,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'XA',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Image.asset(
-                        'lib/assets/images/midnight_pasta.png',
-                        height: 185,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.72),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Positioned(
-                      left: 16,
-                      right: 16,
-                      bottom: 16,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Wild Mushroom & Truffle\nLinguine',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            children: [
-                              _Tag(text: "CHEF'S CHOICE", color: Color(0xFF1F8D3A)),
-                              SizedBox(width: 8),
-                              _Tag(text: 'PREMIUM', color: Color(0xFF7C5A2B)),
-                              Spacer(),
-                              Text(
-                                '\$34',
-                                style: TextStyle(
-                                  color: Color(0xFFFF6B00),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => _cycleTheme(settings),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.settings_outlined,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Messages list
+        Expanded(
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            itemCount: ai.messages.length,
+            itemBuilder: (context, index) {
+              final msg = ai.messages[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: AiMessageBubble(
+                  text: msg.text,
+                  isUser: msg.isUser,
+                  userInitials: initials,
+                ),
+              );
+            },
+          ),
+        ),
+        // Animated orb — visible when mic is active
+        ClipRect(
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            child: _isListening ? const _OrbSection() : const SizedBox.shrink(),
+          ),
+        ),
+        // Quick suggestion chips
+        _QuickChips(onSend: _sendPrompt),
+        const SizedBox(height: 8),
+        // Input bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: AiChatBox(
+            hintText: settings.isSpanish
+                ? 'Habla o escribe aquí...'
+                : 'Talk or type here...',
+            onSend: _sendPrompt,
+            onListeningChanged: (v) => setState(() => _isListening = v),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _cycleTheme(AppSettingsProvider settings) async {
+    switch (settings.themeMode) {
+      case ThemeMode.system:
+        await settings.updateThemeMode(ThemeMode.dark);
+      case ThemeMode.dark:
+        await settings.updateThemeMode(ThemeMode.light);
+      case ThemeMode.light:
+        await settings.updateThemeMode(ThemeMode.system);
+    }
+  }
+}
+
+class _OrbSection extends StatelessWidget {
+  const _OrbSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 190,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 130,
+            height: 130,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFF6F22),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF6F22).withValues(alpha: 0.55),
+                  blurRadius: 50,
+                  spreadRadius: 12,
                 ),
               ],
             ),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: Colors.white,
+              size: 52,
+            ),
           ),
-          const SizedBox(height: 14),
-          AiChatBox(
-            hintText: copy.isSpanish
-                ? 'Describe un sabor o antojo...'
-                : 'Describe a flavor or mood...',
-            onSend: (prompt) => _sendPrompt(context, prompt),
+          const SizedBox(height: 16),
+          const Text(
+            'ESCUCHANDO TUS ANTOJOS...',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2.0,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickChips extends StatelessWidget {
+  const _QuickChips({required this.onSend});
+
+  final ValueChanged<String> onSend;
+
+  static const List<(IconData, String)> _chips = [
+    (Icons.eco_outlined, 'Recomiéndame algo saludable'),
+    (Icons.whatshot_outlined, 'Quiero algo con mucho sabor'),
+    (Icons.local_cafe_outlined, 'Una bebida refrescante'),
+    (Icons.star_outline_rounded, 'El plato especial del chef'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _chips.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final (icon, label) = _chips[index];
+          return GestureDetector(
+            onTap: () => onSend(label),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: const Color(0xFF2C2C2E)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: const Color(0xFF62D26F), size: 13),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
