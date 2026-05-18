@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/entities/menu.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
+import 'customer_app_screen.dart';
 
 class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
@@ -38,6 +40,28 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
               const SizedBox(height: 20),
               _AjustesCard(settings: settings),
               const SizedBox(height: 16),
+              _BienestarCard(
+                allergies: user?.allergies ?? const [],
+                onRemove: (allergy) async {
+                  final u = auth.currentUser;
+                  if (u == null) return;
+                  final newList = List<String>.from(u.allergies)
+                    ..remove(allergy);
+                  await auth.updateInitialProfile(
+                    allergies: newList,
+                    preferences: u.preferences,
+                  );
+                },
+                onAdd: () => flow.openProfileSetup(),
+              ),
+              const SizedBox(height: 16),
+              _HistorialCard(
+                order: order,
+                showAll: _showAllHistory,
+                onToggleAll: () =>
+                    setState(() => _showAllHistory = !_showAllHistory),
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -360,4 +384,294 @@ class _ThemeSelector extends StatelessWidget {
       }),
     );
   }
+}
+
+// ─────────────────────────────────────────
+// Bienestar card (alergias)
+// ─────────────────────────────────────────
+
+class _BienestarCard extends StatelessWidget {
+  const _BienestarCard({
+    required this.allergies,
+    required this.onRemove,
+    required this.onAdd,
+  });
+
+  final List<String> allergies;
+  final ValueChanged<String> onRemove;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.spa_rounded, color: Color(0xFF4CAF50), size: 20),
+              SizedBox(width: 10),
+              Text(
+                'Bienestar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Alergias persistentes:',
+            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ...allergies.map(
+                (a) => _AllergyChip(label: a, onRemove: () => onRemove(a)),
+              ),
+              GestureDetector(
+                onTap: onAdd,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: const Color(0xFFFF6F22).withValues(alpha: 0.6),
+                    ),
+                  ),
+                  child: const Text(
+                    '+ Añadir',
+                    style: TextStyle(
+                      color: Color(0xFFFF6F22),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AllergyChip extends StatelessWidget {
+  const _AllergyChip({required this.label, required this.onRemove});
+
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onRemove,
+            child: const Icon(
+              Icons.close_rounded,
+              size: 14,
+              color: Color(0xFF8E8E93),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+// Historial de pedidos
+// ─────────────────────────────────────────
+
+class _HistorialCard extends StatelessWidget {
+  const _HistorialCard({
+    required this.order,
+    required this.showAll,
+    required this.onToggleAll,
+  });
+
+  final OrderProvider order;
+  final bool showAll;
+  final VoidCallback onToggleAll;
+
+  List<MapEntry<Menu, int>> _deduped() {
+    final items = order.orderedItems;
+    final counts = <String, int>{};
+    final menuMap = <String, Menu>{};
+    for (final item in items) {
+      counts.update(item.id, (v) => v + 1, ifAbsent: () => 1);
+      menuMap[item.id] = item;
+    }
+    return counts.entries
+        .map((e) => MapEntry(menuMap[e.key]!, e.value))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final all = _deduped();
+    final visible = showAll ? all : all.take(3).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.history_rounded,
+                color: Color(0xFFFF6F22),
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Historial de Pedidos',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              if (all.length > 3)
+                GestureDetector(
+                  onTap: onToggleAll,
+                  child: Text(
+                    showAll ? 'Ver menos' : 'Ver todo ›',
+                    style: const TextStyle(
+                      color: Color(0xFFFF6F22),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (visible.isEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Sin pedidos en esta sesión.',
+              style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+            ),
+          ] else ...[
+            const SizedBox(height: 14),
+            ...visible.map(
+              (entry) => _HistoryRow(
+                menu: entry.key,
+                quantity: entry.value,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryRow extends StatelessWidget {
+  const _HistoryRow({required this.menu, required this.quantity});
+
+  final Menu menu;
+  final int quantity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              CustomerAppScreen.imageFor(menu.id),
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 50,
+                height: 50,
+                color: const Color(0xFF2C2C2E),
+                child: const Icon(
+                  Icons.restaurant_rounded,
+                  color: Color(0xFFFF6F22),
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  quantity > 1 ? '${menu.name} ×$quantity' : menu.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  menu.category,
+                  style: const TextStyle(
+                    color: Color(0xFF8E8E93),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            _formatCop(menu.price * quantity),
+            style: const TextStyle(
+              color: Color(0xFFFF6F22),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatCop(double value) {
+  final intVal = value.toInt();
+  return '\$${intVal.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
 }
