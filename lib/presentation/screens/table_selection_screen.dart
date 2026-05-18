@@ -268,10 +268,10 @@ class _TableGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
+        crossAxisCount: 5,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: 0.88,
+        childAspectRatio: 0.80,
       ),
       itemBuilder: (context, index) {
         final table = provider.tables[index];
