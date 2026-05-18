@@ -41,6 +41,9 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _state == AuthState.authenticated;
   bool get hasCompletedProfile =>
       _currentUser != null && _currentUser!.fullName.isNotEmpty;
+  String get userRole => _currentUser?.role ?? 'client';
+  bool get isAdmin => userRole == 'admin';
+  bool get isClient => userRole == 'client';
 
   Future<void> loadCurrentUser() async {
     _setState(AuthState.loading);
@@ -90,6 +93,7 @@ class AuthProvider extends ChangeNotifier {
     required String fullName,
     required String email,
     required String password,
+    String role = 'client',
   }) async {
     _setState(AuthState.loading);
 
@@ -99,6 +103,7 @@ class AuthProvider extends ChangeNotifier {
         email: email.trim().toLowerCase(),
         fullName: fullName.trim(),
         password: password.trim(),
+        role: role,
         allergies: const [],
         preferences: const [],
         createdAt: DateTime.now(),
