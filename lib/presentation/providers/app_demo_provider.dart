@@ -16,6 +16,7 @@ enum CustomerScreen {
   aiConcierge,
   checkout,
   tracking,
+  history,
   profile,
 }
 
