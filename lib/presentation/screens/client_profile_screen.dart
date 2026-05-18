@@ -62,6 +62,20 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                     setState(() => _showAllHistory = !_showAllHistory),
               ),
               const SizedBox(height: 24),
+              _LogoutButton(
+                onLogout: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => const _LogoutDialog(),
+                  );
+                  if (confirmed != true) return;
+                  if (!context.mounted) return;
+                  await auth.logout();
+                  if (!context.mounted) return;
+                  order.clearDemoState();
+                  flow.backToWelcome();
+                },
+              ),
             ],
           ),
         ),
@@ -667,6 +681,91 @@ class _HistoryRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+// Cerrar sesión
+// ─────────────────────────────────────────
+
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton({required this.onLogout});
+
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: onLogout,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF3A1A1A),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.logout_rounded, color: Color(0xFFFF4444), size: 20),
+              SizedBox(width: 10),
+              Text(
+                'Cerrar Sesión',
+                style: TextStyle(
+                  color: Color(0xFFFF4444),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoutDialog extends StatelessWidget {
+  const _LogoutDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF1C1C1E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text(
+        '¿Cerrar sesión?',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+      ),
+      content: const Text(
+        '¿Seguro que deseas cerrar sesión?',
+        style: TextStyle(color: Color(0xFF8E8E93)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: Color(0xFF8E8E93)),
+          ),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFFF4444),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text(
+            'Cerrar sesión',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
     );
   }
 }
