@@ -3,6 +3,7 @@ class User {
   final String email;
   final String fullName;
   final String password;
+  final String role;
   final List<String> allergies;
   final List<String> preferences;
   final DateTime createdAt;
@@ -13,6 +14,7 @@ class User {
     required this.email,
     required this.fullName,
     required this.password,
+    this.role = 'client',
     required this.allergies,
     required this.preferences,
     required this.createdAt,
@@ -24,6 +26,7 @@ class User {
     String? email,
     String? fullName,
     String? password,
+    String? role,
     List<String>? allergies,
     List<String>? preferences,
     DateTime? createdAt,
@@ -34,6 +37,7 @@ class User {
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,
       password: password ?? this.password,
+      role: role ?? this.role,
       allergies: allergies ?? this.allergies,
       preferences: preferences ?? this.preferences,
       createdAt: createdAt ?? this.createdAt,
