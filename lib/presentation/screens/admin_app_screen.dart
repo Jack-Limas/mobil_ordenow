@@ -7,6 +7,11 @@ import '../providers/app_settings_provider.dart';
 import '../providers/order_provider.dart';
 import 'customer_app_screen.dart';
 
+String _formatCop(double value) {
+  final intVal = value.toInt();
+  return '\$${intVal.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+}
+
 class AdminAppScreen extends StatelessWidget {
   const AdminAppScreen({super.key});
 
@@ -41,7 +46,9 @@ class _AdminDashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final order = context.watch<OrderProvider>();
-    final recentTotal = order.activeOrder?.totalAmount ?? 142.0;
+    final recentTotal = order.activeOrder?.totalAmount ?? 142000.0;
+    final pendingCashCount = order.pendingPaymentTables.length;
+    final activeRevenue = order.activeOrder?.totalAmount ?? 0.0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
@@ -53,67 +60,68 @@ class _AdminDashboardView extends StatelessWidget {
             showAvatar: true,
           ),
           const SizedBox(height: 22),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF252421),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 4,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0B63E),
-                    borderRadius: BorderRadius.circular(999),
+          if (pendingCashCount > 0)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF252421),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 4,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0B63E),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.payments_outlined, color: Color(0xFFF0B63E)),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Pending Cash\nVerifications',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.payments_outlined, color: Color(0xFFF0B63E)),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Pending Cash\nVerifications',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'There are 4 orders awaiting manual payment confirmation from the courier.',
-                        style: TextStyle(color: Color(0xFFD5C1B8), height: 1.4),
-                      ),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'There ${pendingCashCount == 1 ? 'is 1 table' : 'are $pendingCashCount tables'} awaiting manual payment confirmation.',
+                          style: const TextStyle(color: Color(0xFFD5C1B8), height: 1.4),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 18),
-          const _AdminMetricCard(
-            label: 'REVENUE TODAY',
-            value: '\$12,482.50',
-            footer: '+14.2% from yesterday',
-            accent: Color(0xFF7DDB7A),
+          if (pendingCashCount > 0) const SizedBox(height: 18),
+          _AdminMetricCard(
+            label: 'INGRESOS SESIÓN',
+            value: activeRevenue > 0 ? _formatCop(activeRevenue) : _formatCop(0),
+            footer: order.hasActiveOrder ? 'Orden activa en curso' : 'Sin órdenes activas',
+            accent: const Color(0xFF7DDB7A),
           ),
           const SizedBox(height: 18),
           _AdminMetricCard(
-            label: 'ACTIVE ORDERS',
-            value: '${order.hasActiveOrder ? 42 : 18}',
-            footer: 'Avg. Prep: 18 mins',
+            label: 'ÓRDENES ACTIVAS',
+            value: order.hasActiveOrder ? '1' : '0',
+            footer: 'Mesas con pago pendiente: $pendingCashCount',
             accent: const Color(0xFFD7C1B7),
           ),
           const SizedBox(height: 18),
@@ -181,8 +189,8 @@ class _AdminDashboardView extends StatelessWidget {
           _ActivityCard(
             icon: Icons.check_circle_outline_rounded,
             title: 'Order #8492\nCompleted',
-            subtitle: 'Delivery to Upper East Side • 4 mins ago',
-            amount: '\$${recentTotal.toStringAsFixed(2)}',
+            subtitle: 'Mesa 3 • hace 4 min',
+            amount: _formatCop(recentTotal),
             status: 'CREDIT CARD',
             accent: const Color(0xFF7DDB7A),
           ),
@@ -1409,7 +1417,7 @@ class _AdminDishCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '\$${menu.price.toStringAsFixed(0)}',
+                      _formatCop(menu.price),
                       style: const TextStyle(
                         color: Color(0xFFEAB8A1),
                         fontSize: 18,
@@ -1542,7 +1550,7 @@ class _ActiveCommandCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '\$${(activeOrder?.totalAmount ?? 142.50).toStringAsFixed(2)}',
+                    _formatCop(activeOrder?.totalAmount ?? 142000),
                     style: const TextStyle(
                       color: Color(0xFFF0B63E),
                       fontSize: 28,
