@@ -13,6 +13,9 @@ class OrdersKdsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.black,
+      floatingActionButton: kds.pendingCash.isNotEmpty
+          ? _CashFab(request: kds.pendingCash.first)
+          : null,
       body: Column(
         children: [
           const _KdsAppBar(),
@@ -639,6 +642,73 @@ class _EmptyKds extends StatelessWidget {
             'Las nuevas comandas aparecerán aquí\nen tiempo real.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF3A3A3C), height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CashFab extends StatelessWidget {
+  const _CashFab({required this.request});
+
+  final KdsCashRequest request;
+
+  String _formatCop(double v) {
+    final s = v.toStringAsFixed(0);
+    return '\$${s.replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: () => _showDialog(context),
+      backgroundColor: const Color(0xFFFF6F22),
+      child: const Icon(Icons.attach_money_rounded, color: Colors.white, size: 28),
+    );
+  }
+
+  void _showDialog(BuildContext context) {
+    final kds = context.read<OrdersKdsProvider>();
+    final label = kds.tableLabel(request.tableId);
+    final amount = request.amount > 0
+        ? _formatCop(request.amount)
+        : _formatCop(kds.orderTotalForTable(request.tableId));
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1E),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Confirmar Pago en Efectivo',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          '¿Confirmar pago en efectivo de $label por $amount?',
+          style: const TextStyle(color: Color(0xFF8E8E93)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Color(0xFF8E8E93)),
+            ),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await kds.confirmCashPayment(
+                requestId: request.id,
+                tableId: request.tableId,
+              );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6F22),
+            ),
+            child: const Text('Confirmar'),
           ),
         ],
       ),
