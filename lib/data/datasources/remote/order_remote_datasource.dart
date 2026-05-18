@@ -14,4 +14,13 @@ class OrderRemoteDataSource {
     final orders = await SupabaseService.getOrdersByUser(userId);
     return orders.map(OrderModel.fromJson).toList();
   }
+
+  Stream<OrderModel?> watchActiveOrder(String userId) {
+    return SupabaseService.watchOrdersByUser(userId).map((rows) {
+      final active =
+          rows.where((r) => r['status'] != 'paid' && r['status'] != 'completed');
+      if (active.isEmpty) return null;
+      return OrderModel.fromJson(active.first);
+    });
+  }
 }
