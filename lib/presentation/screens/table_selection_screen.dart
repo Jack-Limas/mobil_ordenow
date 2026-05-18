@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/utils/app_copy.dart';
 import '../../domain/entities/table.dart';
 import '../providers/app_demo_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
 import '../providers/table_provider.dart';
 import '../widgets/app_utility_toggles.dart';
@@ -19,6 +20,17 @@ class TableSelectionScreen extends StatefulWidget {
 
 class _TableSelectionScreenState extends State<TableSelectionScreen> {
   final TextEditingController _preferencesController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (context.read<AuthProvider>().isAdmin) {
+        context.read<AppDemoProvider>().openAdminArea();
+      }
+    });
+  }
 
   @override
   void dispose() {
