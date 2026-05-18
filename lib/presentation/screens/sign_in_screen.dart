@@ -61,8 +61,10 @@ class _SignInScreenState extends State<SignInScreen> {
       if (_role == SignInRole.administrator &&
           normalizedEmail == 'admin@ordenow.com') {
         demo.openAdminArea();
-      } else {
+      } else if (auth.hasCompletedProfile) {
         demo.openTableSelection();
+      } else {
+        demo.openProfileSetup();
       }
       return;
     }
