@@ -11,6 +11,10 @@ class AdminProfileScreen extends StatefulWidget {
 }
 
 class _AdminProfileScreenState extends State<AdminProfileScreen> {
+  bool _aiGrouping = true;
+  bool _visualAlerts = true;
+  String _timezone = 'GMT-5 (Ciudad de México)';
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettingsProvider>();
@@ -23,10 +27,21 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                _IdentitySection(),
-                SizedBox(height: 16),
-                _HorariosCard(),
+              children: [
+                const _IdentitySection(),
+                const SizedBox(height: 16),
+                const _HorariosCard(),
+                const SizedBox(height: 16),
+                _KdsSettingsCard(
+                  aiGrouping: _aiGrouping,
+                  visualAlerts: _visualAlerts,
+                  onAiGroupingChanged: (v) => setState(() => _aiGrouping = v),
+                  onVisualAlertsChanged: (v) => setState(() => _visualAlerts = v),
+                ),
+                const SizedBox(height: 16),
+                _LocalizacionCard(settings: settings, timezone: _timezone, onTimezoneChanged: (v) => setState(() => _timezone = v!)),
+                const SizedBox(height: 16),
+                _AparienciaCard(settings: settings),
               ],
             ),
           ),
@@ -284,6 +299,290 @@ class _HorarioRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CardHeader extends StatelessWidget {
+  const _CardHeader({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFFFF6F22), size: 20),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+      ],
+    );
+  }
+}
+
+class _KdsSettingsCard extends StatelessWidget {
+  const _KdsSettingsCard({
+    required this.aiGrouping,
+    required this.visualAlerts,
+    required this.onAiGroupingChanged,
+    required this.onVisualAlertsChanged,
+  });
+
+  final bool aiGrouping;
+  final bool visualAlerts;
+  final ValueChanged<bool> onAiGroupingChanged;
+  final ValueChanged<bool> onVisualAlertsChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardHeader(icon: Icons.settings_rounded, label: 'Ajustes KDS'),
+          const SizedBox(height: 6),
+          const Text(
+            'Configuración avanzada para estaciones de cocina y despacho',
+            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          _KdsToggle(
+            label: 'Agrupación IA',
+            sublabel: 'Por estación de cocina',
+            value: aiGrouping,
+            onChanged: onAiGroupingChanged,
+          ),
+          const SizedBox(height: 12),
+          _KdsToggle(
+            label: 'Alertas Visuales',
+            sublabel: 'Modo alta prioridad',
+            value: visualAlerts,
+            onChanged: onVisualAlertsChanged,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {},
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFFF6F22),
+                side: const BorderSide(color: Color(0xFFFF6F22)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: const Text('Configurar Terminales ›'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KdsToggle extends StatelessWidget {
+  const _KdsToggle({
+    required this.label,
+    required this.sublabel,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String sublabel;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+              Text(sublabel, style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12)),
+            ],
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: const Color(0xFFFF6F22),
+          activeTrackColor: const Color(0xFFFF6F22).withValues(alpha: 0.3),
+        ),
+      ],
+    );
+  }
+}
+
+class _LocalizacionCard extends StatelessWidget {
+  const _LocalizacionCard({
+    required this.settings,
+    required this.timezone,
+    required this.onTimezoneChanged,
+  });
+
+  final AppSettingsProvider settings;
+  final String timezone;
+  final ValueChanged<String?> onTimezoneChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardHeader(icon: Icons.language_rounded, label: 'Localización'),
+          const SizedBox(height: 16),
+          _DropdownRow(
+            label: 'Idioma del Sistema',
+            value: settings.isSpanish ? 'Español (Latinoamérica)' : 'English (US)',
+            items: const ['Español (Latinoamérica)', 'English (US)'],
+            onChanged: (v) {
+              if (v == 'Español (Latinoamérica)') {
+                settings.updateLanguage('es');
+              } else {
+                settings.updateLanguage('en');
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          _DropdownRow(
+            label: 'Zona Horaria',
+            value: timezone,
+            items: const ['GMT-5 (Ciudad de México)', 'GMT-3 (Buenos Aires)', 'GMT-5 (Bogotá)', 'GMT+0 (Londres)'],
+            onChanged: onTimezoneChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DropdownRow extends StatelessWidget {
+  const _DropdownRow({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12)),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2C2C2E),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              dropdownColor: const Color(0xFF2C2C2E),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF8E8E93)),
+              items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AparienciaCard extends StatelessWidget {
+  const _AparienciaCard({required this.settings});
+
+  final AppSettingsProvider settings;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardHeader(icon: Icons.palette_rounded, label: 'Apariencia'),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _ThemeButton(
+                icon: Icons.dark_mode_rounded,
+                label: 'Oscuro',
+                isActive: settings.themeMode == ThemeMode.dark,
+                onTap: () => settings.updateThemeMode(ThemeMode.dark),
+              ),
+              const SizedBox(width: 8),
+              _ThemeButton(
+                icon: Icons.light_mode_rounded,
+                label: 'Claro',
+                isActive: settings.themeMode == ThemeMode.light,
+                onTap: () => settings.updateThemeMode(ThemeMode.light),
+              ),
+              const SizedBox(width: 8),
+              _ThemeButton(
+                icon: Icons.laptop_rounded,
+                label: 'Sistema',
+                isActive: settings.themeMode == ThemeMode.system,
+                onTap: () => settings.updateThemeMode(ThemeMode.system),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeButton extends StatelessWidget {
+  const _ThemeButton({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFFF6F22) : const Color(0xFF2C2C2E),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: Colors.white, size: 18),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
