@@ -61,16 +61,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     _scrollToForm();
   }
 
-  void _cancelEdit() => setState(() {
-        _editingItem = null;
-        _nameCtrl.clear();
-        _priceCtrl.clear();
-        _descCtrl.clear();
-        _ingredientsCtrl.clear();
-        _imageCtrl.clear();
-        _category = 'Plato';
-      });
-
   String _mapCategory(String raw) {
     const map = {
       'Main': 'Plato',
@@ -81,6 +71,62 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       'Healthy': 'Plato',
     };
     return map[raw] ?? 'Plato';
+  }
+
+  void _cancelEdit() => setState(() {
+        _editingItem = null;
+        _nameCtrl.clear();
+        _priceCtrl.clear();
+        _descCtrl.clear();
+        _ingredientsCtrl.clear();
+        _imageCtrl.clear();
+        _category = 'Plato';
+      });
+
+  Future<void> _submit() async {
+    final name = _nameCtrl.text.trim();
+    final priceStr = _priceCtrl.text.trim();
+    if (name.isEmpty || priceStr.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nombre y precio son obligatorios'),
+          backgroundColor: Color(0xFFD32F2F),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final price = double.tryParse(priceStr) ?? 0;
+    final provider = context.read<MenuManagementProvider>();
+    if (_editingItem != null) {
+      await provider.updateMenuItem(
+        id: _editingItem!.id,
+        name: name,
+        price: price,
+        category: _category,
+        description: _descCtrl.text.trim(),
+        imageUrl: _imageCtrl.text.trim(),
+      );
+    } else {
+      await provider.createMenuItem(
+        name: name,
+        price: price,
+        category: _category,
+        description: _descCtrl.text.trim(),
+        ingredients: _ingredientsCtrl.text.trim(),
+        imageUrl: _imageCtrl.text.trim(),
+      );
+    }
+    _cancelEdit();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('¡Plato publicado! Ya está disponible para los clientes'),
+        backgroundColor: Color(0xFF2E7D32),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> _scrollToForm() async {
@@ -155,6 +201,19 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                   ),
                   const SizedBox(height: 20),
                   SizedBox(key: _formAnchorKey),
+                  _AddDishForm(
+                    nameCtrl: _nameCtrl,
+                    priceCtrl: _priceCtrl,
+                    ingredientsCtrl: _ingredientsCtrl,
+                    descCtrl: _descCtrl,
+                    imageCtrl: _imageCtrl,
+                    category: _category,
+                    isEditing: _editingItem != null,
+                    onCategoryChanged: (v) => setState(() => _category = v),
+                    onSubmit: _submit,
+                    onCancel: _editingItem != null ? _cancelEdit : null,
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -501,6 +560,261 @@ class _IconBtn extends StatelessWidget {
         ),
         child: Icon(icon, color: color, size: 16),
       ),
+    );
+  }
+}
+
+// ── Add / Edit Dish Form ──────────────────────────────────────────────────────
+
+class _AddDishForm extends StatelessWidget {
+  const _AddDishForm({
+    required this.nameCtrl,
+    required this.priceCtrl,
+    required this.ingredientsCtrl,
+    required this.descCtrl,
+    required this.imageCtrl,
+    required this.category,
+    required this.isEditing,
+    required this.onCategoryChanged,
+    required this.onSubmit,
+    this.onCancel,
+  });
+
+  final TextEditingController nameCtrl;
+  final TextEditingController priceCtrl;
+  final TextEditingController ingredientsCtrl;
+  final TextEditingController descCtrl;
+  final TextEditingController imageCtrl;
+  final String category;
+  final bool isEditing;
+  final ValueChanged<String> onCategoryChanged;
+  final VoidCallback onSubmit;
+  final VoidCallback? onCancel;
+
+  static const _categories = ['Plato', 'Bebida', 'Postre', 'Entrada'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isEditing ? 'Editar Plato' : 'Añadir Nuevo Plato',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _FormField(
+            controller: nameCtrl,
+            label: 'Nombre del Plato*',
+            hint: 'Ej: Risotto de Azafrán',
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _FormField(
+                  controller: priceCtrl,
+                  label: 'Precio (\$)*',
+                  hint: '0',
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Categoría',
+                      style: TextStyle(
+                        color: Color(0xFF8E8E93),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF2C2C2E)),
+                      ),
+                      child: DropdownButton<String>(
+                        value: category,
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        dropdownColor: const Color(0xFF1C1C1E),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        items: _categories
+                            .map(
+                              (c) => DropdownMenuItem(
+                                value: c,
+                                child: Text(c),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) {
+                          if (v != null) onCategoryChanged(v);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _FormField(
+            controller: ingredientsCtrl,
+            label: 'Ingredientes',
+            hint: 'Separados por coma...',
+            maxLines: 2,
+          ),
+          const SizedBox(height: 12),
+          _FormField(
+            controller: descCtrl,
+            label: 'Descripción',
+            hint: 'Describe la experiencia sensorial...',
+            maxLines: 3,
+          ),
+          const SizedBox(height: 12),
+          _FormField(
+            controller: imageCtrl,
+            label: 'Link de Imagen',
+            hint: 'https://...',
+            suffix: const Icon(
+              Icons.image_outlined,
+              color: Color(0xFF8E8E93),
+              size: 20,
+            ),
+          ),
+          const SizedBox(height: 20),
+          if (onCancel != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onCancel,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: Color(0xFF2C2C2E)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Cancelar edición',
+                    style: TextStyle(color: Color(0xFF8E8E93)),
+                  ),
+                ),
+              ),
+            ),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: FilledButton(
+              onPressed: onSubmit,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6F22),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                isEditing ? 'Guardar Cambios' : 'Publicar en Menú',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FormField extends StatelessWidget {
+  const _FormField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    this.keyboardType = TextInputType.text,
+    this.maxLines = 1,
+    this.suffix,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final TextInputType keyboardType;
+  final int maxLines;
+  final Widget? suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF8E8E93),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          minLines: 1,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Color(0xFF3A3A3C), fontSize: 14),
+            suffixIcon: suffix,
+            filled: true,
+            fillColor: Colors.black,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF2C2C2E)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF2C2C2E)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFFF6F22)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
