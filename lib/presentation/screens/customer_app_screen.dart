@@ -10,7 +10,7 @@ import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
 import '../widgets/ai_chat_box.dart';
 import '../widgets/ai_message_bubble.dart';
-import '../widgets/order_progress.dart';
+import 'order_tracking_screen.dart';
 
 class CustomerAppScreen extends StatelessWidget {
   const CustomerAppScreen({super.key});
@@ -28,6 +28,7 @@ class CustomerAppScreen extends StatelessWidget {
     'IA',
     'Menú',
     'Pedidos',
+    'Historial',
     'Perfil',
   ];
 
@@ -46,7 +47,8 @@ class CustomerAppScreen extends StatelessWidget {
             _SmartCartView(),
             _AiConciergeView(),
             _CheckoutView(),
-            _TrackingView(),
+            OrderTrackingScreen(),
+            _HistoryView(),
             _CustomerProfileView(),
           ],
         ),
@@ -63,6 +65,8 @@ class CustomerAppScreen extends StatelessWidget {
             case 2:
               flow.setCustomerScreen(CustomerScreen.tracking);
             case 3:
+              flow.setCustomerScreen(CustomerScreen.history);
+            case 4:
               flow.setCustomerScreen(CustomerScreen.profile);
           }
         },
@@ -84,8 +88,10 @@ class CustomerAppScreen extends StatelessWidget {
         return 1;
       case CustomerScreen.tracking:
         return 2;
-      case CustomerScreen.profile:
+      case CustomerScreen.history:
         return 3;
+      case CustomerScreen.profile:
+        return 4;
     }
   }
 
@@ -898,204 +904,176 @@ class _CheckoutView extends StatelessWidget {
   }
 }
 
-class _TrackingView extends StatelessWidget {
-  const _TrackingView();
+class _HistoryView extends StatelessWidget {
+  const _HistoryView();
 
   @override
   Widget build(BuildContext context) {
     final order = context.watch<OrderProvider>();
-    final flow = context.read<AppDemoProvider>();
+    final settings = context.watch<AppSettingsProvider>();
+    final items = order.orderedItems;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+    return Column(
+      children: [
+        Container(
+          color: Colors.black,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6F22),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.restaurant_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'OrdeNow',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: settings.toggleLanguage,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'XA',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: items.isEmpty
+              ? const _EmptyHistory()
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+                  children: [
+                    const Text(
+                      'Historial de pedidos',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...items.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1C1C1E),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF6F22)
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.restaurant_rounded,
+                                  color: Color(0xFFFF6F22),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                      item.category,
+                                      style: const TextStyle(
+                                        color: Color(0xFF8E8E93),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                _formatPrice(item.price),
+                                style: const TextStyle(
+                                  color: Color(0xFFFF6F22),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyHistory extends StatelessWidget {
+  const _EmptyHistory();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _CustomerHeader(
-            title: 'OrdeNow',
-            leading: const CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.black,
-              child: Icon(Icons.person_outline, color: Colors.white70),
-            ),
-            trailing: IconButton(
-              onPressed: () => flow.setCustomerScreen(CustomerScreen.cart),
-              icon: const Icon(Icons.shopping_bag_outlined),
-            ),
+          Icon(
+            Icons.receipt_long_outlined,
+            color: Color(0xFF3A3A3C),
+            size: 64,
           ),
-          const SizedBox(height: 28),
-          Container(
-            height: 275,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              image: const DecorationImage(
-                image: AssetImage('lib/assets/images/background_bienvenida.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.85),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: const Padding(
-                padding: EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _Tag(text: 'ORDER #8821', color: Color(0xFF188A31)),
-                    SizedBox(height: 14),
-                    Text(
-                      'Preparing your\nSignature\nCourse',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        height: 1.1,
-                        fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Estimated arrival at your table: 12 mins',
-                      style: TextStyle(
-                        color: Color(0xFFD5C8C1),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2E2B28),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Text(
-                      'Live Status',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Spacer(),
-                    Text(
-                      'LIVE KITCHEN FEED',
-                      style: TextStyle(
-                        color: Color(0xFF84D975),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                OrderProgress(currentStep: order.orderStepIndex),
-                const SizedBox(height: 16),
-                if (order.activeOrder != null)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: OutlinedButton(
-                      onPressed: order.advanceKitchenStatus,
-                      child: const Text('Advance Status'),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D1B1A),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.qr_code_2_rounded, size: 120, color: Colors.white),
-                SizedBox(height: 16),
-                Text(
-                  'Digital Receipt',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Scan to pay or split the bill with your party',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFFB5A59D)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2B2927),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'AI Concierge',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Need to add another drink? Allergies? Just ask me anything about your current order.',
-                  style: TextStyle(color: Color(0xFFD9C1B7), height: 1.5),
-                ),
-                const SizedBox(height: 18),
-                FilledButton(
-                  onPressed: () => flow.setCustomerScreen(CustomerScreen.aiConcierge),
-                  child: const Text('Talk to AI'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'Order Details',
+          SizedBox(height: 16),
+          Text(
+            'Sin historial',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
+              color: Color(0xFF636366),
+              fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 14),
-          ...order.orderedItems.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _OrderDetailRow(menu: item),
-            ),
+          SizedBox(height: 8),
+          Text(
+            'Tus pedidos anteriores\naparecerán aquí.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF3A3A3C)),
           ),
         ],
       ),
@@ -1631,9 +1609,10 @@ class _CustomerBottomBar extends StatelessWidget {
       Icons.auto_awesome_outlined,
       Icons.restaurant_menu_outlined,
       Icons.receipt_long_outlined,
+      Icons.history_outlined,
       Icons.person_outline_rounded,
     ];
-    const labels = ['IA', 'Menú', 'Pedidos', 'Perfil'];
+    const labels = ['IA', 'Menú', 'Pedidos', 'Historial', 'Perfil'];
 
     return Container(
       margin: EdgeInsets.zero,
@@ -2228,61 +2207,6 @@ class _CheckoutField extends StatelessWidget {
           child: Text(
             hint,
             style: const TextStyle(color: Color(0xFF7D746F)),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OrderDetailRow extends StatelessWidget {
-  const _OrderDetailRow({
-    required this.menu,
-  });
-
-  final Menu menu;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Image.asset(
-            CustomerAppScreen.imageFor(menu.id),
-            width: 82,
-            height: 82,
-            fit: BoxFit.cover,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                menu.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                menu.description,
-                style: const TextStyle(color: Color(0xFFB7A39A), height: 1.4),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          _formatPrice(menu.price),
-          style: const TextStyle(
-            color: Color(0xFFEAB8A1),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
           ),
         ),
       ],
