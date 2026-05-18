@@ -36,6 +36,8 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 email: user?.email ?? '',
               ),
               const SizedBox(height: 20),
+              _AjustesCard(settings: settings),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -190,6 +192,172 @@ class _AvatarSection extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+// Ajustes card (idioma + tema)
+// ─────────────────────────────────────────
+
+class _AjustesCard extends StatelessWidget {
+  const _AjustesCard({required this.settings});
+
+  final AppSettingsProvider settings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.settings_rounded, color: Color(0xFFFF6F22), size: 20),
+              SizedBox(width: 10),
+              Text(
+                'Ajustes',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              const Text(
+                'Idioma',
+                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 14),
+              ),
+              const Spacer(),
+              _TogglePill(
+                options: const ['Español', 'English'],
+                selectedIndex: settings.isSpanish ? 0 : 1,
+                onTap: (i) => settings.updateLanguage(i == 0 ? 'es' : 'en'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: Color(0xFF2C2C2E), height: 1),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Text(
+                'Tema',
+                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 14),
+              ),
+              const Spacer(),
+              _ThemeSelector(
+                selected: settings.themeMode,
+                onTap: settings.updateThemeMode,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TogglePill extends StatelessWidget {
+  const _TogglePill({
+    required this.options,
+    required this.selectedIndex,
+    required this.onTap,
+  });
+
+  final List<String> options;
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(options.length, (i) {
+          final isSelected = i == selectedIndex;
+          return GestureDetector(
+            onTap: () => onTap(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFFFF6F22)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                options[i],
+                style: TextStyle(
+                  color: isSelected ? Colors.white : const Color(0xFF8E8E93),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _ThemeSelector extends StatelessWidget {
+  const _ThemeSelector({required this.selected, required this.onTap});
+
+  final ThemeMode selected;
+  final ValueChanged<ThemeMode> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const modes = [ThemeMode.dark, ThemeMode.light, ThemeMode.system];
+    const icons = [
+      Icons.dark_mode_rounded,
+      Icons.light_mode_rounded,
+      Icons.computer_rounded,
+    ];
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(modes.length, (i) {
+        final isSelected = selected == modes[i];
+        return GestureDetector(
+          onTap: () => onTap(modes[i]),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 36,
+            height: 36,
+            margin: EdgeInsets.only(left: i > 0 ? 8 : 0),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color(0xFFFF6F22)
+                  : const Color(0xFF2C2C2E),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icons[i],
+              color: isSelected ? Colors.white : const Color(0xFF8E8E93),
+              size: 18,
+            ),
+          ),
+        );
+      }),
     );
   }
 }
