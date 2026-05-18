@@ -300,6 +300,14 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void finalizeDigitalPayment() {
+    markAsPaid(paymentMethod: 'digital');
+  }
+
+  void requestCashPayment() {
+    requestCashDesk();
+  }
+
   void clearDemoState() {
     _selectedTableId = null;
     _cartMenuIds.clear();
