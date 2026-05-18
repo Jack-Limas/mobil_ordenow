@@ -39,6 +39,7 @@ class SupabaseTables {
   static const String menu = 'menu_items';
   static const String order = 'orders';
   static const String table = 'restaurant_tables';
+  static const String cashRequest = 'cash_requests';
 }
 
 class OrderStatuses {

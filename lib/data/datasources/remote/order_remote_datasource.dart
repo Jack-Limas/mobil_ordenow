@@ -30,4 +30,12 @@ class OrderRemoteDataSource {
       return OrderModel.fromJson(active.first);
     });
   }
+
+  Future<void> insertCashRequest(Map<String, dynamic> data) async {
+    await SupabaseService.insertCashRequest(data);
+  }
+
+  Stream<List<Map<String, dynamic>>> watchCashRequests(String tableId) {
+    return SupabaseService.watchCashRequests(tableId);
+  }
 }

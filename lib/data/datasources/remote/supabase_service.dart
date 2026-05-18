@@ -87,6 +87,20 @@ class SupabaseService {
         .map((rows) => rows.map(Map<String, dynamic>.from).toList());
   }
 
+  // ---------- CASH REQUESTS ----------
+
+  static Future<void> insertCashRequest(Map<String, dynamic> data) async {
+    await client.from(SupabaseTables.cashRequest).insert(data);
+  }
+
+  static Stream<List<Map<String, dynamic>>> watchCashRequests(String tableId) {
+    return client
+        .from(SupabaseTables.cashRequest)
+        .stream(primaryKey: ['id'])
+        .eq('table_id', tableId)
+        .map((rows) => rows.map(Map<String, dynamic>.from).toList());
+  }
+
   // ---------- TABLE ----------
 
   static Future<List<Map<String, dynamic>>> getTables() async {
