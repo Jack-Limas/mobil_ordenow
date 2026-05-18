@@ -143,6 +143,21 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  // 0=Recibido, 1=Cocinando, 2=Reparto, 3=Entregado
+  int get trackingStep {
+    switch (_activeOrder?.status) {
+      case OrderStatuses.preparing:
+        return 1;
+      case OrderStatuses.ready:
+        return 2;
+      case OrderStatuses.delivered:
+      case OrderStatuses.completed:
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
   List<TableEntity> get pendingPaymentTables =>
       _tables.where((table) => table.needsPayment).toList();
 
