@@ -98,12 +98,14 @@ class OrderProvider extends ChangeNotifier {
   final List<String> _cartMenuIds = [];
   Order? _activeOrder;
   String _paymentMethod = 'card';
+  String _diningPreferences = '';
 
   List<Menu> get menu => List.unmodifiable(_menu);
   List<TableEntity> get tables => List.unmodifiable(_tables);
   String? get selectedTableId => _selectedTableId;
   Order? get activeOrder => _activeOrder;
   String get paymentMethod => _paymentMethod;
+  String get diningPreferences => _diningPreferences;
 
   List<Menu> get recommendedMenu =>
       _menu.where((item) => item.recommended).toList();
@@ -161,6 +163,11 @@ class OrderProvider extends ChangeNotifier {
 
   void selectTable(String tableId) {
     _selectedTableId = tableId;
+    notifyListeners();
+  }
+
+  void setDiningPreferences(String value) {
+    _diningPreferences = value;
     notifyListeners();
   }
 
@@ -283,6 +290,7 @@ class OrderProvider extends ChangeNotifier {
     _cartMenuIds.clear();
     _activeOrder = null;
     _paymentMethod = 'card';
+    _diningPreferences = '';
 
     for (var i = 0; i < _tables.length; i++) {
       _tables[i] = TableEntity(
