@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/datasources/local/hive_service.dart';
+import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/order_provider.dart';
 
 class AdminProfileScreen extends StatefulWidget {
   const AdminProfileScreen({super.key});
@@ -42,6 +46,10 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                 _LocalizacionCard(settings: settings, timezone: _timezone, onTimezoneChanged: (v) => setState(() => _timezone = v!)),
                 const SizedBox(height: 16),
                 _AparienciaCard(settings: settings),
+                const SizedBox(height: 24),
+                const _SecuritySection(),
+                const SizedBox(height: 12),
+                const _LogoutButton(),
               ],
             ),
           ),
@@ -584,5 +592,103 @@ class _ThemeButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _SecuritySection extends StatelessWidget {
+  const _SecuritySection();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SEGURIDAD DE LA CUENTA',
+          style: TextStyle(
+            color: Color(0xFF8E8E93),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'Última conexión: Hoy 16:30 - CDMX, MX',
+          style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+        ),
+      ],
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Material(
+        color: const Color(0xFF3A1A1A),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _confirmLogout(context),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: Text(
+                'Cerrar Sesión',
+                style: TextStyle(
+                  color: Color(0xFFFF4444),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1E),
+        title: const Text('¿Cerrar sesión?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Se cerrará la sesión actual. Tendrás que iniciar sesión nuevamente.',
+          style: TextStyle(color: Color(0xFF8E8E93)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: Color(0xFF8E8E93))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Cerrar Sesión',
+              style: TextStyle(color: Color(0xFFFF4444), fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final auth = context.read<AuthProvider>();
+    final order = context.read<OrderProvider>();
+    final flow = context.read<AppDemoProvider>();
+
+    await auth.logout();
+    await HiveService.getUserBox().clear();
+    if (!context.mounted) return;
+    order.clearDemoState();
+    flow.backToWelcome();
   }
 }
