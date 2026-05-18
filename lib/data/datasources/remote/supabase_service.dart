@@ -69,6 +69,14 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(res);
   }
 
+  static Stream<List<Map<String, dynamic>>> watchOrdersByUser(String userId) {
+    return client
+        .from(SupabaseTables.order)
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .map((rows) => rows.map(Map<String, dynamic>.from).toList());
+  }
+
   // ---------- TABLE ----------
 
   static Future<List<Map<String, dynamic>>> getTables() async {
