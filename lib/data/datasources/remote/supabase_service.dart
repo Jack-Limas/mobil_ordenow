@@ -56,6 +56,16 @@ class SupabaseService {
     await client.from(SupabaseTables.order).upsert(data);
   }
 
+  static Future<void> updateOrderStatus({
+    required String orderId,
+    required String status,
+  }) async {
+    await client.from(SupabaseTables.order).update({
+      'status': status,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', orderId);
+  }
+
   static Future<List<Map<String, dynamic>>> getOrders() async {
     final res = await client.from(SupabaseTables.order).select();
     return List<Map<String, dynamic>>.from(res);

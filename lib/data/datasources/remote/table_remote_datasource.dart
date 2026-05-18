@@ -20,4 +20,12 @@ class TableRemoteDataSource {
       needsPayment: false,
     );
   }
+
+  Future<void> releaseTable(String tableId) {
+    return SupabaseService.updateTableStatus(
+      tableId: tableId,
+      occupied: false,
+      needsPayment: false,
+    );
+  }
 }

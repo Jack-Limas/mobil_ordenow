@@ -15,6 +15,13 @@ class OrderRemoteDataSource {
     return orders.map(OrderModel.fromJson).toList();
   }
 
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String status,
+  }) async {
+    await SupabaseService.updateOrderStatus(orderId: orderId, status: status);
+  }
+
   Stream<OrderModel?> watchActiveOrder(String userId) {
     return SupabaseService.watchOrdersByUser(userId).map((rows) {
       final active =
