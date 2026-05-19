@@ -73,8 +73,10 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
               subtitle:
                   'This simulated journey lets you test table selection, AI ordering, live kitchen updates and payment.',
               trailing: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B00).withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(18),
@@ -105,8 +107,8 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                     icon: Icons.payments_rounded,
                     label: order.hasActiveOrder
                         ? order.isPaid
-                            ? 'Paid'
-                            : 'Pending payment'
+                              ? 'Paid'
+                              : 'Pending payment'
                         : 'No active order',
                   ),
                 ],
@@ -143,7 +145,8 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                       shrinkWrap: true,
                       physics: const BouncingScrollPhysics(),
                       itemCount: ai.messages.length,
-                      separatorBuilder: (_, index) => const SizedBox(height: 10),
+                      separatorBuilder: (_, index) =>
+                          const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final message = ai.messages[index];
                         return AiMessageBubble(
@@ -157,25 +160,26 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: [
-                      'I want something premium',
-                      'Any light options for allergies?',
-                      'Suggest a drink',
-                      'What is my order status?',
-                    ].map((prompt) {
-                      return ActionChip(
-                        label: Text(prompt),
-                        onPressed: () {
-                          ai.sendMessage(
-                            prompt: prompt,
-                            recommendedMenu: order.recommendedMenu,
-                            cartItems: order.cartItems,
-                            tableNumber: table?.number,
-                            orderStatus: order.currentOrderStatus,
+                    children:
+                        [
+                          'I want something premium',
+                          'Any light options for allergies?',
+                          'Suggest a drink',
+                          'What is my order status?',
+                        ].map((prompt) {
+                          return ActionChip(
+                            label: Text(prompt),
+                            onPressed: () {
+                              ai.sendMessage(
+                                prompt: prompt,
+                                recommendedMenu: order.menu,
+                                cartItems: order.cartItems,
+                                tableNumber: table?.number,
+                                orderStatus: order.currentOrderStatus,
+                              );
+                            },
                           );
-                        },
-                      );
-                    }).toList(),
+                        }).toList(),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -193,7 +197,7 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                         onPressed: () {
                           ai.sendMessage(
                             prompt: _chatController.text,
-                            recommendedMenu: order.recommendedMenu,
+                            recommendedMenu: order.menu,
                             cartItems: order.cartItems,
                             tableNumber: table?.number,
                             orderStatus: order.currentOrderStatus,
@@ -227,7 +231,8 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                   return MenuItemCard(
                     menu: item,
                     imagePath:
-                        _menuImages[item.id] ?? 'lib/assets/images/background_bienvenida.png',
+                        _menuImages[item.id] ??
+                        'lib/assets/images/background_bienvenida.png',
                     onOrderWithAi: () => order.addItemToCart(item.id),
                   );
                 },
@@ -294,7 +299,8 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                                 ),
                               ),
                               IconButton(
-                                onPressed: () => order.removeItemFromCart(item.id),
+                                onPressed: () =>
+                                    order.removeItemFromCart(item.id),
                                 icon: const Icon(Icons.close_rounded),
                               ),
                             ],
@@ -325,12 +331,14 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: !order.hasSelectedTable || order.cartItems.isEmpty
+                      onPressed:
+                          !order.hasSelectedTable || order.cartItems.isEmpty
                           ? null
                           : () {
                               order.placeDemoOrder(
                                 userId: auth.currentUser?.id ?? 'demo-customer',
-                                notes: 'No peanuts, medium spice, sparkling water.',
+                                notes:
+                                    'No peanuts, medium spice, sparkling water.',
                               );
                             },
                       child: const Text('Send Order To Kitchen'),
@@ -445,10 +453,7 @@ class _CustomerDemoScreenState extends State<CustomerDemoScreen> {
 }
 
 class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-  });
+  const _InfoChip({required this.icon, required this.label});
 
   final IconData icon;
   final String label;

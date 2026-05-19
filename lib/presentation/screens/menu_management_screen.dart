@@ -42,7 +42,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       _priceCtrl.text = item.price.toInt().toString();
       _descCtrl.text = item.description;
       _ingredientsCtrl.text = item.tags.join(', ');
-      _imageCtrl.clear();
+      _imageCtrl.text = item.imageUrl;
       _category = _mapCategory(item.category);
     });
     _scrollToForm();
@@ -74,14 +74,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   void _cancelEdit() => setState(() {
-        _editingItem = null;
-        _nameCtrl.clear();
-        _priceCtrl.clear();
-        _descCtrl.clear();
-        _ingredientsCtrl.clear();
-        _imageCtrl.clear();
-        _category = 'Plato';
-      });
+    _editingItem = null;
+    _nameCtrl.clear();
+    _priceCtrl.clear();
+    _descCtrl.clear();
+    _ingredientsCtrl.clear();
+    _imageCtrl.clear();
+    _category = 'Plato';
+  });
 
   Future<void> _submit() async {
     final name = _nameCtrl.text.trim();
@@ -145,8 +145,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1E),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           '¿Eliminar plato?',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
@@ -198,11 +197,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     loading: mgmt.loading,
                     onEdit: _openEdit,
                     onDelete: _confirmDelete,
-                  ),
-                  const SizedBox(height: 20),
-                  _AiSuggestionCard(
-                    suggestion: mgmt.aiSuggestion,
-                    onApply: _openNew,
                   ),
                   const SizedBox(height: 20),
                   SizedBox(key: _formAnchorKey),
@@ -271,8 +265,10 @@ class _MenuMgmtAppBar extends StatelessWidget {
             GestureDetector(
               onTap: () => settings.toggleLanguage(),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1C1C1E),
                   borderRadius: BorderRadius.circular(8),
@@ -436,8 +432,10 @@ class _DishCard extends StatelessWidget {
                 top: 4,
                 right: 4,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6F22),
                     borderRadius: BorderRadius.circular(6),
@@ -537,7 +535,15 @@ class _DishImage extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: placeholder,
+      child: item.imageUrl.trim().isEmpty
+          ? placeholder
+          : Image.network(
+              item.imageUrl.trim(),
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => placeholder,
+            ),
     );
   }
 }
@@ -564,103 +570,6 @@ class _IconBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: color, size: 16),
-      ),
-    );
-  }
-}
-
-// ── AI Suggestion Card ────────────────────────────────────────────────────────
-
-class _AiSuggestionCard extends StatelessWidget {
-  const _AiSuggestionCard({
-    required this.suggestion,
-    required this.onApply,
-  });
-
-  final String suggestion;
-  final VoidCallback onApply;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A1A00),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFF6F22)),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF6F22).withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: Color(0xFFFF6F22),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Optimizado por IA',
-                style: TextStyle(
-                  color: Color(0xFFFF6F22),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Sugerencias para optimizar tus platos con IA',
-            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 11),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '"$suggestion"',
-              style: const TextStyle(
-                color: Color(0xFFFFD699),
-                fontSize: 13,
-                height: 1.5,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onApply,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFFF6F22),
-                side: const BorderSide(color: Color(0xFFFF6F22)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Text('✦', style: TextStyle(fontSize: 14)),
-              label: const Text(
-                'Aplicar Predicción IA',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -766,10 +675,7 @@ class _AddDishForm extends StatelessWidget {
                         ),
                         items: _categories
                             .map(
-                              (c) => DropdownMenuItem(
-                                value: c,
-                                child: Text(c),
-                              ),
+                              (c) => DropdownMenuItem(value: c, child: Text(c)),
                             )
                             .toList(),
                         onChanged: (v) {
@@ -799,8 +705,8 @@ class _AddDishForm extends StatelessWidget {
           const SizedBox(height: 12),
           _FormField(
             controller: imageCtrl,
-            label: 'Link de Imagen',
-            hint: 'https://...',
+            label: 'Imagen de referencia',
+            hint: 'Pega una URL https://... o una ruta de asset',
             suffix: const Icon(
               Icons.image_outlined,
               color: Color(0xFF8E8E93),

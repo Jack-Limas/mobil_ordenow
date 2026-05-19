@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/utils/constants.dart';
+import '../../data/datasources/remote/supabase_service.dart';
+import '../../data/models/menu_model.dart';
+import '../../data/models/order_model.dart';
 import '../../domain/entities/menu.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/table.dart';
@@ -17,69 +22,10 @@ class CartLineItem {
 
 class OrderProvider extends ChangeNotifier {
   final Uuid _uuid = const Uuid();
+  StreamSubscription<List<Map<String, dynamic>>>? _menuSubscription;
+  StreamSubscription<List<Map<String, dynamic>>>? _activeOrderSubscription;
 
-  final List<Menu> _menu = [
-    Menu(
-      id: 'menu-1',
-      name: 'Saffron Sea Scallops',
-      description: 'Silky scallops with saffron butter and citrus pearls.',
-      price: 68000,
-      category: 'Main',
-      available: true,
-      recommended: true,
-      tags: const ['seafood', 'light', 'chef pick'],
-    ),
-    Menu(
-      id: 'menu-2',
-      name: 'Midnight Pasta',
-      description: 'Black garlic cream pasta with mushrooms and parmesan.',
-      price: 52000,
-      category: 'Main',
-      available: true,
-      recommended: true,
-      tags: const ['vegetarian', 'comfort'],
-    ),
-    Menu(
-      id: 'menu-3',
-      name: 'Smoked Ribeye',
-      description: 'Charcoal ribeye with roasted potato and demi-glace.',
-      price: 78000,
-      category: 'Signature',
-      available: true,
-      recommended: true,
-      tags: const ['beef', 'premium'],
-    ),
-    Menu(
-      id: 'menu-4',
-      name: 'Artisan Harvest Bowl',
-      description: 'Warm quinoa, greens, avocado, mango and house dressing.',
-      price: 44000,
-      category: 'Healthy',
-      available: true,
-      recommended: false,
-      tags: const ['healthy', 'gluten free'],
-    ),
-    Menu(
-      id: 'menu-5',
-      name: 'Lychee Ginger Fizz',
-      description: 'Sparkling lychee drink with ginger and mint.',
-      price: 18000,
-      category: 'Drink',
-      available: true,
-      recommended: true,
-      tags: const ['drink', 'fresh'],
-    ),
-    Menu(
-      id: 'menu-6',
-      name: 'Cacao Old Fashioned',
-      description: 'Dark cacao twist on a classic old fashioned.',
-      price: 26000,
-      category: 'Drink',
-      available: true,
-      recommended: false,
-      tags: const ['drink', 'cocktail'],
-    ),
-  ];
+  List<Menu> _menu = [];
 
   final List<TableEntity> _tables = List.generate(
     8,
@@ -96,6 +42,11 @@ class OrderProvider extends ChangeNotifier {
   Order? _activeOrder;
   String _paymentMethod = 'card';
   String _diningPreferences = '';
+
+  OrderProvider() {
+    _loadRemoteMenu();
+    _subscribeToMenu();
+  }
 
   List<Menu> get menu => List.unmodifiable(_menu);
   List<TableEntity> get tables => List.unmodifiable(_tables);
@@ -245,6 +196,9 @@ class OrderProvider extends ChangeNotifier {
     _cartMenuIds.clear();
     _updateTableState(occupied: true, needsPayment: false);
     notifyListeners();
+
+    _syncActiveOrder();
+    _subscribeToActiveOrder(userId);
   }
 
   void advanceKitchenStatus() {
@@ -275,6 +229,7 @@ class OrderProvider extends ChangeNotifier {
       synced: _activeOrder!.synced,
     );
 
+    _syncActiveOrder();
     notifyListeners();
   }
 
@@ -299,11 +254,18 @@ class OrderProvider extends ChangeNotifier {
     );
 
     _updateTableState(occupied: true, needsPayment: false);
+    _syncActiveOrder();
+    _syncPaymentState(
+      paid: true,
+      paymentMethod: paymentMethod ?? _activeOrder!.paymentMethod,
+    );
     notifyListeners();
   }
 
   void requestCashDesk() {
     _updateTableState(occupied: true, needsPayment: true);
+    _syncActiveOrder();
+    _syncCashRequest();
     notifyListeners();
   }
 
@@ -319,6 +281,8 @@ class OrderProvider extends ChangeNotifier {
     _selectedTableId = null;
     _cartMenuIds.clear();
     _activeOrder = null;
+    _activeOrderSubscription?.cancel();
+    _activeOrderSubscription = null;
     _paymentMethod = 'card';
     _diningPreferences = '';
 
@@ -375,5 +339,130 @@ class OrderProvider extends ChangeNotifier {
       occupied: occupied,
       needsPayment: needsPayment,
     );
+
+    _syncTableState(current.id, occupied: occupied, needsPayment: needsPayment);
+  }
+
+  Future<void> _loadRemoteMenu() async {
+    try {
+      final rows = await SupabaseService.getMenu();
+      _applyRemoteMenu(rows);
+    } catch (_) {
+      // Demo menu remains available when Supabase is not reachable.
+    }
+  }
+
+  void _subscribeToMenu() {
+    try {
+      _menuSubscription = SupabaseService.watchMenu().listen(
+        _applyRemoteMenu,
+        onError: (_) {},
+      );
+    } catch (_) {}
+  }
+
+  void _applyRemoteMenu(List<Map<String, dynamic>> rows) {
+    _menu = rows.map(MenuModel.fromJson).toList();
+    _cartMenuIds.removeWhere((id) => !_menu.any((item) => item.id == id));
+    notifyListeners();
+  }
+
+  void _subscribeToActiveOrder(String userId) {
+    _activeOrderSubscription?.cancel();
+    try {
+      _activeOrderSubscription = SupabaseService.watchOrdersByUser(userId)
+          .listen((rows) {
+            if (_activeOrder == null) {
+              return;
+            }
+
+            Map<String, dynamic>? row;
+            for (final item in rows) {
+              if (item['id'] == _activeOrder!.id) {
+                row = item;
+                break;
+              }
+            }
+
+            if (row == null) {
+              return;
+            }
+
+            _activeOrder = OrderModel.fromJson(row);
+            notifyListeners();
+          }, onError: (_) {});
+    } catch (_) {}
+  }
+
+  Future<void> _syncActiveOrder() async {
+    final order = _activeOrder;
+    if (order == null) {
+      return;
+    }
+
+    try {
+      await SupabaseService.upsertOrder(OrderModel.fromEntity(order).toJson());
+    } catch (_) {
+      // Local state keeps the customer flow usable if the network is down.
+    }
+  }
+
+  Future<void> _syncPaymentState({
+    required bool paid,
+    required String paymentMethod,
+  }) async {
+    final order = _activeOrder;
+    if (order == null) {
+      return;
+    }
+
+    try {
+      await SupabaseService.updateOrderPayment(
+        orderId: order.id,
+        paid: paid,
+        paymentMethod: paymentMethod,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _syncCashRequest() async {
+    final order = _activeOrder;
+    if (order == null) {
+      return;
+    }
+
+    try {
+      await SupabaseService.insertCashRequest({
+        'id': _uuid.v4(),
+        'order_id': order.id,
+        'table_id': order.tableId,
+        'amount': order.totalAmount,
+        'method': 'cash',
+        'status': 'pending',
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _syncTableState(
+    String tableId, {
+    required bool occupied,
+    required bool needsPayment,
+  }) async {
+    try {
+      await SupabaseService.updateTableStatus(
+        tableId: tableId,
+        occupied: occupied,
+        needsPayment: needsPayment,
+      );
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _menuSubscription?.cancel();
+    _activeOrderSubscription?.cancel();
+    super.dispose();
   }
 }

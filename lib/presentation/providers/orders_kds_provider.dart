@@ -90,38 +90,39 @@ class OrdersKdsProvider extends ChangeNotifier {
 
   void _initStreams() {
     try {
-      _ordersSub = _ds.watchActiveOrders().listen(
-        (rows) {
-          _activeOrders = rows.map((r) {
-            return KdsActiveOrder(
-              id: r['id'] as String,
-              tableId: r['table_id'] as String,
-              itemIds: List<String>.from(r['items'] ?? const []),
-              status: r['status'] as String,
-              totalAmount: (r['total_amount'] as num?)?.toDouble() ?? 0,
-              createdAt:
-                  DateTime.tryParse(r['created_at'] as String? ?? '') ??
-                  DateTime.now(),
-              notes: r['notes'] as String? ?? '',
-            );
-          }).toList();
-          notifyListeners();
-        },
-        onError: (_) {},
-      );
-      _cashSub = _ds.watchAllPendingCashRequests().listen(
-        (rows) {
-          _pendingCash = rows.map((r) {
-            return KdsCashRequest(
-              id: r['id'] as String,
-              tableId: r['table_id'] as String,
-              amount: (r['amount'] as num?)?.toDouble() ?? 0,
-            );
-          }).toList();
-          notifyListeners();
-        },
-        onError: (_) {},
-      );
+      _ordersSub = _ds.watchActiveOrders().listen((rows) {
+        _activeOrders =
+            rows.map((r) {
+              return KdsActiveOrder(
+                id: r['id'] as String,
+                tableId: r['table_id'] as String,
+                itemIds: List<String>.from(r['items'] ?? const []),
+                status: r['status'] as String,
+                totalAmount: (r['total_amount'] as num?)?.toDouble() ?? 0,
+                createdAt:
+                    DateTime.tryParse(r['created_at'] as String? ?? '') ??
+                    DateTime.now(),
+                notes: r['notes'] as String? ?? '',
+              );
+            }).toList()..sort((a, b) {
+              final tableA = _tableNumbers[a.tableId] ?? 9999;
+              final tableB = _tableNumbers[b.tableId] ?? 9999;
+              final byTable = tableA.compareTo(tableB);
+              if (byTable != 0) return byTable;
+              return a.createdAt.compareTo(b.createdAt);
+            });
+        notifyListeners();
+      }, onError: (_) {});
+      _cashSub = _ds.watchAllPendingCashRequests().listen((rows) {
+        _pendingCash = rows.map((r) {
+          return KdsCashRequest(
+            id: r['id'] as String,
+            tableId: r['table_id'] as String,
+            amount: (r['amount'] as num?)?.toDouble() ?? 0,
+          );
+        }).toList();
+        notifyListeners();
+      }, onError: (_) {});
     } catch (_) {}
   }
 
@@ -160,6 +161,20 @@ class OrdersKdsProvider extends ChangeNotifier {
       if (order != null) {
         await _ds.updateOrderStatus(orderId: order.id, status: 'paid');
       }
+      await SupabaseService.updateTableStatus(
+        tableId: tableId,
+        occupied: false,
+        needsPayment: false,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> releaseTable({
+    required String orderId,
+    required String tableId,
+  }) async {
+    try {
+      await _ds.updateOrderStatus(orderId: orderId, status: 'completed');
       await SupabaseService.updateTableStatus(
         tableId: tableId,
         occupied: false,

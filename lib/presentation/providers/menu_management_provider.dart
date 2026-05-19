@@ -45,7 +45,11 @@ class MenuManagementProvider extends ChangeNotifier {
   }) async {
     try {
       final tags = ingredients.isNotEmpty
-          ? ingredients.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList()
+          ? ingredients
+                .split(',')
+                .map((s) => s.trim())
+                .where((s) => s.isNotEmpty)
+                .toList()
           : <String>[];
       await _ds.createMenuItem({
         'id': _uuid.v4(),
@@ -53,11 +57,10 @@ class MenuManagementProvider extends ChangeNotifier {
         'price': price,
         'category': category,
         'description': description,
-        'image_url': imageUrl.isNotEmpty ? imageUrl : null,
+        'image_url': imageUrl,
         'available': true,
         'recommended': false,
         'tags': tags,
-        'created_at': DateTime.now().toIso8601String(),
       });
       await _loadMenu();
     } catch (_) {}
@@ -77,8 +80,7 @@ class MenuManagementProvider extends ChangeNotifier {
         'price': price,
         'category': category,
         'description': description,
-        'image_url': imageUrl.isNotEmpty ? imageUrl : null,
-        'updated_at': DateTime.now().toIso8601String(),
+        'image_url': imageUrl,
       });
       await _loadMenu();
     } catch (_) {}

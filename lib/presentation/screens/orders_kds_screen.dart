@@ -5,7 +5,9 @@ import '../providers/app_settings_provider.dart';
 import '../providers/orders_kds_provider.dart';
 
 class OrdersKdsScreen extends StatelessWidget {
-  const OrdersKdsScreen({super.key});
+  const OrdersKdsScreen({super.key, this.showBackButton = true});
+
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +20,7 @@ class OrdersKdsScreen extends StatelessWidget {
           : null,
       body: Column(
         children: [
-          const _KdsAppBar(),
+          _KdsAppBar(showBackButton: showBackButton),
           if (kds.pendingCash.isNotEmpty)
             _CashAlertBanner(request: kds.pendingCash.first),
           Expanded(
@@ -47,7 +49,9 @@ class OrdersKdsScreen extends StatelessWidget {
 }
 
 class _KdsAppBar extends StatelessWidget {
-  const _KdsAppBar();
+  const _KdsAppBar({required this.showBackButton});
+
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -59,14 +63,17 @@ class _KdsAppBar extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(4, 8, 16, 12),
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
+            if (showBackButton)
+              IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.pop(context),
+              )
+            else
+              const SizedBox(width: 12),
             const Icon(
               Icons.restaurant_menu_rounded,
               color: Color(0xFFFF6F22),
@@ -85,8 +92,10 @@ class _KdsAppBar extends StatelessWidget {
             GestureDetector(
               onTap: () => settings.toggleLanguage(),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1C1C1E),
                   borderRadius: BorderRadius.circular(8),
@@ -233,8 +242,9 @@ class _OrderCard extends StatelessWidget {
 
     final isPrep = order.status == 'preparing';
     final statusLabel = isPrep ? 'Preparando' : 'Recibido';
-    final statusColor =
-        isPrep ? const Color(0xFFFF6F22) : const Color(0xFFFFB800);
+    final statusColor = isPrep
+        ? const Color(0xFFFF6F22)
+        : const Color(0xFFFFB800);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -262,8 +272,7 @@ class _OrderCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             _elapsed(),
-            style:
-                const TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+            style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
           ),
           const SizedBox(height: 12),
           for (var i = 0; i < order.itemIds.length; i++)
@@ -282,10 +291,7 @@ class _OrderCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       kds.itemName(order.itemIds[i]),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ),
                 ],
@@ -301,14 +307,10 @@ class _OrderCard extends StatelessWidget {
             height: 44,
             child: isPrep
                 ? _ReadyButton(
-                    onTap: () => kds.markReady(
-                      order.id,
-                      kds.tableLabel(order.tableId),
-                    ),
+                    onTap: () =>
+                        kds.markReady(order.id, kds.tableLabel(order.tableId)),
                   )
-                : _StartButton(
-                    onTap: () => kds.startPreparation(order.id),
-                  ),
+                : _StartButton(onTap: () => kds.startPreparation(order.id)),
           ),
         ],
       ),
@@ -413,15 +415,31 @@ class _OrderCard extends StatelessWidget {
                   value: _formatCop(order.totalAmount),
                 ),
                 const SizedBox(height: 6),
-                _BillRow(
-                  label: 'Servicio (10%)',
-                  value: _formatCop(service),
-                ),
+                _BillRow(label: 'Servicio (10%)', value: _formatCop(service)),
                 const SizedBox(height: 6),
-                _BillRow(
-                  label: 'Total',
-                  value: _formatCop(total),
-                  bold: true,
+                _BillRow(label: 'Total', value: _formatCop(total), bold: true),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => kds.releaseTable(
+                      orderId: order.id,
+                      tableId: order.tableId,
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6F22),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.event_available_rounded, size: 18),
+                    label: const Text(
+                      'Cerrar pedido y liberar mesa',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 14),
               ],
@@ -518,11 +536,7 @@ class _TurnBadge extends StatelessWidget {
 }
 
 class _BillRow extends StatelessWidget {
-  const _BillRow({
-    required this.label,
-    required this.value,
-    this.bold = false,
-  });
+  const _BillRow({required this.label, required this.value, this.bold = false});
 
   final String label;
   final String value;
@@ -579,9 +593,7 @@ class _StartButton extends StatelessWidget {
         backgroundColor: const Color(0xFFFF6F22),
         foregroundColor: Colors.white,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       icon: const Text('🍳', style: TextStyle(fontSize: 16)),
       label: const Text(
@@ -605,9 +617,7 @@ class _ReadyButton extends StatelessWidget {
         backgroundColor: const Color(0xFF1A3A1A),
         foregroundColor: const Color(0xFF4CAF50),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
       label: const Text(
@@ -664,7 +674,11 @@ class _CashFab extends StatelessWidget {
     return FloatingActionButton(
       onPressed: () => _showDialog(context),
       backgroundColor: const Color(0xFFFF6F22),
-      child: const Icon(Icons.attach_money_rounded, color: Colors.white, size: 28),
+      child: const Icon(
+        Icons.attach_money_rounded,
+        color: Colors.white,
+        size: 28,
+      ),
     );
   }
 
@@ -679,8 +693,7 @@ class _CashFab extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1E),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Confirmar Pago en Efectivo',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),

@@ -10,6 +10,7 @@ class MenuModel extends Menu {
     required super.available,
     required super.recommended,
     required super.tags,
+    super.imageUrl = '',
   });
 
   factory MenuModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +23,7 @@ class MenuModel extends Menu {
       available: json['available'] as bool? ?? true,
       recommended: json['recommended'] as bool? ?? false,
       tags: List<String>.from(json['tags'] ?? const []),
+      imageUrl: json['image_url'] as String? ?? '',
     );
   }
 
@@ -35,6 +37,7 @@ class MenuModel extends Menu {
       "available": available,
       "recommended": recommended,
       "tags": tags,
+      "image_url": imageUrl,
     };
   }
 
@@ -48,6 +51,7 @@ class MenuModel extends Menu {
       available: menu.available,
       recommended: menu.recommended,
       tags: menu.tags,
+      imageUrl: menu.imageUrl,
     );
   }
 
@@ -61,6 +65,7 @@ class MenuModel extends Menu {
       available: available,
       recommended: recommended,
       tags: tags,
+      imageUrl: imageUrl,
     );
   }
 }

@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../data/datasources/remote/order_remote_datasource.dart';
+import '../../data/datasources/remote/supabase_service.dart';
+import '../../data/models/table_model.dart';
+import '../../domain/entities/table.dart';
 
 class DashPopularDish {
   final String menuId;
@@ -31,125 +33,159 @@ class DashRecentOrder {
 }
 
 class AdminDashboardProvider extends ChangeNotifier {
-  static const _demoSparkline = <double>[
-    1800000,
-    1650000,
-    2100000,
-    1950000,
-    2200000,
-    2450000,
-  ];
-  static const _demoFlowBars = <double>[8, 12, 15, 10, 17, 14];
+  StreamSubscription<List<Map<String, dynamic>>>? _ordersSub;
+  StreamSubscription<List<Map<String, dynamic>>>? _tablesSub;
 
-  static const _demoPopular = <DashPopularDish>[
-    DashPopularDish(
-        menuId: 'menu-4', name: 'Ensalada de Dragón Exótico', sales: 42),
-    DashPopularDish(
-        menuId: 'menu-3', name: 'Corte Prime Chimichurri', sales: 31),
-    DashPopularDish(
-        menuId: 'menu-2', name: 'Burger Nean Orgánico', sales: 19),
-  ];
+  List<TableEntity> _tables = const [];
+  List<Map<String, dynamic>> _orders = const [];
 
-  static const _demoRecent = <DashRecentOrder>[
-    DashRecentOrder(
-        shortId: '#M21',
-        label: 'Mesa 12 (Toronja)',
-        status: 'preparing',
-        total: 84200),
-    DashRecentOrder(
-        shortId: '#M20',
-        label: 'Juan Delgado',
-        status: 'delivered',
-        total: 72100),
-    DashRecentOrder(
-        shortId: '#M19',
-        label: 'Mesa 7 (Mandarina)',
-        status: 'preparing',
-        total: 52500),
-    DashRecentOrder(
-        shortId: '#M18',
-        label: 'Carlos Rivera',
-        status: 'ready',
-        total: 91300),
-  ];
+  List<TableEntity> get tables => List.unmodifiable(_tables);
+  bool get showActive => true;
+  List<DashPopularDish> get popularDishes => const [];
+  List<double> get salesSparkline => const [];
+  List<double> get flowBars => const [];
+  List<TableEntity> get occupiedTables =>
+      _tables.where((table) => table.occupied || table.needsPayment).toList()
+        ..sort((a, b) => a.number.compareTo(b.number));
 
-  double _salesToday = 2450000;
-  int _activeOrders = 12;
-  double _avgTicket = 42500;
-  bool _showActive = true;
-  List<DashPopularDish> _popular = List.from(_demoPopular);
-  List<DashRecentOrder> _recent = List.from(_demoRecent);
+  int get activeOrders => _orders.where(_isActiveOrder).length;
 
-  StreamSubscription<List<Map<String, dynamic>>>? _sub;
+  double get salesToday {
+    final now = DateTime.now();
+    return _orders
+        .where((order) {
+          final created = DateTime.tryParse(
+            order['created_at']?.toString() ?? '',
+          );
+          final isToday =
+              created != null &&
+              created.year == now.year &&
+              created.month == now.month &&
+              created.day == now.day;
+          return isToday &&
+              (order['paid'] == true ||
+                  order['status'] == 'completed' ||
+                  order['status'] == 'paid');
+        })
+        .fold(
+          0.0,
+          (total, order) =>
+              total + ((order['total_amount'] as num?)?.toDouble() ?? 0),
+        );
+  }
 
-  double get salesToday => _salesToday;
-  int get activeOrders => _activeOrders;
-  double get avgTicket => _avgTicket;
-  bool get showActive => _showActive;
-  List<DashPopularDish> get popularDishes => List.unmodifiable(_popular);
-  List<DashRecentOrder> get recentOrders => List.unmodifiable(_recent);
-  List<double> get salesSparkline => _demoSparkline;
-  List<double> get flowBars => _demoFlowBars;
+  double get avgTicket {
+    final paid = _orders.where((order) {
+      return order['paid'] == true ||
+          order['status'] == 'completed' ||
+          order['status'] == 'paid';
+    }).toList();
+    if (paid.isEmpty) return 0;
+    final total = paid.fold(
+      0.0,
+      (sum, order) => sum + ((order['total_amount'] as num?)?.toDouble() ?? 0),
+    );
+    return total / paid.length;
+  }
+
+  List<DashRecentOrder> get recentOrders => _orders.take(12).map((order) {
+    final id = order['id']?.toString() ?? '';
+    final short = id.isEmpty
+        ? '#---'
+        : '#${id.substring(0, id.length < 4 ? id.length : 4).toUpperCase()}';
+    final table = tableForId(order['table_id']?.toString() ?? '');
+    return DashRecentOrder(
+      shortId: short,
+      label: table == null ? 'Mesa sin asignar' : 'Mesa ${table.number}',
+      status: order['status']?.toString() ?? 'pending',
+      total: (order['total_amount'] as num?)?.toDouble() ?? 0,
+    );
+  }).toList();
 
   AdminDashboardProvider() {
+    _loadInitialData();
     _initStreams();
+  }
+
+  TableEntity? tableForId(String tableId) {
+    for (final table in _tables) {
+      if (table.id == tableId) return table;
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? activeOrderForTable(String tableId) {
+    for (final order in _orders) {
+      if (order['table_id'] == tableId && _isActiveOrder(order)) {
+        return order;
+      }
+    }
+    return null;
+  }
+
+  Future<void> releaseTable(String tableId) async {
+    final activeOrder = activeOrderForTable(tableId);
+
+    // Optimistic update: remove table from local state immediately.
+    _tables = _tables.map((t) {
+      if (t.id == tableId) return t.copyWith(occupied: false, needsPayment: false);
+      return t;
+    }).toList();
+    notifyListeners();
+
+    try {
+      if (activeOrder != null) {
+        await SupabaseService.updateOrderStatus(
+          orderId: activeOrder['id'] as String,
+          status: 'completed',
+        );
+      }
+      await SupabaseService.updateTableStatus(
+        tableId: tableId,
+        occupied: false,
+        needsPayment: false,
+      );
+    } catch (_) {}
+  }
+
+  void setTab({required bool showActive}) {}
+
+  Future<void> _loadInitialData() async {
+    try {
+      final rows = await SupabaseService.getTables();
+      _tables = rows.map(TableModel.fromJson).toList();
+      notifyListeners();
+    } catch (_) {}
+
+    try {
+      _orders = await SupabaseService.getOrders();
+      notifyListeners();
+    } catch (_) {}
   }
 
   void _initStreams() {
     try {
-      _sub = OrderRemoteDataSource()
-          .watchAllOrders()
-          .listen(_processOrders, onError: (_) {});
+      _tablesSub = SupabaseService.watchTables().listen((rows) {
+        _tables = rows.map(TableModel.fromJson).toList();
+        notifyListeners();
+      }, onError: (_) {});
+
+      _ordersSub = SupabaseService.watchAllOrders().listen((rows) {
+        _orders = rows;
+        notifyListeners();
+      }, onError: (_) {});
     } catch (_) {}
   }
 
-  void _processOrders(List<Map<String, dynamic>> rows) {
-    if (rows.isEmpty) return;
-    final today = DateTime.now();
-
-    final paidRows = rows.where((r) {
-      final created = DateTime.tryParse(r['created_at']?.toString() ?? '');
-      final isToday = created != null &&
-          created.year == today.year &&
-          created.month == today.month &&
-          created.day == today.day;
-      return isToday &&
-          (r['status'] == 'completed' || r['status'] == 'paid');
-    }).toList();
-
-    const activeStatuses = {'accepted', 'preparing', 'ready'};
-    final activeRows = rows
-        .where((r) => activeStatuses.contains(r['status']?.toString()))
-        .toList();
-
-    _salesToday = paidRows.fold(
-        0.0, (s, r) => s + ((r['total_amount'] as num?)?.toDouble() ?? 0));
-    _activeOrders = activeRows.length;
-    _avgTicket = paidRows.isEmpty ? 0 : _salesToday / paidRows.length;
-
-    _recent = rows.take(20).map((r) {
-      final id = r['id']?.toString() ?? '';
-      final shortId =
-          '#M${id.substring(0, id.length.clamp(0, 2)).toUpperCase()}';
-      return DashRecentOrder(
-        shortId: shortId,
-        label: 'Mesa ${r['table_id'] ?? '-'}',
-        status: r['status']?.toString() ?? 'pending',
-        total: (r['total_amount'] as num?)?.toDouble() ?? 0,
-      );
-    }).toList();
-
-    notifyListeners();
-  }
-
-  void setTab({required bool showActive}) {
-    _showActive = showActive;
-    notifyListeners();
+  bool _isActiveOrder(Map<String, dynamic> order) {
+    const active = {'pending', 'accepted', 'preparing', 'ready'};
+    return active.contains(order['status']?.toString());
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
+    _ordersSub?.cancel();
+    _tablesSub?.cancel();
     super.dispose();
   }
 }

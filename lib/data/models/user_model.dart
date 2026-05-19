@@ -14,17 +14,27 @@ class UserModel extends User {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String;
+    final email = json['email'] as String;
+    final role =
+        json['role'] as String? ??
+        (id == 'admin' || email.toLowerCase() == 'admin@ordenow.com'
+            ? 'admin'
+            : 'client');
+
     return UserModel(
-      id: json['id'] as String,
-      email: json['email'] as String,
+      id: id,
+      email: email,
       fullName: json['full_name'] as String? ?? json['name'] as String? ?? '',
       password: json['password'] as String? ?? '',
-      role: json['role'] as String? ?? 'client',
+      role: role,
       allergies: List<String>.from(json['allergies'] ?? []),
       preferences: List<String>.from(json['preferences'] ?? []),
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+      updatedAt:
+          DateTime.tryParse(json['updated_at'] as String? ?? '') ??
           DateTime.now(),
     );
   }

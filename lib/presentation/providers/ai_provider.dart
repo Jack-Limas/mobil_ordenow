@@ -20,18 +20,14 @@ class AiProvider extends ChangeNotifier {
 
   bool _isSpeaking = false;
   bool _ttsEnabled = true;
+  bool _isLoading = false;
 
-  final List<DemoAiMessage> _messages = const [
-    DemoAiMessage(
-      text:
-          'Bienvenido a OrdeNow. Puedo recomendarte platos, bebidas, opciones sin alergenos y ayudarte a hacer tu pedido.',
-      isUser: false,
-    ),
-  ].toList();
+  final List<DemoAiMessage> _messages = [];
 
   List<DemoAiMessage> get messages => List.unmodifiable(_messages);
   bool get isSpeaking => _isSpeaking;
   bool get ttsEnabled => _ttsEnabled;
+  bool get isLoading => _isLoading;
 
   AiProvider() {
     _initTts();
@@ -75,6 +71,42 @@ class AiProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> sendGreeting({
+    String? userName,
+    required List<Menu> recommendedMenu,
+    int? tableNumber,
+    List<String> allergies = const [],
+    String diningPreferences = '',
+  }) async {
+    if (_messages.isNotEmpty || _isLoading) return;
+
+    final name = userName?.trim() ?? '';
+    final greetingPrompt = name.isNotEmpty
+        ? 'Saluda a $name por su nombre y preséntate brevemente como el asistente virtual de OrdeNow. Ofrécete a ayudarle a explorar el menú o hacer su pedido.'
+        : 'Saluda al cliente y preséntate brevemente como el asistente virtual de OrdeNow. Ofrécete a ayudarle a explorar el menú o hacer su pedido.';
+
+    _isLoading = true;
+    notifyListeners();
+
+    final reply = await _aiService.generateConciergeReply(
+      prompt: greetingPrompt,
+      recommendedMenu: recommendedMenu,
+      cartItems: const [],
+      tableNumber: tableNumber,
+      orderStatus: '',
+      allergies: allergies,
+      diningPreferences: diningPreferences,
+    );
+
+    _messages.add(DemoAiMessage(text: reply, isUser: false));
+    _isLoading = false;
+    notifyListeners();
+
+    if (_ttsEnabled) {
+      await _tts.speak(reply);
+    }
+  }
+
   Future<void> sendMessage({
     required String prompt,
     required List<Menu> recommendedMenu,
@@ -85,9 +117,10 @@ class AiProvider extends ChangeNotifier {
     String diningPreferences = '',
   }) async {
     final trimmedPrompt = prompt.trim();
-    if (trimmedPrompt.isEmpty) return;
+    if (trimmedPrompt.isEmpty || _isLoading) return;
 
     _messages.add(DemoAiMessage(text: trimmedPrompt, isUser: true));
+    _isLoading = true;
     notifyListeners();
 
     final reply = await _aiService.generateConciergeReply(
@@ -101,6 +134,7 @@ class AiProvider extends ChangeNotifier {
     );
 
     _messages.add(DemoAiMessage(text: reply, isUser: false));
+    _isLoading = false;
     notifyListeners();
 
     if (_ttsEnabled) {

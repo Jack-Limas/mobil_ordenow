@@ -7,51 +7,34 @@ import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
 
-class AdminProfileScreen extends StatefulWidget {
+class AdminProfileScreen extends StatelessWidget {
   const AdminProfileScreen({super.key});
-
-  @override
-  State<AdminProfileScreen> createState() => _AdminProfileScreenState();
-}
-
-class _AdminProfileScreenState extends State<AdminProfileScreen> {
-  bool _aiGrouping = true;
-  bool _visualAlerts = true;
-  String _timezone = 'GMT-5 (Ciudad de México)';
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettingsProvider>();
+    final user = context.watch<AuthProvider>().currentUser;
 
     return Column(
       children: [
         _ProfileAppBar(settings: settings),
         Expanded(
-          child: SingleChildScrollView(
+          child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _IdentitySection(),
-                const SizedBox(height: 16),
-                const _HorariosCard(),
-                const SizedBox(height: 16),
-                _KdsSettingsCard(
-                  aiGrouping: _aiGrouping,
-                  visualAlerts: _visualAlerts,
-                  onAiGroupingChanged: (v) => setState(() => _aiGrouping = v),
-                  onVisualAlertsChanged: (v) => setState(() => _visualAlerts = v),
-                ),
-                const SizedBox(height: 16),
-                _LocalizacionCard(settings: settings, timezone: _timezone, onTimezoneChanged: (v) => setState(() => _timezone = v!)),
-                const SizedBox(height: 16),
-                _AparienciaCard(settings: settings),
-                const SizedBox(height: 24),
-                const _SecuritySection(),
-                const SizedBox(height: 12),
-                const _LogoutButton(),
-              ],
-            ),
+            children: [
+              _IdentityCard(
+                name: user?.fullName.isNotEmpty == true
+                    ? user!.fullName
+                    : 'Administrador',
+                email: user?.email ?? 'admin@ordenow.com',
+              ),
+              const SizedBox(height: 16),
+              _LanguageCard(settings: settings),
+              const SizedBox(height: 16),
+              _AppearanceCard(settings: settings),
+              const SizedBox(height: 24),
+              const _LogoutButton(),
+            ],
           ),
         ),
       ],
@@ -78,16 +61,22 @@ class _ProfileAppBar extends StatelessWidget {
               color: const Color(0xFFFF6F22),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.restaurant_rounded, color: Colors.white, size: 18),
+            child: const Icon(
+              Icons.restaurant_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 10),
           const Text(
             'OrdeNow',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const Spacer(),
-          const Icon(Icons.notifications_outlined, color: Color(0xFF8E8E93), size: 22),
-          const SizedBox(width: 14),
           GestureDetector(
             onTap: settings.toggleLanguage,
             child: Container(
@@ -98,7 +87,11 @@ class _ProfileAppBar extends StatelessWidget {
               ),
               child: Text(
                 settings.isSpanish ? 'ES' : 'EN',
-                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -108,102 +101,148 @@ class _ProfileAppBar extends StatelessWidget {
   }
 }
 
-class _IdentitySection extends StatelessWidget {
-  const _IdentitySection();
+class _IdentityCard extends StatelessWidget {
+  const _IdentityCard({required this.name, required this.email});
+
+  final String name;
+  final String email;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Center(
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.topCenter,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF1C1C1E),
-                  ),
-                  child: const Icon(Icons.store_rounded, color: Color(0xFF8E8E93), size: 40),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  _Badge('VERIFICADO', Color(0xFF4CAF50), Color(0xFF1A3A1A)),
-                  SizedBox(width: 6),
-                  _Badge('IA JEFE', Color(0xFFFF6F22), Color(0xFF2A1A00)),
-                ],
-              ),
-            ],
+    return _SectionCard(
+      child: Column(
+        children: [
+          Container(
+            width: 82,
+            height: 82,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFF2C2C2E),
+            ),
+            child: const Icon(
+              Icons.admin_panel_settings_rounded,
+              color: Color(0xFFFF6F22),
+              size: 38,
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Mesa Fusion & Grill',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          '📍 Polanco, CDMX, ID-0942',
-          style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 14),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFFF6F22),
-                side: const BorderSide(color: Color(0xFFFF6F22)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Editar Perfil'),
+          const SizedBox(height: 14),
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(width: 10),
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF8E8E93),
-                side: const BorderSide(color: Color(0xFF3A3A3C)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('⋯', style: TextStyle(fontSize: 18)),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            email,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A3A1A),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFF4CAF50)),
             ),
-          ],
-        ),
-      ],
+            child: const Text(
+              'ADMINISTRADOR',
+              style: TextStyle(
+                color: Color(0xFF4CAF50),
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _Badge extends StatelessWidget {
-  const _Badge(this.label, this.color, this.bg);
+class _LanguageCard extends StatelessWidget {
+  const _LanguageCard({required this.settings});
 
-  final String label;
-  final Color color;
-  final Color bg;
+  final AppSettingsProvider settings;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color),
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardHeader(icon: Icons.translate_rounded, label: 'Idioma'),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _OptionButton(
+                  label: 'Español',
+                  selected: settings.isSpanish,
+                  onTap: () => settings.updateLanguage('es'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _OptionButton(
+                  label: 'English',
+                  selected: !settings.isSpanish,
+                  onTap: () => settings.updateLanguage('en'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+    );
+  }
+}
+
+class _AppearanceCard extends StatelessWidget {
+  const _AppearanceCard({required this.settings});
+
+  final AppSettingsProvider settings;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardHeader(icon: Icons.palette_rounded, label: 'Apariencia'),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _OptionButton(
+                  label: 'Oscuro',
+                  selected: settings.themeMode == ThemeMode.dark,
+                  onTap: () => settings.updateThemeMode(ThemeMode.dark),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _OptionButton(
+                  label: 'Claro',
+                  selected: settings.themeMode == ThemeMode.light,
+                  onTap: () => settings.updateThemeMode(ThemeMode.light),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _OptionButton(
+                  label: 'Sistema',
+                  selected: settings.themeMode == ThemeMode.system,
+                  onTap: () => settings.updateThemeMode(ThemeMode.system),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -227,90 +266,6 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _HorariosCard extends StatelessWidget {
-  const _HorariosCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.access_time_rounded, color: Color(0xFFFF6F22), size: 20),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Horarios',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: const Icon(Icons.edit_rounded, color: Color(0xFF8E8E93), size: 18),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          const _HorarioRow('Lun - Vie', '08:00 - 23:00', false),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Divider(color: Color(0xFF2C2C2E), height: 1),
-          ),
-          const _HorarioRow('Sábados', '10:00 - 21:00', false),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Divider(color: Color(0xFF2C2C2E), height: 1),
-          ),
-          const _HorarioRow('Domingos', 'Cerrado', true),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFFF6F22),
-                side: const BorderSide(color: Color(0xFFFF6F22)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Text('Gestionar Calendario ›'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HorarioRow extends StatelessWidget {
-  const _HorarioRow(this.day, this.hours, this.isClosed);
-
-  final String day;
-  final String hours;
-  final bool isClosed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(day, style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 14)),
-        ),
-        Text(
-          hours,
-          style: TextStyle(
-            color: isClosed ? const Color(0xFFFF4444) : Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _CardHeader extends StatelessWidget {
   const _CardHeader({required this.icon, required this.label});
 
@@ -323,188 +278,12 @@ class _CardHeader extends StatelessWidget {
       children: [
         Icon(icon, color: const Color(0xFFFF6F22), size: 20),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-      ],
-    );
-  }
-}
-
-class _KdsSettingsCard extends StatelessWidget {
-  const _KdsSettingsCard({
-    required this.aiGrouping,
-    required this.visualAlerts,
-    required this.onAiGroupingChanged,
-    required this.onVisualAlertsChanged,
-  });
-
-  final bool aiGrouping;
-  final bool visualAlerts;
-  final ValueChanged<bool> onAiGroupingChanged;
-  final ValueChanged<bool> onVisualAlertsChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _CardHeader(icon: Icons.settings_rounded, label: 'Ajustes KDS'),
-          const SizedBox(height: 6),
-          const Text(
-            'Configuración avanzada para estaciones de cocina y despacho',
-            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
-          ),
-          const SizedBox(height: 16),
-          _KdsToggle(
-            label: 'Agrupación IA',
-            sublabel: 'Por estación de cocina',
-            value: aiGrouping,
-            onChanged: onAiGroupingChanged,
-          ),
-          const SizedBox(height: 12),
-          _KdsToggle(
-            label: 'Alertas Visuales',
-            sublabel: 'Modo alta prioridad',
-            value: visualAlerts,
-            onChanged: onVisualAlertsChanged,
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFFF6F22),
-                side: const BorderSide(color: Color(0xFFFF6F22)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Text('Configurar Terminales ›'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _KdsToggle extends StatelessWidget {
-  const _KdsToggle({
-    required this.label,
-    required this.sublabel,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final String sublabel;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-              Text(sublabel, style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12)),
-            ],
-          ),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: const Color(0xFFFF6F22),
-          activeTrackColor: const Color(0xFFFF6F22).withValues(alpha: 0.3),
-        ),
-      ],
-    );
-  }
-}
-
-class _LocalizacionCard extends StatelessWidget {
-  const _LocalizacionCard({
-    required this.settings,
-    required this.timezone,
-    required this.onTimezoneChanged,
-  });
-
-  final AppSettingsProvider settings;
-  final String timezone;
-  final ValueChanged<String?> onTimezoneChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _CardHeader(icon: Icons.language_rounded, label: 'Localización'),
-          const SizedBox(height: 16),
-          _DropdownRow(
-            label: 'Idioma del Sistema',
-            value: settings.isSpanish ? 'Español (Latinoamérica)' : 'English (US)',
-            items: const ['Español (Latinoamérica)', 'English (US)'],
-            onChanged: (v) {
-              if (v == 'Español (Latinoamérica)') {
-                settings.updateLanguage('es');
-              } else {
-                settings.updateLanguage('en');
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          _DropdownRow(
-            label: 'Zona Horaria',
-            value: timezone,
-            items: const ['GMT-5 (Ciudad de México)', 'GMT-3 (Buenos Aires)', 'GMT-5 (Bogotá)', 'GMT+0 (Londres)'],
-            onChanged: onTimezoneChanged,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DropdownRow extends StatelessWidget {
-  const _DropdownRow({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  final String label;
-  final String value;
-  final List<String> items;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12)),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2C2C2E),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              dropdownColor: const Color(0xFF2C2C2E),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF8E8E93)),
-              items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-              onChanged: onChanged,
-            ),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -512,112 +291,37 @@ class _DropdownRow extends StatelessWidget {
   }
 }
 
-class _AparienciaCard extends StatelessWidget {
-  const _AparienciaCard({required this.settings});
-
-  final AppSettingsProvider settings;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _CardHeader(icon: Icons.palette_rounded, label: 'Apariencia'),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _ThemeButton(
-                icon: Icons.dark_mode_rounded,
-                label: 'Oscuro',
-                isActive: settings.themeMode == ThemeMode.dark,
-                onTap: () => settings.updateThemeMode(ThemeMode.dark),
-              ),
-              const SizedBox(width: 8),
-              _ThemeButton(
-                icon: Icons.light_mode_rounded,
-                label: 'Claro',
-                isActive: settings.themeMode == ThemeMode.light,
-                onTap: () => settings.updateThemeMode(ThemeMode.light),
-              ),
-              const SizedBox(width: 8),
-              _ThemeButton(
-                icon: Icons.laptop_rounded,
-                label: 'Sistema',
-                isActive: settings.themeMode == ThemeMode.system,
-                onTap: () => settings.updateThemeMode(ThemeMode.system),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ThemeButton extends StatelessWidget {
-  const _ThemeButton({
-    required this.icon,
+class _OptionButton extends StatelessWidget {
+  const _OptionButton({
     required this.label,
-    required this.isActive,
+    required this.selected,
     required this.onTap,
   });
 
-  final IconData icon;
   final String label;
-  final bool isActive;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFFFF6F22) : const Color(0xFF2C2C2E),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: Colors.white, size: 18),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-              ),
-            ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFFF6F22) : const Color(0xFF2C2C2E),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SecuritySection extends StatelessWidget {
-  const _SecuritySection();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'SEGURIDAD DE LA CUENTA',
-          style: TextStyle(
-            color: Color(0xFF8E8E93),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          'Última conexión: Hoy 16:30 - CDMX, MX',
-          style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
-        ),
-      ],
     );
   }
 }
@@ -639,7 +343,7 @@ class _LogoutButton extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
-                'Cerrar Sesión',
+                'Cerrar sesion',
                 style: TextStyle(
                   color: Color(0xFFFF4444),
                   fontSize: 16,
@@ -658,21 +362,24 @@ class _LogoutButton extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1E),
-        title: const Text('¿Cerrar sesión?', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Cerrar sesion',
+          style: TextStyle(color: Colors.white),
+        ),
         content: const Text(
-          'Se cerrará la sesión actual. Tendrás que iniciar sesión nuevamente.',
+          'Tendras que iniciar sesion nuevamente.',
           style: TextStyle(color: Color(0xFF8E8E93)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar', style: TextStyle(color: Color(0xFF8E8E93))),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text(
-              'Cerrar Sesión',
-              style: TextStyle(color: Color(0xFFFF4444), fontWeight: FontWeight.w700),
+              'Cerrar sesion',
+              style: TextStyle(color: Color(0xFFFF4444)),
             ),
           ),
         ],

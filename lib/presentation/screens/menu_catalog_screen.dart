@@ -41,12 +41,14 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
     final order = context.read<OrderProvider>();
     ai.sendMessage(
       prompt: 'El cliente quiere saber sobre: ${menu.name}',
-      recommendedMenu: order.recommendedMenu,
+      recommendedMenu: order.menu,
       cartItems: order.cartItems,
       tableNumber: order.selectedTable?.number,
       orderStatus: order.currentOrderStatus,
     );
-    context.read<AppDemoProvider>().setCustomerScreen(CustomerScreen.aiConcierge);
+    context.read<AppDemoProvider>().setCustomerScreen(
+      CustomerScreen.aiConcierge,
+    );
   }
 
   @override
@@ -78,7 +80,9 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? const Color(0xFFFF6F22)
@@ -111,18 +115,20 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                       padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        mainAxisExtent: 320,
-                      ),
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                            mainAxisExtent: 320,
+                          ),
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final item = filtered[index];
                         return MenuItemCard(
                           menu: item,
-                          imagePath: _menuImages[item.id] ??
-                              'lib/assets/images/background_bienvenida.png',
+                          imagePath: item.imageUrl.isNotEmpty
+                              ? item.imageUrl
+                              : _menuImages[item.id] ??
+                                    'lib/assets/images/background_bienvenida.png',
                           onOrderWithAi: () => _orderWithAi(item),
                         );
                       },
@@ -203,18 +209,11 @@ class _EmptyCategory extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.restaurant_rounded,
-            color: Color(0xFF3A3A3C),
-            size: 56,
-          ),
+          Icon(Icons.restaurant_rounded, color: Color(0xFF3A3A3C), size: 56),
           SizedBox(height: 16),
           Text(
             'No hay platos en esta categoría',
-            style: TextStyle(
-              color: Color(0xFF8E8E93),
-              fontSize: 15,
-            ),
+            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 15),
           ),
         ],
       ),

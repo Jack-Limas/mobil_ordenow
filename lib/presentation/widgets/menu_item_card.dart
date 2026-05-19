@@ -30,32 +30,16 @@ class MenuItemCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
-                child: Image.asset(
-                  imagePath,
-                  height: 140,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 140,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2C2C2E),
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(12)),
-                    ),
-                    child: const Icon(
-                      Icons.restaurant_rounded,
-                      color: Color(0xFF3A3A3C),
-                      size: 48,
-                    ),
-                  ),
-                ),
+                child: _MenuImage(imagePath: imagePath),
               ),
               Positioned(
                 top: 10,
                 left: 10,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6F22),
                     borderRadius: BorderRadius.circular(999),
@@ -134,6 +118,54 @@ class MenuItemCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MenuImage extends StatelessWidget {
+  const _MenuImage({required this.imagePath});
+
+  final String imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = imagePath.trim();
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return Image.network(
+        path,
+        height: 140,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const _ImagePlaceholder(),
+      );
+    }
+
+    return Image.asset(
+      path,
+      height: 140,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const _ImagePlaceholder(),
+    );
+  }
+}
+
+class _ImagePlaceholder extends StatelessWidget {
+  const _ImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 140,
+      decoration: const BoxDecoration(
+        color: Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      child: const Icon(
+        Icons.restaurant_rounded,
+        color: Color(0xFF3A3A3C),
+        size: 48,
       ),
     );
   }

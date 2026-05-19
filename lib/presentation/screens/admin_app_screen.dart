@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/entities/table.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/order_provider.dart';
 import 'admin_profile_screen.dart';
 import 'menu_management_screen.dart';
 import 'orders_kds_screen.dart';
@@ -44,10 +44,10 @@ class _AdminAppScreenState extends State<AdminAppScreen> {
         child: IndexedStack(
           index: flow.adminScreen.index,
           children: const [
-            _AdminDashboardView(),
-            _AdminMenuManagementView(),
-            _AdminOrderManagementView(),
-            _AdminProfileView(),
+            _AdminHomeView(),
+            MenuManagementScreen(),
+            OrdersKdsScreen(showBackButton: false),
+            AdminProfileScreen(),
           ],
         ),
       ),
@@ -55,23 +55,12 @@ class _AdminAppScreenState extends State<AdminAppScreen> {
         selectedIndex: flow.adminScreen.index,
         onTap: (index) => flow.setAdminScreen(AdminScreen.values[index]),
       ),
-      floatingActionButton: flow.adminScreen == AdminScreen.dashboard
-          ? FloatingActionButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const OrdersKdsScreen()),
-              ),
-              backgroundColor: const Color(0xFFFF6F22),
-              child: const Icon(Icons.add, color: Colors.white),
-            )
-          : null,
     );
   }
 }
 
-class _AdminDashboardView extends StatelessWidget {
-  const _AdminDashboardView();
+class _AdminHomeView extends StatelessWidget {
+  const _AdminHomeView();
 
   @override
   Widget build(BuildContext context) {
@@ -80,65 +69,38 @@ class _AdminDashboardView extends StatelessWidget {
 
     return Column(
       children: [
-        _DashboardAppBar(settings: settings),
+        _AdminAppBar(settings: settings),
         Expanded(
-          child: SingleChildScrollView(
+          child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Resumen del Día',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
+            children: [
+              const Text(
+                'Mesas ocupadas',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  _todaySubtitle(),
-                  style: const TextStyle(
-                    color: Color(0xFF8E8E93),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _SalesCard(dash: dash),
-                const SizedBox(height: 12),
-                _ActiveOrdersCard(dash: dash),
-                const SizedBox(height: 12),
-                _AvgTicketCard(dash: dash),
-                const SizedBox(height: 24),
-                _PopularDishesSection(dash: dash),
-                const SizedBox(height: 24),
-                _OrderFlowSection(dash: dash),
-                const SizedBox(height: 24),
-                _RecentOrdersSection(dash: dash),
-              ],
-            ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${dash.occupiedTables.length} mesas en servicio • Tiempo real',
+                style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+              _OccupiedTablesSection(dash: dash),
+              const SizedBox(height: 22),
+              _StatsSection(dash: dash),
+            ],
           ),
         ),
       ],
     );
   }
-
-  String _todaySubtitle() {
-    final now = DateTime.now();
-    const weekdays = [
-      'Lunes', 'Martes', 'Miércoles', 'Jueves',
-      'Viernes', 'Sábado', 'Domingo'
-    ];
-    const months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
-    return '${weekdays[now.weekday - 1]}, ${now.day} de ${months[now.month - 1]} • Tiempo Real';
-  }
 }
 
-class _DashboardAppBar extends StatelessWidget {
-  const _DashboardAppBar({required this.settings});
+class _AdminAppBar extends StatelessWidget {
+  const _AdminAppBar({required this.settings});
 
   final AppSettingsProvider settings;
 
@@ -196,426 +158,209 @@ class _DashboardAppBar extends StatelessWidget {
   }
 }
 
-class _SalesCard extends StatelessWidget {
-  const _SalesCard({required this.dash});
+class _OccupiedTablesSection extends StatelessWidget {
+  const _OccupiedTablesSection({required this.dash});
 
   final AdminDashboardProvider dash;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: const [
-                    Text(
-                      'VENTAS DEL DÍA',
-                      style: TextStyle(
-                        color: Color(0xFF8E8E93),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(Icons.show_chart_rounded,
-                        color: Color(0xFF8E8E93), size: 18),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _formatCop(dash.salesToday),
-                  style: const TextStyle(
-                    color: Color(0xFF4CAF50),
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Row(
-                  children: [
-                    Icon(Icons.arrow_upward_rounded,
-                        color: Color(0xFF4CAF50), size: 14),
-                    SizedBox(width: 4),
-                    Text(
-                      '+11.5% vs ayer',
-                      style: TextStyle(
-                        color: Color(0xFF4CAF50),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-              ],
+    final tables = dash.occupiedTables;
+    if (tables.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1C1C1E),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Column(
+          children: [
+            Icon(
+              Icons.table_restaurant_outlined,
+              color: Color(0xFF3A3A3C),
+              size: 48,
             ),
-          ),
-          SizedBox(
-            height: 48,
-            child: ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(16)),
-              child: CustomPaint(
-                painter: _SparklinePainter(
-                  data: dash.salesSparkline,
-                  color: const Color(0xFF4CAF50),
-                ),
-                size: const Size(double.infinity, 48),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActiveOrdersCard extends StatelessWidget {
-  const _ActiveOrdersCard({required this.dash});
-
-  final AdminDashboardProvider dash;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Text(
-                'PEDIDOS ACTIVOS',
-                style: TextStyle(
-                  color: Color(0xFF8E8E93),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              Spacer(),
-              Icon(Icons.list_alt_rounded, color: Color(0xFF8E8E93), size: 18),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${dash.activeOrders}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Row(
-            children: [
-              Icon(Icons.timer_outlined, color: Color(0xFF8E8E93), size: 14),
-              SizedBox(width: 4),
-              Text(
-                'Promedio 26 min',
-                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AvgTicketCard extends StatelessWidget {
-  const _AvgTicketCard({required this.dash});
-
-  final AdminDashboardProvider dash;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Text(
-                'TICKET PROMEDIO',
-                style: TextStyle(
-                  color: Color(0xFF8E8E93),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              Spacer(),
-              Icon(Icons.receipt_long_rounded,
-                  color: Color(0xFF8E8E93), size: 18),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _formatCop(dash.avgTicket),
-            style: const TextStyle(
-              color: Color(0xFFFF6F22),
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            '12 Comandas/hora',
-            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SparklinePainter extends CustomPainter {
-  final List<double> data;
-  final Color color;
-
-  const _SparklinePainter({required this.data, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.length < 2) return;
-    final max = data.reduce((a, b) => a > b ? a : b);
-    final min = data.reduce((a, b) => a < b ? a : b);
-    final range = (max - min) == 0 ? 1.0 : max - min;
-
-    final linePaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          color.withValues(alpha: 0.3),
-          color.withValues(alpha: 0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.fill;
-
-    final linePath = Path();
-    final fillPath = Path();
-
-    for (var i = 0; i < data.length; i++) {
-      final x = i / (data.length - 1) * size.width;
-      final y =
-          (1 - (data[i] - min) / range) * (size.height * 0.8) +
-          size.height * 0.1;
-      if (i == 0) {
-        linePath.moveTo(x, y);
-        fillPath.moveTo(x, size.height);
-        fillPath.lineTo(x, y);
-      } else {
-        linePath.lineTo(x, y);
-        fillPath.lineTo(x, y);
-      }
-    }
-
-    fillPath.lineTo(size.width, size.height);
-    fillPath.close();
-
-    canvas.drawPath(fillPath, fillPaint);
-    canvas.drawPath(linePath, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(_SparklinePainter old) =>
-      old.data != data || old.color != color;
-}
-
-class _PopularDishesSection extends StatelessWidget {
-  const _PopularDishesSection({required this.dash});
-
-  final AdminDashboardProvider dash;
-
-  static const _menuImages = <String, String>{
-    'menu-1': 'lib/assets/images/saffron_infused_sea_scallops.png',
-    'menu-2': 'lib/assets/images/midnight_pasta.png',
-    'menu-3': 'lib/assets/images/smoked_ribeye.png',
-    'menu-4': 'lib/assets/images/artisan_harvest_bowl.png',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final dishes = dash.popularDishes;
-    final maxSales = dishes.isEmpty
-        ? 1
-        : dishes.map((d) => d.sales).reduce((a, b) => a > b ? a : b);
-
-    return Column(
-      children: [
-        Row(
-          children: const [
+            SizedBox(height: 14),
             Text(
-              'Platos Populares',
+              'No hay mesas ocupadas',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            Spacer(),
+            SizedBox(height: 6),
             Text(
-              'Ver todo',
-              style: TextStyle(
-                color: Color(0xFFFF6F22),
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+              'Cuando un cliente reserve una mesa, aparecera aqui.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF8E8E93), height: 1.4),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF1C1C1E),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              for (var i = 0; i < dishes.length; i++) ...[
-                _DishRow(
-                  dish: dishes[i],
-                  imagePath: _menuImages[dishes[i].menuId] ??
-                      'lib/assets/images/background_bienvenida.png',
-                  fraction: maxSales == 0 ? 0 : dishes[i].sales / maxSales,
+      );
+    }
+
+    return GridView.builder(
+      itemCount: tables.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.88,
+      ),
+      itemBuilder: (context, index) {
+        final table = tables[index];
+        final activeOrder = dash.activeOrderForTable(table.id);
+        return _TableServiceCard(
+          table: table,
+          orderStatus: activeOrder?['status']?.toString(),
+          orderTotal: (activeOrder?['total_amount'] as num?)?.toDouble() ?? 0,
+          hasOrder: activeOrder != null,
+          onOpenOrder: activeOrder == null
+              ? null
+              : () => context.read<AppDemoProvider>().setAdminScreen(
+                  AdminScreen.orderManagement,
                 ),
-                if (i < dishes.length - 1)
-                  const Divider(
-                      height: 1,
-                      color: Color(0xFF2C2C2E),
-                      indent: 16,
-                      endIndent: 16),
-              ],
-            ],
+          onRelease: () => _confirmRelease(context, dash, table),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmRelease(
+    BuildContext context,
+    AdminDashboardProvider dash,
+    TableEntity table,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1E),
+        title: Text(
+          'Liberar mesa ${table.number}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
           ),
         ),
-      ],
+        content: const Text(
+          'La mesa quedará disponible para nuevos clientes. Si tiene una orden activa, se marcará como completada.',
+          style: TextStyle(color: Color(0xFF8E8E93)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6F22),
+            ),
+            child: const Text('Liberar'),
+          ),
+        ],
+      ),
     );
+
+    if (confirmed == true) {
+      await dash.releaseTable(table.id);
+    }
   }
 }
 
-class _DishRow extends StatelessWidget {
-  const _DishRow({
-    required this.dish,
-    required this.imagePath,
-    required this.fraction,
+class _TableServiceCard extends StatelessWidget {
+  const _TableServiceCard({
+    required this.table,
+    required this.orderStatus,
+    required this.orderTotal,
+    required this.hasOrder,
+    required this.onOpenOrder,
+    required this.onRelease,
   });
 
-  final DashPopularDish dish;
-  final String imagePath;
-  final double fraction;
+  final TableEntity table;
+  final String? orderStatus;
+  final double orderTotal;
+  final bool hasOrder;
+  final VoidCallback? onOpenOrder;
+  final VoidCallback onRelease;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      child: Row(
+    final color = table.needsPayment
+        ? const Color(0xFFFFB800)
+        : const Color(0xFFFF6F22);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: table.needsPayment
+            ? const Color(0xFF3A2618)
+            : const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.asset(
-              imagePath,
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2C2C2E),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(Icons.restaurant_rounded,
-                    color: Color(0xFF3A3A3C), size: 20),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  dish.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Stack(
-                      children: [
-                        Container(
-                          height: 4,
-                          width: constraints.maxWidth,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2C2C2E),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        Container(
-                          height: 4,
-                          width: constraints.maxWidth * fraction,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF6F22),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Row(
             children: [
-              Text(
-                '${dish.sales}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const Spacer(),
+              Icon(Icons.table_restaurant_rounded, color: color, size: 20),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            'Mesa ${table.number}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            table.needsPayment ? 'Pago pendiente' : _statusLabel(orderStatus),
+            style: const TextStyle(color: Color(0xFFB8A59B), fontSize: 12),
+          ),
+          if (orderTotal > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              _formatCop(orderTotal),
+              style: TextStyle(color: color, fontWeight: FontWeight.w800),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onOpenOrder,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFF3A3A3C)),
+                  ),
+                  child: const Text('Comanda'),
                 ),
               ),
-              const Text(
-                'Ventas',
-                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 10),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                onPressed: onRelease,
+                style: IconButton.styleFrom(
+                  backgroundColor: color,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.event_available_rounded, size: 18),
               ),
             ],
           ),
@@ -623,10 +368,20 @@ class _DishRow extends StatelessWidget {
       ),
     );
   }
+
+  String _statusLabel(String? status) {
+    return switch (status) {
+      'pending' => 'Pendiente',
+      'accepted' => 'Aceptado',
+      'preparing' => 'Preparando',
+      'ready' => 'Listo',
+      _ => hasOrder ? 'Con pedido' : 'Ocupada',
+    };
+  }
 }
 
-class _OrderFlowSection extends StatelessWidget {
-  const _OrderFlowSection({required this.dash});
+class _StatsSection extends StatelessWidget {
+  const _StatsSection({required this.dash});
 
   final AdminDashboardProvider dash;
 
@@ -636,548 +391,87 @@ class _OrderFlowSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Flujo de Pedidos',
+          'Estadisticas reales',
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 2),
-        const Text(
-          'Últimas 6 horas',
-          style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
-        ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1C1C1E),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: 80,
-                child: CustomPaint(
-                  painter: _BarChartPainter(
-                    values: dash.flowBars,
-                    color: const Color(0xFFFF6F22),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: ['7h', '8h', '9h', '10h', '11h', '12h']
-                    .map((l) => Text(l,
-                        style: const TextStyle(
-                            color: Color(0xFF8E8E93), fontSize: 10)))
-                    .toList(),
-              ),
-              const SizedBox(height: 14),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D2E0D),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.bolt_rounded,
-                          color: Color(0xFF4CAF50), size: 15),
-                      SizedBox(width: 6),
-                      Text(
-                        'Eficiencia de Cocina  94%',
-                        style: TextStyle(
-                          color: Color(0xFF4CAF50),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+        _MetricTile(
+          label: 'Ventas del dia',
+          value: _formatCop(dash.salesToday),
+          icon: Icons.show_chart_rounded,
+        ),
+        const SizedBox(height: 10),
+        _MetricTile(
+          label: 'Pedidos activos',
+          value: '${dash.activeOrders}',
+          icon: Icons.receipt_long_rounded,
+        ),
+        const SizedBox(height: 10),
+        _MetricTile(
+          label: 'Ticket promedio',
+          value: _formatCop(dash.avgTicket),
+          icon: Icons.payments_rounded,
         ),
       ],
     );
   }
 }
 
-class _BarChartPainter extends CustomPainter {
-  final List<double> values;
-  final Color color;
-
-  const _BarChartPainter({required this.values, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (values.isEmpty) return;
-    final max = values.reduce((a, b) => a > b ? a : b);
-    if (max == 0) return;
-    final barW = size.width / values.length;
-    final gap = barW * 0.35;
-    final paint = Paint()..color = color;
-
-    for (var i = 0; i < values.length; i++) {
-      final x = i * barW + gap / 2;
-      final barH = values[i] / max * size.height * 0.9;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(x, size.height - barH, barW - gap, barH),
-          const Radius.circular(4),
-        ),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BarChartPainter old) =>
-      old.values != values || old.color != color;
-}
-
-class _RecentOrdersSection extends StatelessWidget {
-  const _RecentOrdersSection({required this.dash});
-
-  final AdminDashboardProvider dash;
-
-  @override
-  Widget build(BuildContext context) {
-    const activeStatuses = {'accepted', 'preparing', 'ready'};
-    final orders = dash.showActive
-        ? dash.recentOrders
-            .where((o) => activeStatuses.contains(o.status))
-            .toList()
-        : dash.recentOrders
-            .where((o) =>
-                o.status == 'delivered' || o.status == 'completed')
-            .toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Pedidos Recientes',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const Spacer(),
-            _TabPill(
-              label: 'Activos',
-              isSelected: dash.showActive,
-              onTap: () => context
-                  .read<AdminDashboardProvider>()
-                  .setTab(showActive: true),
-            ),
-            const SizedBox(width: 8),
-            _TabPill(
-              label: 'Historial',
-              isSelected: !dash.showActive,
-              onTap: () => context
-                  .read<AdminDashboardProvider>()
-                  .setTab(showActive: false),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF1C1C1E),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-                child: Row(
-                  children: const [
-                    SizedBox(
-                      width: 44,
-                      child: Text('ID',
-                          style: TextStyle(
-                              color: Color(0xFF8E8E93),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700)),
-                    ),
-                    Expanded(
-                        child: Text('Mesa/Cliente',
-                            style: TextStyle(
-                                color: Color(0xFF8E8E93),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700))),
-                    Text('Estado',
-                        style: TextStyle(
-                            color: Color(0xFF8E8E93),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700)),
-                    SizedBox(width: 8),
-                    Text('Total',
-                        style: TextStyle(
-                            color: Color(0xFF8E8E93),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700)),
-                    SizedBox(width: 32),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: Color(0xFF2C2C2E)),
-              if (orders.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(
-                    child: Text('Sin pedidos',
-                        style: TextStyle(color: Color(0xFF8E8E93))),
-                  ),
-                )
-              else
-                ...orders.map((o) => _OrderTableRow(order: o)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TabPill extends StatelessWidget {
-  const _TabPill({
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
     required this.label,
-    required this.isSelected,
-    required this.onTap,
+    required this.value,
+    required this.icon,
   });
 
   final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
+  final String value;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFFFF6F22)
-              : const Color(0xFF2C2C2E),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF8E8E93),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OrderTableRow extends StatelessWidget {
-  const _OrderTableRow({required this.order});
-
-  final DashRecentOrder order;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 44,
-                child: Text(
-                  order.shortId,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  order.label,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              _StatusBadge(status: order.status),
-              const SizedBox(width: 8),
-              Text(
-                _formatCop(order.total),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert_rounded,
-                    color: Color(0xFF8E8E93), size: 18),
-                color: const Color(0xFF2C2C2E),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                    value: 'detail',
-                    child: Text('Ver detalle',
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                  PopupMenuItem(
-                    value: 'status',
-                    child: Text('Cambiar estado',
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-                onSelected: (_) {},
-              ),
-            ],
-          ),
-        ),
-        const Divider(height: 1, color: Color(0xFF2C2C2E)),
-      ],
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, bg, fg) = switch (status) {
-      'preparing' => (
-          'Preparación',
-          const Color(0xFF2D2000),
-          const Color(0xFFFFB800)
-        ),
-      'ready' => (
-          'Listo',
-          const Color(0xFF00213D),
-          const Color(0xFF5AC8FA)
-        ),
-      'accepted' => (
-          'Aceptado',
-          const Color(0xFF1A1A00),
-          const Color(0xFFFFD700)
-        ),
-      'delivered' || 'completed' => (
-          'Servido',
-          const Color(0xFF0D2E0D),
-          const Color(0xFF4CAF50)
-        ),
-      _ => (
-          'Pendiente',
-          const Color(0xFF1C1C1E),
-          const Color(0xFF8E8E93)
-        ),
-    };
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: fg,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _AdminMenuManagementView extends StatelessWidget {
-  const _AdminMenuManagementView();
-
-  @override
-  Widget build(BuildContext context) => const MenuManagementScreen();
-}
-
-class _AdminOrderManagementView extends StatelessWidget {
-  const _AdminOrderManagementView();
-
-  @override
-  Widget build(BuildContext context) {
-    final order = context.watch<OrderProvider>();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const _AdminTopBar(
-            title: 'OrdeNow',
-            showAvatar: false,
-            leadingImage: 'lib/assets/images/background_bienvenida.png',
+          Icon(icon, color: const Color(0xFFFF6F22), size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(color: Color(0xFF8E8E93)),
+            ),
           ),
-          const SizedBox(height: 22),
-          const Text(
-            'Live Commands',
-            style: TextStyle(
+          Text(
+            value,
+            style: const TextStyle(
               color: Colors.white,
-              fontSize: 40,
               fontWeight: FontWeight.w800,
-              height: 1.0,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Monitoring real-time kitchen output and financial reconciliations.',
-            style: TextStyle(
-              color: Color(0xFFD7C2B8),
-              fontSize: 16,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF34312E),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.search_rounded, color: Color(0xFFE5B29A)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Search order ID, guest...',
-                    style: TextStyle(color: Color(0xFF8F847D)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.tune_rounded),
-              label: const Text('Filters'),
-            ),
-          ),
-          const SizedBox(height: 28),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                child: Text(
-                  'Active\nQueue',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
-                  ),
-                ),
-              ),
-              _QueueInfo(
-                value: '${order.currentOrderStatus == 'preparing' ? 12 : 8}',
-                label: 'PREPARING',
-                color: const Color(0xFF7DDB7A),
-              ),
-              const SizedBox(width: 18),
-              _QueueInfo(
-                value: '${order.pendingPaymentTables.length + 4}',
-                label: 'PENDING\nPAYMENT',
-                color: const Color(0xFFF0B63E),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          _ActiveCommandCard(order: order),
-          const SizedBox(height: 18),
-          if (order.pendingPaymentTables.isNotEmpty)
-            ...order.pendingPaymentTables.map(
-              (table) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1C1A),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Table ${table.number}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Customer requested cash settlement.',
-                              style: TextStyle(color: Color(0xFFB8A59B)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      FilledButton(
-                        onPressed: () => order.markAsPaid(paymentMethod: 'cash'),
-                        child: const Text('Approve'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 }
 
-class _AdminProfileView extends StatelessWidget {
-  const _AdminProfileView();
-
-  @override
-  Widget build(BuildContext context) => const AdminProfileScreen();
-}
-
 class _AdminBottomBar extends StatelessWidget {
-  const _AdminBottomBar({
-    required this.selectedIndex,
-    required this.onTap,
-  });
+  const _AdminBottomBar({required this.selectedIndex, required this.onTap});
 
   final int selectedIndex;
   final ValueChanged<int> onTap;
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Inicio', 'Menú', 'Comandas', 'Perfil'];
+    const labels = ['Inicio', 'Menu', 'Comandas', 'Perfil'];
     const icons = [
       Icons.home_rounded,
       Icons.restaurant_menu_rounded,
@@ -1230,251 +524,3 @@ class _AdminBottomBar extends StatelessWidget {
     );
   }
 }
-
-class _AdminTopBar extends StatelessWidget {
-  const _AdminTopBar({
-    required this.title,
-    this.showAvatar = false,
-    this.showMenuIcon = false,
-    this.leadingImage,
-  });
-
-  final String title;
-  final bool showAvatar;
-  final bool showMenuIcon;
-  final String? leadingImage;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (showMenuIcon)
-          const Icon(Icons.menu_rounded, color: Color(0xFFE4B29B))
-        else if (leadingImage != null)
-          CircleAvatar(
-            radius: 18,
-            backgroundImage: AssetImage(leadingImage!),
-          ),
-        if (showMenuIcon || leadingImage != null) const SizedBox(width: 12),
-        Text(
-          title,
-          style: TextStyle(
-            color: title == 'OrdeNow'
-                ? const Color(0xFFFF6B00)
-                : const Color(0xFFE5B49D),
-            fontSize: title == 'OrdeNow' ? 18 : 20,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const Spacer(),
-        const Icon(Icons.shopping_bag_outlined, color: Color(0xFFE5B49D)),
-        if (showAvatar) ...[
-          const SizedBox(width: 12),
-          const CircleAvatar(
-            radius: 18,
-            backgroundColor: Color(0xFF4B2D1A),
-            child: Icon(Icons.person, color: Color(0xFFE6B49D)),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _QueueInfo extends StatelessWidget {
-  const _QueueInfo({
-    required this.value,
-    required this.label,
-    required this.color,
-  });
-
-  final String value;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: '$value ',
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              TextSpan(
-                text: label,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActiveCommandCard extends StatelessWidget {
-  const _ActiveCommandCard({
-    required this.order,
-  });
-
-  final OrderProvider order;
-
-  @override
-  Widget build(BuildContext context) {
-    final activeOrder = order.activeOrder;
-    final selectedTable = order.selectedTable;
-    final orderedItems = order.orderedItems;
-
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: const Color(0xFF3A2618),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFF2A211C)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8D6825),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'ACTION\nREQUIRED',
-                  style: TextStyle(
-                    color: Color(0xFFFFE1A2),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    activeOrder == null ? '#ORD-9902' : '#ORD-${activeOrder.id.substring(0, 4).toUpperCase()}',
-                    style: const TextStyle(
-                      color: Color(0xFFD0C2BA),
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _formatCop(activeOrder?.totalAmount ?? 142000),
-                    style: const TextStyle(
-                      color: Color(0xFFF0B63E),
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'PAY IN CASH',
-                    style: TextStyle(
-                      color: Color(0xFFF0B63E),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Table ${selectedTable?.number ?? 12} • 4\nGuests',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              ...(orderedItems.isEmpty
-                      ? const ['Aged Wagyu Sirloin x 2', 'Truffle Risotto', "Brunello di Montalcino '18"]
-                      : orderedItems.take(3).map((item) => item.name))
-                  .map(
-                (name) => Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4A3C36),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    name,
-                    style: const TextStyle(color: Color(0xFFD7C2B8)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: () => order.markAsPaid(paymentMethod: 'cash'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B00),
-                    foregroundColor: const Color(0xFF281508),
-                    padding: const EdgeInsets.symmetric(vertical: 22),
-                  ),
-                  child: const Text('Approve\nPayment', textAlign: TextAlign.center),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: order.hasActiveOrder ? order.advanceKitchenStatus : null,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 22),
-                    backgroundColor: const Color(0xFF3A3835),
-                  ),
-                  child: const Text(
-                    'View\nDigital Comanda',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-

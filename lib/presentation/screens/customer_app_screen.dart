@@ -129,8 +129,9 @@ class _SmartCartView extends StatelessWidget {
             title: 'OrdeNow',
             leading: const CircleAvatar(
               radius: 18,
-              backgroundImage:
-                  AssetImage('lib/assets/images/smoked_ribeye.png'),
+              backgroundImage: AssetImage(
+                'lib/assets/images/smoked_ribeye.png',
+              ),
             ),
             trailing: const _InlineUtilityButtons(),
           ),
@@ -173,41 +174,6 @@ class _SmartCartView extends StatelessWidget {
                 child: _CartLineCard(line: line),
               ),
             ),
-          const SizedBox(height: 8),
-          Text(
-            copy.isSpanish ? 'MARIDAJES DEL SOMMELIER' : "SOMMELIER'S PAIRINGS",
-            style: const TextStyle(
-              color: Color(0xFFEAB8A1),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 248,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _PairingCard(
-                  title: 'Amber Craft Ale',
-                  subtitle: 'Pairs with burger',
-                  price: 7500,
-                  imagePath: 'lib/assets/images/background_bienvenida.png',
-                  onAdd: () => order.addItemToCart('menu-5'),
-                ),
-                const SizedBox(width: 14),
-                _PairingCard(
-                  title: 'Blood Orange Fizz',
-                  subtitle: 'Refreshing',
-                  price: 5000,
-                  imagePath: 'lib/assets/images/background_bienvenida.png',
-                  onAdd: () => order.addItemToCart('menu-5'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -255,10 +221,12 @@ class _SmartCartView extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 168,
-                        child: FilledButton(
-                          onPressed: order.cartLineItems.isEmpty
-                              ? null
-                              : () => flow.setCustomerScreen(CustomerScreen.checkout),
+                      child: FilledButton(
+                        onPressed: order.cartLineItems.isEmpty
+                            ? null
+                            : () => flow.setCustomerScreen(
+                                CustomerScreen.checkout,
+                              ),
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFFFF8B4A),
                           foregroundColor: const Color(0xFF2D1200),
@@ -293,6 +261,29 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
   final ScrollController _scrollController = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _triggerGreeting();
+    });
+  }
+
+  Future<void> _triggerGreeting() async {
+    final ai = context.read<AiProvider>();
+    if (ai.messages.isNotEmpty || ai.isLoading) return;
+    final auth = context.read<AuthProvider>();
+    final order = context.read<OrderProvider>();
+    await ai.sendGreeting(
+      userName: auth.currentUser?.fullName,
+      recommendedMenu: order.menu,
+      tableNumber: order.selectedTable?.number,
+      allergies: auth.currentUser?.allergies ?? [],
+      diningPreferences: order.diningPreferences,
+    );
+    _scrollToBottom();
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
@@ -316,7 +307,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
     final ai = context.read<AiProvider>();
     await ai.sendMessage(
       prompt: prompt,
-      recommendedMenu: order.recommendedMenu,
+      recommendedMenu: order.menu,
       cartItems: order.cartItems,
       tableNumber: order.selectedTable?.number,
       orderStatus: order.currentOrderStatus,
@@ -375,7 +366,9 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                 onTap: settings.toggleLanguage,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1C1C1E),
                     borderRadius: BorderRadius.circular(8),
@@ -414,8 +407,14 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
           child: ListView.builder(
             controller: _scrollController,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            itemCount: ai.messages.length,
+            itemCount: ai.messages.length + (ai.isLoading ? 1 : 0),
             itemBuilder: (context, index) {
+              if (index == ai.messages.length) {
+                return const Padding(
+                  padding: EdgeInsets.only(bottom: 14),
+                  child: _TypingIndicator(),
+                );
+              }
               final msg = ai.messages[index];
               return Padding(
                 padding: const EdgeInsets.only(bottom: 14),
@@ -447,6 +446,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                 ? 'Habla o escribe aquí...'
                 : 'Talk or type here...',
             onSend: _sendPrompt,
+            isLoading: ai.isLoading,
             onListeningChanged: (v) => setState(() => _isListening = v),
           ),
         ),
@@ -508,6 +508,49 @@ class _OrbSection extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TypingIndicator extends StatelessWidget {
+  const _TypingIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: const BoxDecoration(
+            color: Color(0xFFFF6F22),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+        ),
+        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(4),
+              topRight: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+          ),
+          child: const SizedBox(
+            width: 36,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFFFF6F22),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -617,7 +660,9 @@ class _HistoryView extends StatelessWidget {
                 onTap: settings.toggleLanguage,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1C1C1E),
                     borderRadius: BorderRadius.circular(8),
@@ -665,8 +710,9 @@ class _HistoryView extends StatelessWidget {
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6F22)
-                                      .withValues(alpha: 0.12),
+                                  color: const Color(
+                                    0xFFFF6F22,
+                                  ).withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(
@@ -725,11 +771,7 @@ class _EmptyHistory extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            color: Color(0xFF3A3A3C),
-            size: 64,
-          ),
+          Icon(Icons.receipt_long_outlined, color: Color(0xFF3A3A3C), size: 64),
           SizedBox(height: 16),
           Text(
             'Sin historial',
@@ -791,9 +833,7 @@ class _CustomerHeader extends StatelessWidget {
 }
 
 class _InlineUtilityButtons extends StatelessWidget {
-  const _InlineUtilityButtons({
-    this.compact = false,
-  });
+  const _InlineUtilityButtons({this.compact = false});
 
   final bool compact;
 
@@ -834,8 +874,8 @@ class _InlineUtilityButtons extends StatelessWidget {
             settings.themeMode == ThemeMode.light
                 ? Icons.light_mode_rounded
                 : settings.themeMode == ThemeMode.system
-                    ? Icons.settings_brightness_rounded
-                    : Icons.dark_mode_outlined,
+                ? Icons.settings_brightness_rounded
+                : Icons.dark_mode_outlined,
             size: 18,
           ),
         ),
@@ -1017,9 +1057,7 @@ class _CustomerBottomBar extends StatelessWidget {
 }
 
 class _CartLineCard extends StatelessWidget {
-  const _CartLineCard({
-    required this.line,
-  });
+  const _CartLineCard({required this.line});
 
   final CartLineItem line;
 
@@ -1037,11 +1075,10 @@ class _CartLineCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            child: Image.asset(
-              CustomerAppScreen.imageFor(line.menu.id),
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
+            child: _CartLineImage(
+              imagePath: line.menu.imageUrl.isNotEmpty
+                  ? line.menu.imageUrl
+                  : CustomerAppScreen.imageFor(line.menu.id),
             ),
           ),
           Padding(
@@ -1119,93 +1156,50 @@ class _CartLineCard extends StatelessWidget {
   }
 }
 
-class _PairingCard extends StatelessWidget {
-  const _PairingCard({
-    required this.title,
-    required this.subtitle,
-    required this.price,
-    required this.imagePath,
-    required this.onAdd,
-  });
+class _CartLineImage extends StatelessWidget {
+  const _CartLineImage({required this.imagePath});
 
-  final String title;
-  final String subtitle;
-  final double price;
   final String imagePath;
-  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
-    final palette = _CustomerPalette.of(context);
-    return Container(
-      width: 185,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: palette.surface,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Image.asset(
-              imagePath,
-              height: 110,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            subtitle.toUpperCase(),
-            style: const TextStyle(
-              color: Color(0xFF8BD270),
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              color: palette.primaryText,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              Text(
-                _formatPrice(price),
-                style: const TextStyle(
-                  color: Color(0xFFFFC0A5),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              InkWell(
-                onTap: onAdd,
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF6B00),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.add, color: Colors.black),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    final path = imagePath.trim();
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return Image.network(
+        path,
+        height: 180,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const _CartImagePlaceholder(),
+      );
+    }
+
+    return Image.asset(
+      path,
+      height: 180,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const _CartImagePlaceholder(),
     );
   }
 }
 
+class _CartImagePlaceholder extends StatelessWidget {
+  const _CartImagePlaceholder();
 
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 180,
+      color: const Color(0xFF2C2C2E),
+      child: const Icon(
+        Icons.restaurant_rounded,
+        color: Color(0xFF48484A),
+        size: 44,
+      ),
+    );
+  }
+}
 
 class _EmptyStateCard extends StatelessWidget {
   const _EmptyStateCard({
@@ -1247,10 +1241,7 @@ class _EmptyStateCard extends StatelessWidget {
             style: const TextStyle(color: Color(0xFFB7A39A), height: 1.5),
           ),
           const SizedBox(height: 18),
-          FilledButton(
-            onPressed: onTap,
-            child: Text(actionLabel),
-          ),
+          FilledButton(onPressed: onTap, child: Text(actionLabel)),
         ],
       ),
     );
@@ -1293,8 +1284,8 @@ class _SummaryRow extends StatelessWidget {
 String _formatPrice(double value) {
   final intVal = value.toInt();
   final formatted = intVal.toString().replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]}.',
-      );
+    RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+    (m) => '${m[1]}.',
+  );
   return '\$$formatted';
 }

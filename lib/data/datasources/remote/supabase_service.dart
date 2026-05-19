@@ -46,8 +46,16 @@ class SupabaseService {
   // ---------- MENU ----------
 
   static Future<List<Map<String, dynamic>>> getMenu() async {
-    final res = await client.from(SupabaseTables.menu).select();
+    final res = await client.from(SupabaseTables.menu).select().order('name');
     return List<Map<String, dynamic>>.from(res);
+  }
+
+  static Stream<List<Map<String, dynamic>>> watchMenu() {
+    return client
+        .from(SupabaseTables.menu)
+        .stream(primaryKey: ['id'])
+        .order('name')
+        .map((rows) => rows.map(Map<String, dynamic>.from).toList());
   }
 
   static Future<void> createMenuItem(Map<String, dynamic> data) async {
@@ -75,10 +83,30 @@ class SupabaseService {
     required String orderId,
     required String status,
   }) async {
-    await client.from(SupabaseTables.order).update({
-      'status': status,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', orderId);
+    await client
+        .from(SupabaseTables.order)
+        .update({
+          'status': status,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', orderId);
+  }
+
+  static Future<void> updateOrderPayment({
+    required String orderId,
+    required bool paid,
+    required String paymentMethod,
+    String? status,
+  }) async {
+    await client
+        .from(SupabaseTables.order)
+        .update({
+          'paid': paid,
+          'payment_method': paymentMethod,
+          if (status != null) 'status': status,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', orderId);
   }
 
   static Future<List<Map<String, dynamic>>> getOrders() async {
@@ -89,8 +117,10 @@ class SupabaseService {
   static Future<List<Map<String, dynamic>>> getOrdersByUser(
     String userId,
   ) async {
-    final res =
-        await client.from(SupabaseTables.order).select().eq('user_id', userId);
+    final res = await client
+        .from(SupabaseTables.order)
+        .select()
+        .eq('user_id', userId);
     return List<Map<String, dynamic>>.from(res);
   }
 
@@ -136,10 +166,13 @@ class SupabaseService {
     required String requestId,
     required String status,
   }) async {
-    await client.from(SupabaseTables.cashRequest).update({
-      'status': status,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', requestId);
+    await client
+        .from(SupabaseTables.cashRequest)
+        .update({
+          'status': status,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', requestId);
   }
 
   // ---------- TABLE ----------
@@ -162,9 +195,9 @@ class SupabaseService {
     required bool occupied,
     required bool needsPayment,
   }) async {
-    await client.from(SupabaseTables.table).update({
-      'occupied': occupied,
-      'needs_payment': needsPayment,
-    }).eq('id', tableId);
+    await client
+        .from(SupabaseTables.table)
+        .update({'occupied': occupied, 'needs_payment': needsPayment})
+        .eq('id', tableId);
   }
 }

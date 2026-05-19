@@ -7,6 +7,7 @@ class Menu {
   final bool available;
   final bool recommended;
   final List<String> tags;
+  final String imageUrl;
 
   Menu({
     required this.id,
@@ -17,5 +18,6 @@ class Menu {
     required this.available,
     required this.recommended,
     required this.tags,
+    this.imageUrl = '',
   });
 }
