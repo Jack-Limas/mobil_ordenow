@@ -14,6 +14,8 @@ class KdsActiveOrder {
   final double totalAmount;
   final DateTime createdAt;
   final String notes;
+  final bool paid;
+  final String paymentMethod;
 
   const KdsActiveOrder({
     required this.id,
@@ -23,6 +25,8 @@ class KdsActiveOrder {
     required this.totalAmount,
     required this.createdAt,
     required this.notes,
+    this.paid = false,
+    this.paymentMethod = '',
   });
 }
 
@@ -103,6 +107,8 @@ class OrdersKdsProvider extends ChangeNotifier {
                     DateTime.tryParse(r['created_at'] as String? ?? '') ??
                     DateTime.now(),
                 notes: r['notes'] as String? ?? '',
+                paid: (r['paid'] as bool?) ?? false,
+                paymentMethod: r['payment_method'] as String? ?? '',
               );
             }).toList()..sort((a, b) {
               final tableA = _tableNumbers[a.tableId] ?? 9999;
@@ -126,13 +132,46 @@ class OrdersKdsProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<void> refreshPaymentStatus(String orderId) async {
+    try {
+      final rows = await SupabaseService.getOrders();
+      Map<String, dynamic>? row;
+      for (final r in rows) {
+        if (r['id'] == orderId) {
+          row = r;
+          break;
+        }
+      }
+      if (row == null) return;
+      final paid = (row['paid'] as bool?) ?? false;
+      final method = row['payment_method'] as String? ?? '';
+      _activeOrders = _activeOrders.map((o) {
+        if (o.id != orderId) return o;
+        return KdsActiveOrder(
+          id: o.id,
+          tableId: o.tableId,
+          itemIds: o.itemIds,
+          status: o.status,
+          totalAmount: o.totalAmount,
+          createdAt: o.createdAt,
+          notes: o.notes,
+          paid: paid,
+          paymentMethod: method,
+        );
+      }).toList();
+      notifyListeners();
+    } catch (_) {}
+  }
+
   Future<void> startPreparation(String orderId) async {
+    _updateLocalStatus(orderId, 'preparing');
     try {
       await _ds.updateOrderStatus(orderId: orderId, status: 'preparing');
     } catch (_) {}
   }
 
   Future<void> markReady(String orderId, String label) async {
+    _updateLocalStatus(orderId, 'ready');
     try {
       await _ds.updateOrderStatus(orderId: orderId, status: 'ready');
       await NotificationService.notifyOrderReady(
@@ -142,24 +181,47 @@ class OrdersKdsProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  void _updateLocalStatus(String orderId, String status) {
+    _activeOrders = _activeOrders.map((o) {
+      if (o.id != orderId) return o;
+      return KdsActiveOrder(
+        id: o.id,
+        tableId: o.tableId,
+        itemIds: o.itemIds,
+        status: status,
+        totalAmount: o.totalAmount,
+        createdAt: o.createdAt,
+        notes: o.notes,
+        paid: o.paid,
+        paymentMethod: o.paymentMethod,
+      );
+    }).toList();
+    notifyListeners();
+  }
+
   Future<void> confirmCashPayment({
     required String requestId,
     required String tableId,
   }) async {
-    try {
-      KdsActiveOrder? order;
-      for (final o in _activeOrders) {
-        if (o.tableId == tableId) {
-          order = o;
-          break;
-        }
+    KdsActiveOrder? order;
+    for (final o in _activeOrders) {
+      if (o.tableId == tableId) {
+        order = o;
+        break;
       }
+    }
+    if (order != null) {
+      _activeOrders = _activeOrders.where((o) => o.id != order!.id).toList();
+    }
+    _pendingCash = _pendingCash.where((c) => c.id != requestId).toList();
+    notifyListeners();
+    try {
       await _ds.updateCashRequestStatus(
         requestId: requestId,
         status: 'confirmed',
       );
       if (order != null) {
-        await _ds.updateOrderStatus(orderId: order.id, status: 'paid');
+        await _ds.updateOrderStatus(orderId: order.id, status: 'completed');
       }
       await SupabaseService.updateTableStatus(
         tableId: tableId,
@@ -173,6 +235,8 @@ class OrdersKdsProvider extends ChangeNotifier {
     required String orderId,
     required String tableId,
   }) async {
+    _activeOrders = _activeOrders.where((o) => o.id != orderId).toList();
+    notifyListeners();
     try {
       await _ds.updateOrderStatus(orderId: orderId, status: 'completed');
       await SupabaseService.updateTableStatus(

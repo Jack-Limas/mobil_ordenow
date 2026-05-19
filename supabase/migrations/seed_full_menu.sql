@@ -21,7 +21,7 @@ insert into public.menu_items (
   true,
   true,
   '["res", "ribeye", "angus", "parrilla", "premium", "carne"]'::jsonb,
-  ''
+  'https://media.istockphoto.com/id/1145190027/es/foto/bistec-de-ternera-jugosa-a-la-parrilla.webp?a=1&b=1&s=612x612&w=0&k=20&c=o4S2XV6u4po7rVEThl1TgV_v-Ich6a5R1qRa02FzwaA='
 ),
 (
   'res-punta-anca',
@@ -32,7 +32,7 @@ insert into public.menu_items (
   true,
   false,
   '["res", "punta de anca", "carbon", "ahumado", "carne"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/36782583/pexels-photo-36782583.jpeg'
 ),
 (
   'res-lomo-medallones',
@@ -43,7 +43,7 @@ insert into public.menu_items (
   true,
   true,
   '["res", "lomo", "vino", "champinones", "elegante", "carne"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/29790153/pexels-photo-29790153.jpeg'
 ),
 
 -- Pollo: diferentes presentaciones
@@ -56,7 +56,7 @@ insert into public.menu_items (
   true,
   true,
   '["pollo", "parrilla", "saludable", "proteina", "hierbas"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/33795738/pexels-photo-33795738.jpeg'
 ),
 (
   'pollo-crispy',
@@ -67,7 +67,7 @@ insert into public.menu_items (
   true,
   false,
   '["pollo", "crispy", "crocante", "papas", "miel mostaza"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/33101863/pexels-photo-33101863.jpeg'
 ),
 (
   'pollo-curry',
@@ -78,7 +78,7 @@ insert into public.menu_items (
   true,
   true,
   '["pollo", "curry", "coco", "mango", "arroz", "tropical"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/7111537/pexels-photo-7111537.jpeg'
 ),
 
 -- Pastas: diferentes tipos
@@ -91,7 +91,7 @@ insert into public.menu_items (
   true,
   true,
   '["pasta", "spaghetti", "carbonara", "cremosa", "queso"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/29039082/pexels-photo-29039082.jpeg'
 ),
 (
   'pasta-pesto',
@@ -102,7 +102,7 @@ insert into public.menu_items (
   true,
   false,
   '["pasta", "fettuccine", "pesto", "albahaca", "vegetariano"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/31769318/pexels-photo-31769318.jpeg'
 ),
 (
   'pasta-bolognesa',
@@ -113,7 +113,7 @@ insert into public.menu_items (
   true,
   true,
   '["pasta", "rigatoni", "bolognesa", "res", "tomate"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/15230669/pexels-photo-15230669.jpeg'
 ),
 
 -- Hamburguesas
@@ -126,7 +126,7 @@ insert into public.menu_items (
   true,
   true,
   '["hamburguesa", "res", "cheddar", "clasica", "papas"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/34140639/pexels-photo-34140639.jpeg'
 ),
 (
   'burger-bbq',
@@ -137,7 +137,7 @@ insert into public.menu_items (
   true,
   false,
   '["hamburguesa", "bbq", "bacon", "tocineta", "ahumada"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/29819317/pexels-photo-29819317.jpeg'
 ),
 (
   'burger-pollo',
@@ -148,7 +148,7 @@ insert into public.menu_items (
   true,
   true,
   '["hamburguesa", "pollo", "crispy", "ranch", "crocante"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/20525756/pexels-photo-20525756.jpeg'
 ),
 
 -- Vegano
@@ -161,7 +161,7 @@ insert into public.menu_items (
   true,
   true,
   '["vegano", "quinoa", "hummus", "garbanzos", "saludable"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/8286767/pexels-photo-8286767.jpeg'
 ),
 (
   'vegano-tacos',
@@ -172,7 +172,7 @@ insert into public.menu_items (
   true,
   false,
   '["vegano", "tacos", "hongos", "guacamole", "mexicano"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/36866901/pexels-photo-36866901.jpeg'
 ),
 (
   'vegano-burger',
@@ -183,7 +183,7 @@ insert into public.menu_items (
   true,
   true,
   '["vegano", "hamburguesa", "lentejas", "aguacate", "vegetal"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/8472241/pexels-photo-8472241.jpeg'
 ),
 
 -- Bebidas
@@ -196,7 +196,7 @@ insert into public.menu_items (
   true,
   true,
   '["bebida", "limonada", "coco", "fria", "refrescante"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/19600919/pexels-photo-19600919.jpeg'
 ),
 (
   'bebida-frutos-rojos',
@@ -207,7 +207,7 @@ insert into public.menu_items (
   true,
   false,
   '["bebida", "soda", "frutos rojos", "refrescante"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/28525184/pexels-photo-28525184.jpeg'
 ),
 (
   'bebida-cafe-frio',
@@ -218,5 +218,5 @@ insert into public.menu_items (
   true,
   false,
   '["bebida", "cafe", "vainilla", "frio", "postre"]'::jsonb,
-  ''
+  'https://images.pexels.com/photos/37011674/pexels-photo-37011674.jpeg'
 );

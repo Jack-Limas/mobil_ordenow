@@ -29,8 +29,8 @@ class AppCopy {
   String get welcomeBadge =>
       isSpanish ? 'BIENVENIDA EXOTICA' : 'EXOTIC WELCOME';
   String get welcomePill => isSpanish
-      ? 'Tema, idioma y sesion local listos con Provider + Hive.'
-      : 'Theme, language, and local session ready with Provider + Hive.';
+      ? 'Lista para recomendarte, tomar tu pedido y conectarte con la cocina.'
+      : 'Ready to recommend, take your order, and connect you with the kitchen.';
   String get getStarted => isSpanish ? 'Iniciar' : 'Start';
   String get openAdminDemo =>
       isSpanish ? 'Abrir demo admin' : 'Open Admin Demo';

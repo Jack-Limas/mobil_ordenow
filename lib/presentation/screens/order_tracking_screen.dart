@@ -42,6 +42,14 @@ class OrderTrackingScreen extends StatelessWidget {
                 _SelectionSection(order: order),
                 const SizedBox(height: 24),
               ],
+              if (order.hasActiveOrder && !order.isPaid) ...[
+                _PayNowCard(
+                  total: order.activeOrder!.totalAmount,
+                  onPay: () =>
+                      flow.setCustomerScreen(CustomerScreen.checkout),
+                ),
+                const SizedBox(height: 24),
+              ],
               _ExploreMenuSection(
                 menu: order.menu,
                 onExplore: () =>
@@ -346,19 +354,7 @@ class _SelectionItem extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              OrderTrackingScreen.imageFor(menu.id),
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 64,
-                height: 64,
-                color: const Color(0xFF2C2C2E),
-                child: const Icon(Icons.restaurant_rounded,
-                    color: Color(0xFF636366), size: 28),
-              ),
-            ),
+            child: _TrackingItemImage(menu: menu),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -488,16 +484,7 @@ class _LargeMenuCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Stack(
         children: [
-          Image.asset(
-            OrderTrackingScreen.imageFor(menu.id),
-            height: 180,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              height: 180,
-              color: const Color(0xFF1C1C1E),
-            ),
-          ),
+          _TrackingMenuImage(menu: menu, height: 180),
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -596,16 +583,7 @@ class _SmallMenuCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: Stack(
         children: [
-          Image.asset(
-            OrderTrackingScreen.imageFor(menu.id),
-            height: 140,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              height: 140,
-              color: const Color(0xFF1C1C1E),
-            ),
-          ),
+          _TrackingMenuImage(menu: menu, height: 140),
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -656,6 +634,157 @@ class _SmallMenuCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── image helpers ───────────────────────────────────────────────────────────
+
+class _TrackingItemImage extends StatelessWidget {
+  const _TrackingItemImage({required this.menu});
+  final Menu menu;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = menu.imageUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return Image.network(
+        url,
+        width: 64,
+        height: 64,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+      );
+    }
+    return Image.asset(
+      OrderTrackingScreen.imageFor(menu.id),
+      width: 64,
+      height: 64,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _placeholder(),
+    );
+  }
+
+  Widget _placeholder() => Container(
+        width: 64,
+        height: 64,
+        color: const Color(0xFF2C2C2E),
+        child: const Icon(
+          Icons.restaurant_rounded,
+          color: Color(0xFF636366),
+          size: 28,
+        ),
+      );
+}
+
+class _TrackingMenuImage extends StatelessWidget {
+  const _TrackingMenuImage({required this.menu, required this.height});
+  final Menu menu;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = menu.imageUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return Image.network(
+        url,
+        height: height,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _fallback(),
+      );
+    }
+    return Image.asset(
+      OrderTrackingScreen.imageFor(menu.id),
+      height: height,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _fallback(),
+    );
+  }
+
+  Widget _fallback() => Container(
+        height: height,
+        color: const Color(0xFF1C1C1E),
+        child: const Icon(
+          Icons.restaurant_rounded,
+          color: Color(0xFF3A3A3C),
+          size: 48,
+        ),
+      );
+}
+
+// ─── Pay Now Card ────────────────────────────────────────────────────────────
+
+class _PayNowCard extends StatelessWidget {
+  const _PayNowCard({required this.total, required this.onPay});
+
+  final double total;
+  final VoidCallback onPay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFF6F22).withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.payment_rounded, color: Color(0xFFFF6F22), size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Pago',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Total: ${_formatCop(total)}',
+            style: const TextStyle(
+              color: Color(0xFF8E8E93),
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Puedes pagar ahora o esperar a recibir tu pedido.',
+            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onPay,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6F22),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.payment_rounded, size: 18),
+              label: const Text(
+                'Pagar Pedido',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],

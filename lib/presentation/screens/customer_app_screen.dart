@@ -259,20 +259,35 @@ class _AiConciergeView extends StatefulWidget {
 class _AiConciergeViewState extends State<_AiConciergeView> {
   bool _isListening = false;
   final ScrollController _scrollController = ScrollController();
+  AiProvider? _aiProvider;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _triggerGreeting();
+      if (mounted) {
+        _aiProvider = context.read<AiProvider>();
+        _aiProvider!.addListener(_onAiChanged);
+        _triggerGreeting();
+      }
     });
   }
 
+  void _onAiChanged() {
+    if (!mounted) return;
+    final ai = _aiProvider;
+    if (ai != null && ai.shouldNavigateToPayment) {
+      ai.clearNavigationFlag();
+      context.read<AppDemoProvider>().setCustomerScreen(CustomerScreen.checkout);
+    }
+  }
+
   Future<void> _triggerGreeting() async {
-    final ai = context.read<AiProvider>();
-    if (ai.messages.isNotEmpty || ai.isLoading) return;
     final auth = context.read<AuthProvider>();
     final order = context.read<OrderProvider>();
+    final ai = context.read<AiProvider>();
+    ai.setCurrentUser(auth.currentUser?.id); // always set before the guard
+    if (ai.messages.isNotEmpty || ai.isLoading) return;
     await ai.sendGreeting(
       userName: auth.currentUser?.fullName,
       recommendedMenu: order.menu,
@@ -285,6 +300,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
 
   @override
   void dispose() {
+    _aiProvider?.removeListener(_onAiChanged);
     _scrollController.dispose();
     super.dispose();
   }
@@ -305,6 +321,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
     final order = context.read<OrderProvider>();
     final auth = context.read<AuthProvider>();
     final ai = context.read<AiProvider>();
+    ai.setCurrentUser(auth.currentUser?.id);
     await ai.sendMessage(
       prompt: prompt,
       recommendedMenu: order.menu,
@@ -426,6 +443,39 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
               );
             },
           ),
+        ),
+        // Confirm / cancel buttons shown when AI requests order confirmation
+        Consumer<AiProvider>(
+          builder: (context, ai, _) {
+            if (!ai.pendingConfirmation) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: ai.cancelPendingOrder,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.redAccent,
+                        side: const BorderSide(color: Colors.redAccent),
+                      ),
+                      child: const Text('Cancelar'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: ai.confirmPendingOrder,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6F22),
+                      ),
+                      child: const Text('Confirmar pedido'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
         // Animated orb — visible when mic is active
         ClipRect(
@@ -624,7 +674,7 @@ class _HistoryView extends StatelessWidget {
   Widget build(BuildContext context) {
     final order = context.watch<OrderProvider>();
     final settings = context.watch<AppSettingsProvider>();
-    final items = order.orderedItems;
+    final items = order.historyItems;
 
     return Column(
       children: [

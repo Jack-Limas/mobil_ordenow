@@ -69,7 +69,11 @@ class OrdeNowApp extends StatelessWidget {
             getSelectedTable: dependencies.getSelectedTable,
           )..initialize(),
         ),
-        ChangeNotifierProvider(create: (_) => AiProvider()),
+        ChangeNotifierProxyProvider<OrderProvider, AiProvider>(
+          create: (ctx) =>
+              AiProvider(orderProvider: ctx.read<OrderProvider>()),
+          update: (ctx, order, ai) => ai!..updateOrderProvider(order),
+        ),
         ChangeNotifierProvider(create: (_) => AdminDashboardProvider()),
         ChangeNotifierProvider(create: (_) => OrdersKdsProvider()),
         ChangeNotifierProvider(create: (_) => MenuManagementProvider()),

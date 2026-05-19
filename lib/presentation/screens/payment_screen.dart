@@ -46,18 +46,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('¡Gracias por tu visita! 🎉'),
+        content: Text('¡Pago confirmado! Tu pedido sigue en camino.'),
         backgroundColor: Color(0xFF2E7D32),
         behavior: SnackBarBehavior.floating,
         duration: Duration(seconds: 2),
       ),
     );
 
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 1600));
     if (!mounted) return;
 
-    order.clearDemoState();
-    flow.backToWelcome();
+    // The order is still active — go back to tracking, not history.
+    // clearDemoState is NOT called here; the admin releases the table when done.
+    flow.setCustomerScreen(CustomerScreen.tracking);
   }
 
   void _requestCash() {
@@ -91,7 +92,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return Column(
       children: [
         _PaymentAppBar(
-          onBack: () => flow.setCustomerScreen(CustomerScreen.cart),
+          onBack: () => flow.setCustomerScreen(
+            order.hasActiveOrder ? CustomerScreen.tracking : CustomerScreen.cart,
+          ),
         ),
         Expanded(
           child: _isCashRequested
@@ -642,6 +645,7 @@ class _CashWaitState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final flow = context.read<AppDemoProvider>();
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -683,8 +687,17 @@ class _CashWaitState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 40),
-            const CircularProgressIndicator(
-              color: Color(0xFFFF6F22),
+            const CircularProgressIndicator(color: Color(0xFFFF6F22)),
+            const SizedBox(height: 32),
+            TextButton.icon(
+              onPressed: () =>
+                  flow.setCustomerScreen(CustomerScreen.tracking),
+              icon: const Icon(Icons.receipt_long_outlined,
+                  color: Color(0xFFFF6F22)),
+              label: const Text(
+                'Ver seguimiento del pedido',
+                style: TextStyle(color: Color(0xFFFF6F22)),
+              ),
             ),
           ],
         ),

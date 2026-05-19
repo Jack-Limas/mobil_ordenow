@@ -45,10 +45,20 @@ class AdminDashboardProvider extends ChangeNotifier {
   List<double> get salesSparkline => const [];
   List<double> get flowBars => const [];
   List<TableEntity> get occupiedTables =>
-      _tables.where((table) => table.occupied || table.needsPayment).toList()
+      _tables.where((t) => t.occupied || t.needsPayment).toList()
         ..sort((a, b) => a.number.compareTo(b.number));
 
-  int get activeOrders => _orders.where(_isActiveOrder).length;
+  int get activeOrders {
+    final now = DateTime.now();
+    return _orders.where((o) {
+      if (!_isActiveOrder(o)) return false;
+      final created = DateTime.tryParse(o['created_at']?.toString() ?? '');
+      if (created == null) return false;
+      return created.year == now.year &&
+          created.month == now.month &&
+          created.day == now.day;
+    }).length;
+  }
 
   double get salesToday {
     final now = DateTime.now();
@@ -126,20 +136,24 @@ class AdminDashboardProvider extends ChangeNotifier {
   Future<void> releaseTable(String tableId) async {
     final activeOrder = activeOrderForTable(tableId);
 
-    // Optimistic update: remove table from local state immediately.
+    // Optimistic update: mark table as free immediately.
     _tables = _tables.map((t) {
       if (t.id == tableId) return t.copyWith(occupied: false, needsPayment: false);
       return t;
     }).toList();
     notifyListeners();
 
-    try {
-      if (activeOrder != null) {
+    // Each operation in its own try-catch so one failure doesn't block the other.
+    if (activeOrder != null) {
+      try {
         await SupabaseService.updateOrderStatus(
           orderId: activeOrder['id'] as String,
           status: 'completed',
         );
-      }
+      } catch (_) {}
+    }
+
+    try {
       await SupabaseService.updateTableStatus(
         tableId: tableId,
         occupied: false,
@@ -178,7 +192,7 @@ class AdminDashboardProvider extends ChangeNotifier {
   }
 
   bool _isActiveOrder(Map<String, dynamic> order) {
-    const active = {'pending', 'accepted', 'preparing', 'ready'};
+    const active = {'pending', 'accepted', 'preparing', 'ready', 'delivered'};
     return active.contains(order['status']?.toString());
   }
 

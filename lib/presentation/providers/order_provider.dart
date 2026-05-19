@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/services/ai_service.dart';
 import '../../core/utils/constants.dart';
 import '../../data/datasources/remote/supabase_service.dart';
 import '../../data/models/menu_model.dart';
@@ -40,6 +41,7 @@ class OrderProvider extends ChangeNotifier {
   String? _selectedTableId;
   final List<String> _cartMenuIds = [];
   Order? _activeOrder;
+  Order? _completedOrder;
   String _paymentMethod = 'card';
   String _diningPreferences = '';
 
@@ -72,6 +74,18 @@ class OrderProvider extends ChangeNotifier {
   bool get hasActiveOrder => _activeOrder != null;
   bool get hasSelectedTable => _selectedTableId != null;
   bool get isPaid => _activeOrder?.paid ?? false;
+  bool get hasCompletedOrder => _completedOrder != null;
+
+  List<Menu> get historyItems {
+    final src = _activeOrder ?? _completedOrder;
+    if (src == null) return const [];
+    final result = <Menu>[];
+    for (final id in src.items) {
+      final matches = _menu.where((m) => m.id == id).toList();
+      if (matches.isNotEmpty) result.add(matches.first);
+    }
+    return result;
+  }
 
   String get currentOrderStatus =>
       _activeOrder?.status ?? OrderStatuses.pending;
@@ -278,6 +292,7 @@ class OrderProvider extends ChangeNotifier {
   }
 
   void clearDemoState() {
+    if (_activeOrder != null) _completedOrder = _activeOrder;
     _selectedTableId = null;
     _cartMenuIds.clear();
     _activeOrder = null;
@@ -389,6 +404,10 @@ class OrderProvider extends ChangeNotifier {
             }
 
             _activeOrder = OrderModel.fromJson(row);
+            if (_activeOrder!.status == OrderStatuses.completed ||
+                _activeOrder!.status == OrderStatuses.delivered) {
+              _completedOrder = _activeOrder;
+            }
             notifyListeners();
           }, onError: (_) {});
     } catch (_) {}
@@ -457,6 +476,134 @@ class OrderProvider extends ChangeNotifier {
         needsPayment: needsPayment,
       );
     } catch (_) {}
+  }
+
+  void addItemById({required String id, required int quantity}) {
+    final found = _findMenuItemForAi(id, '');
+    if (found == null) return;
+    for (var i = 0; i < quantity; i++) {
+      _cartMenuIds.add(found.id);
+    }
+    notifyListeners();
+  }
+
+  Future<void> createOrderFromAi({
+    required List<AiCartItem> items,
+    required double total,
+    required String userId,
+  }) async {
+    _cartMenuIds.clear();
+    for (final item in items) {
+      final found = _findMenuItemForAi(item.id, item.name);
+      if (found != null) {
+        for (var i = 0; i < item.quantity; i++) {
+          _cartMenuIds.add(found.id);
+        }
+      }
+    }
+
+    // If AI items didn't match the menu, fall back to current cart contents.
+    // Still create the order even if items list is empty so the order reaches Supabase.
+    final orderItems = _cartMenuIds.isNotEmpty
+        ? List<String>.from(_cartMenuIds)
+        : items.map((i) => i.id).toList();
+
+    if (_selectedTableId == null) return;
+
+    final now = DateTime.now();
+    _activeOrder = Order(
+      id: _uuid.v4(),
+      userId: userId,
+      tableId: _selectedTableId!,
+      items: orderItems,
+      status: OrderStatuses.pending,
+      createdAt: now,
+      updatedAt: now,
+      paid: false,
+      paymentMethod: _paymentMethod,
+      totalAmount: total,
+      notes: '',
+      synced: false,
+    );
+
+    _cartMenuIds.clear();
+    _updateTableState(occupied: true, needsPayment: false);
+    notifyListeners();
+
+    await _syncActiveOrder();
+    _subscribeToActiveOrder(userId);
+  }
+
+  Future<bool> loadUserSession(String userId) async {
+    try {
+      final rows = await SupabaseService.getOrdersByUser(userId);
+      const activeStatuses = {
+        OrderStatuses.pending,
+        OrderStatuses.accepted,
+        OrderStatuses.preparing,
+        OrderStatuses.ready,
+        OrderStatuses.delivered,
+      };
+
+      // Restore history from most recent completed order
+      final completedRows = rows
+          .where((r) =>
+              r['status'] == OrderStatuses.completed ||
+              r['status'] == 'paid')
+          .toList();
+      if (completedRows.isNotEmpty) {
+        completedRows.sort((a, b) {
+          final da =
+              DateTime.tryParse(a['created_at'] as String? ?? '') ??
+              DateTime(0);
+          final db =
+              DateTime.tryParse(b['created_at'] as String? ?? '') ??
+              DateTime(0);
+          return db.compareTo(da);
+        });
+        _completedOrder = OrderModel.fromJson(completedRows.first);
+      }
+
+      final activeRows = rows
+          .where((r) => activeStatuses.contains(r['status'] as String?))
+          .toList();
+
+      if (activeRows.isEmpty) {
+        notifyListeners();
+        return false;
+      }
+
+      activeRows.sort((a, b) {
+        final da =
+            DateTime.tryParse(a['created_at'] as String? ?? '') ?? DateTime(0);
+        final db =
+            DateTime.tryParse(b['created_at'] as String? ?? '') ?? DateTime(0);
+        return db.compareTo(da);
+      });
+
+      _activeOrder = OrderModel.fromJson(activeRows.first);
+      _selectedTableId = _activeOrder!.tableId;
+      notifyListeners();
+      _subscribeToActiveOrder(userId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Menu? _findMenuItemForAi(String id, String name) {
+    // 1. Exact ID match
+    for (final m in _menu) {
+      if (m.id == id) return m;
+    }
+    if (name.isEmpty) return null;
+    // 2. Case-insensitive name contains match
+    final nameLower = name.toLowerCase().trim();
+    for (final m in _menu) {
+      final mLow = m.name.toLowerCase();
+      if (mLow.contains(nameLower) || nameLower.contains(mLow)) return m;
+    }
+    return null;
   }
 
   @override

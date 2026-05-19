@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/admin_dashboard_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/orders_kds_provider.dart';
 
@@ -214,7 +215,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _OrderCard extends StatelessWidget {
+class _OrderCard extends StatefulWidget {
   const _OrderCard({
     required this.order,
     required this.turn,
@@ -224,6 +225,37 @@ class _OrderCard extends StatelessWidget {
   final KdsActiveOrder order;
   final int turn;
   final OrdersKdsProvider kds;
+
+  @override
+  State<_OrderCard> createState() => _OrderCardState();
+}
+
+class _OrderCardState extends State<_OrderCard> {
+  String? _lastRefreshedId;
+
+  @override
+  void didUpdateWidget(_OrderCard old) {
+    super.didUpdateWidget(old);
+    _maybeRefreshPayment();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _maybeRefreshPayment();
+  }
+
+  void _maybeRefreshPayment() {
+    final o = widget.order;
+    if (o.status == 'ready' && !o.paid && _lastRefreshedId != o.id) {
+      _lastRefreshedId = o.id;
+      Future.microtask(() => widget.kds.refreshPaymentStatus(o.id));
+    }
+  }
+
+  KdsActiveOrder get order => widget.order;
+  int get turn => widget.turn;
+  OrdersKdsProvider get kds => widget.kds;
 
   String _elapsed() {
     final diff = DateTime.now().difference(order.createdAt);
@@ -238,7 +270,7 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (order.status == 'ready') return _buildDetailCard();
+    if (order.status == 'ready') return _buildDetailCard(context);
 
     final isPrep = order.status == 'preparing';
     final statusLabel = isPrep ? 'Preparando' : 'Recibido';
@@ -317,7 +349,7 @@ class _OrderCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailCard() {
+  Widget _buildDetailCard(BuildContext context) {
     final label = kds.tableLabel(order.tableId);
     final now = DateTime.now();
     final service = order.totalAmount * 0.10;
@@ -419,25 +451,47 @@ class _OrderCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 _BillRow(label: 'Total', value: _formatCop(total), bold: true),
                 const SizedBox(height: 14),
+                if (!order.paid)
+                  _PaymentPendingBanner(
+                    order: order,
+                    onRefresh: () => kds.refreshPaymentStatus(order.id),
+                  ),
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () => kds.releaseTable(
-                      orderId: order.id,
-                      tableId: order.tableId,
-                    ),
+                    onPressed: order.paid
+                        ? () {
+                            kds.releaseTable(
+                              orderId: order.id,
+                              tableId: order.tableId,
+                            );
+                            context
+                                .read<AdminDashboardProvider>()
+                                .releaseTable(order.tableId);
+                          }
+                        : null,
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6F22),
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFF3A3A3C),
+                      disabledForegroundColor: const Color(0xFF636366),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: const Icon(Icons.event_available_rounded, size: 18),
-                    label: const Text(
-                      'Cerrar pedido y liberar mesa',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    icon: Icon(
+                      order.paid
+                          ? Icons.event_available_rounded
+                          : Icons.lock_outline_rounded,
+                      size: 18,
+                    ),
+                    label: Text(
+                      order.paid
+                          ? 'Cerrar pedido y liberar mesa'
+                          : 'Esperando confirmación de pago',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -623,6 +677,61 @@ class _ReadyButton extends StatelessWidget {
       label: const Text(
         'Notificar: Listo para servir',
         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+      ),
+    );
+  }
+}
+
+class _PaymentPendingBanner extends StatelessWidget {
+  const _PaymentPendingBanner({required this.order, required this.onRefresh});
+
+  final KdsActiveOrder order;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final isCash = order.paymentMethod == 'cash';
+    final message = isCash
+        ? 'Pago en efectivo solicitado. Confírmalo con el botón naranja (💳).'
+        : 'Pago digital pendiente. Toca "Verificar" para comprobar.';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF48484A)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded,
+              color: Color(0xFF8E8E93), size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Color(0xFF8E8E93),
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+          ),
+          if (!isCash) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: onRefresh,
+              child: const Text(
+                'Verificar',
+                style: TextStyle(
+                  color: Color(0xFFFF6F22),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/utils/app_copy.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/order_provider.dart';
 import '../widgets/app_utility_toggles.dart';
 
 enum SignInRole {
@@ -61,7 +62,15 @@ class _SignInScreenState extends State<SignInScreen> {
       if (auth.isAdmin) {
         demo.openAdminArea();
       } else if (auth.hasCompletedProfile) {
-        demo.openTableSelection();
+        final order = context.read<OrderProvider>();
+        final hasSession =
+            await order.loadUserSession(auth.currentUser!.id);
+        if (!mounted) return;
+        if (hasSession) {
+          demo.openCustomerArea(screen: CustomerScreen.tracking);
+        } else {
+          demo.openTableSelection();
+        }
       } else {
         demo.openProfileSetup();
       }

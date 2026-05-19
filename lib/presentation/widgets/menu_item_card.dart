@@ -57,64 +57,68 @@ class MenuItemCard extends StatelessWidget {
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  menu.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    menu.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  menu.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF8E8E93),
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  _formatCop(menu.price),
-                  style: const TextStyle(
-                    color: Color(0xFFFF6F22),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: onOrderWithAi,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6F22),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      textStyle: const TextStyle(
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: Text(
+                      menu.description,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 8,
+                      style: const TextStyle(
+                        color: Color(0xFF8E8E93),
                         fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        height: 1.4,
                       ),
                     ),
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 14),
-                    label: const Text('Ordenar con IA'),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatCop(menu.price),
+                    style: const TextStyle(
+                      color: Color(0xFFFF6F22),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: onOrderWithAi,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6F22),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      icon: const Icon(Icons.auto_awesome_rounded, size: 14),
+                      label: const Text('Ordenar con IA'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
