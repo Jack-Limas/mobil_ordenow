@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import '../../domain/entities/menu.dart';
 import '../providers/ai_provider.dart';
 import '../providers/app_demo_provider.dart';
-import '../providers/app_settings_provider.dart';
 import '../providers/order_provider.dart';
+import '../widgets/app_utility_toggles.dart';
 import '../widgets/menu_item_card.dart';
 
 class MenuCatalogScreen extends StatefulWidget {
@@ -53,18 +53,17 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<AppSettingsProvider>();
     final order = context.watch<OrderProvider>();
     final categories = _categories(order.menu);
     final selectedCat = _selectedCategory ?? 'Todos';
     final filtered = _filtered(order.menu);
 
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: Column(
           children: [
-            _CatalogAppBar(settings: settings),
+            const _CatalogAppBar(),
             ShaderMask(
               shaderCallback: (rect) => const LinearGradient(
                 begin: Alignment.centerLeft,
@@ -151,14 +150,12 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
 }
 
 class _CatalogAppBar extends StatelessWidget {
-  const _CatalogAppBar({required this.settings});
-
-  final AppSettingsProvider settings;
+  const _CatalogAppBar();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
@@ -176,53 +173,16 @@ class _CatalogAppBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Text(
+          Text(
             'OrdeNow',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: settings.toggleLanguage,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                settings.isSpanish ? 'ES' : 'EN',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: settings.cycleThemeMode,
-            child: Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                settings.themeMode == ThemeMode.light
-                    ? Icons.light_mode_rounded
-                    : settings.themeMode == ThemeMode.system
-                    ? Icons.settings_brightness_rounded
-                    : Icons.dark_mode_outlined,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ),
+          const AppUtilityToggles(),
         ],
       ),
     );
