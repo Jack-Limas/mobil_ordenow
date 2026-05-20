@@ -158,34 +158,35 @@ class _OccupiedTablesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final tables = dash.occupiedTables;
     if (tables.isEmpty) {
+      final copy = AppCopy.of(context);
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E),
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Column(
+        child: Column(
           children: [
             Icon(
               Icons.table_restaurant_outlined,
-              color: Color(0xFF3A3A3C),
+              color: Theme.of(context).dividerColor,
               size: 48,
             ),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             Text(
-              'No hay mesas ocupadas',
+              copy.adminNoTables,
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
-              'Cuando un cliente reserve una mesa, aparecera aqui.',
+              copy.adminNoTablesSub,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF8E8E93), height: 1.4),
+              style: const TextStyle(color: Color(0xFF8E8E93), height: 1.4),
             ),
           ],
         ),
@@ -228,12 +229,12 @@ class _OccupiedTablesSection extends StatelessWidget {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Theme.of(dialogContext).cardColor,
         title: Text(
           'Liberar mesa ${table.number}',
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(dialogContext).colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -301,7 +302,7 @@ class _TableServiceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: table.needsPayment
             ? const Color(0xFF3A2618)
-            : const Color(0xFF1C1C1E),
+            : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
@@ -322,8 +323,8 @@ class _TableServiceCard extends StatelessWidget {
           const Spacer(),
           Text(
             'Mesa ${table.number}',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 22,
               fontWeight: FontWeight.w800,
             ),
@@ -439,7 +440,7 @@ class _MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -454,8 +455,8 @@ class _MetricTile extends StatelessWidget {
           ),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w800,
             ),
           ),
