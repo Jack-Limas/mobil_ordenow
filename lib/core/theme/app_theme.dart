@@ -56,6 +56,11 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         ),
       ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.lightBackground,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: Color(0xFF8E8E93),
+      ),
     );
   }
 
@@ -111,6 +116,11 @@ class AppTheme {
           ),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.darkBackground,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: Color(0xFF8E8E93),
       ),
     );
   }
