@@ -251,7 +251,7 @@ class _OrderCardState extends State<_OrderCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -261,8 +261,8 @@ class _OrderCardState extends State<_OrderCard> {
             children: [
               Text(
                 kds.tableLabel(order.tableId),
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -293,7 +293,10 @@ class _OrderCardState extends State<_OrderCard> {
                   Expanded(
                     child: Text(
                       kds.itemName(order.itemIds[i]),
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ],
@@ -327,7 +330,7 @@ class _OrderCardState extends State<_OrderCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFFFF6F22).withValues(alpha: 0.4),
@@ -338,8 +341,10 @@ class _OrderCardState extends State<_OrderCard> {
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFF2C2C2E))),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Theme.of(context).dividerColor),
+              ),
             ),
             child: Row(
               children: [
@@ -402,8 +407,8 @@ class _OrderCardState extends State<_OrderCard> {
                         Expanded(
                           child: Text(
                             kds.itemName(id),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 14,
                             ),
                           ),
@@ -411,7 +416,7 @@ class _OrderCardState extends State<_OrderCard> {
                       ],
                     ),
                   ),
-                const Divider(color: Color(0xFF2C2C2E), height: 24),
+                Divider(color: Theme.of(context).dividerColor, height: 24),
                 _BillRow(
                   label: 'Subtotal',
                   value: _formatCop(order.totalAmount),
@@ -569,7 +574,9 @@ class _BillRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = TextStyle(
-      color: bold ? Colors.white : const Color(0xFF8E8E93),
+      color: bold
+          ? Theme.of(context).colorScheme.onSurface
+          : const Color(0xFF8E8E93),
       fontSize: bold ? 15 : 13,
       fontWeight: bold ? FontWeight.w700 : FontWeight.normal,
     );
@@ -593,7 +600,7 @@ class _NoteChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -668,9 +675,9 @@ class _PaymentPendingBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF48484A)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -712,25 +719,29 @@ class _EmptyKds extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.soup_kitchen_rounded, color: Color(0xFF2C2C2E), size: 72),
-          SizedBox(height: 20),
+          Icon(
+            Icons.soup_kitchen_rounded,
+            color: Theme.of(context).dividerColor,
+            size: 72,
+          ),
+          const SizedBox(height: 20),
           Text(
             'Sin órdenes activas',
             style: TextStyle(
-              color: Color(0xFF48484A),
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 8),
-          Text(
+          const SizedBox(height: 8),
+          const Text(
             'Las nuevas comandas aparecerán aquí\nen tiempo real.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF3A3A3C), height: 1.5),
+            style: TextStyle(color: Color(0xFF8E8E93), height: 1.5),
           ),
         ],
       ),
@@ -771,11 +782,14 @@ class _CashFab extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           AppCopy.of(ctx).kdsConfirmCash,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Theme.of(ctx).colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           '¿Confirmar pago en efectivo de $label por $amount?',
