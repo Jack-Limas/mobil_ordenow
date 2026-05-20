@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/entities/menu.dart';
-import '../providers/app_settings_provider.dart';
+import '../../core/utils/app_copy.dart';
 import '../providers/menu_management_provider.dart';
+import '../widgets/app_utility_toggles.dart';
 
 class MenuManagementScreen extends StatefulWidget {
   const MenuManagementScreen({super.key});
@@ -239,11 +240,10 @@ class _MenuMgmtAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<AppSettingsProvider>();
     return SafeArea(
       bottom: false,
       child: Container(
-        color: Colors.black,
+        color: Theme.of(context).scaffoldBackgroundColor,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
         child: Row(
           children: [
@@ -253,36 +253,16 @@ class _MenuMgmtAppBar extends StatelessWidget {
               size: 22,
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'OrdeNow',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const Spacer(),
-            GestureDetector(
-              onTap: () => settings.toggleLanguage(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  settings.isSpanish ? 'ES' : 'EN',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
+            const AppUtilityToggles(),
           ],
         ),
       ),
@@ -297,19 +277,19 @@ class _MenuHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Gestión del Menú',
+          AppCopy.of(context).menuMgmtTitle,
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 22,
             fontWeight: FontWeight.w800,
           ),
         ),
-        SizedBox(height: 6),
-        Text(
+        const SizedBox(height: 6),
+        const Text(
           'Administra y optimiza tus platos actuales con inteligencia artificial',
           style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13, height: 1.4),
         ),
@@ -346,9 +326,9 @@ class _CurrentDishesSection extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             child: Row(
               children: [
-                const Text(
-                  '✕ Platos Actuales',
-                  style: TextStyle(
+                Text(
+                  '✕ ${AppCopy.of(context).menuCurrent}',
+                  style: const TextStyle(
                     color: Color(0xFFFF6F22),
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -616,9 +596,9 @@ class _AddDishForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isEditing ? 'Editar Plato' : 'Añadir Nuevo Plato',
-            style: const TextStyle(
-              color: Colors.white,
+            isEditing ? 'Editar Plato' : AppCopy.of(context).menuAddItem,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
@@ -747,7 +727,7 @@ class _AddDishForm extends StatelessWidget {
                 ),
               ),
               child: Text(
-                isEditing ? 'Guardar Cambios' : 'Publicar en Menú',
+                isEditing ? 'Guardar Cambios' : AppCopy.of(context).menuPublish,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
