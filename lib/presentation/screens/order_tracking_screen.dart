@@ -137,6 +137,7 @@ class _TrackingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final activeOrder = order.activeOrder;
     final status = order.currentOrderStatus;
     final badge = _badge(status);
@@ -145,12 +146,12 @@ class _TrackingCard extends StatelessWidget {
         : '#—';
     final timeStr = activeOrder != null
         ? 'Iniciado a las ${_formatTime(activeOrder.createdAt)}'
-        : 'Sin pedido activo';
+        : copy.trackingActiveOrder;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -164,7 +165,7 @@ class _TrackingCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppCopy.of(context).trackingTitle.toUpperCase(),
+                      copy.trackingTitle.toUpperCase(),
                       style: const TextStyle(
                         color: Color(0xFF8E8E93),
                         fontSize: 11,
@@ -175,8 +176,8 @@ class _TrackingCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Pedido $orderId',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                       ),
@@ -196,7 +197,7 @@ class _TrackingCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2C2C2E),
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Row(
@@ -252,10 +253,10 @@ class _SelectionSection extends StatelessWidget {
             const Icon(Icons.content_cut_rounded,
                 color: Color(0xFFFF6F22), size: 18),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Tu Selección',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -303,7 +304,7 @@ class _SelectionItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -319,8 +320,8 @@ class _SelectionItem extends StatelessWidget {
               children: [
                 Text(
                   qty > 1 ? '${menu.name} ×$qty' : menu.name,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                   ),
@@ -341,8 +342,8 @@ class _SelectionItem extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             _formatCop(menu.price * qty),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w700,
               fontSize: 14,
             ),
@@ -613,7 +614,7 @@ class _TrackingItemImage extends StatelessWidget {
         width: 64,
         height: 64,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(),
+        errorBuilder: (ctx, _, __) => _placeholder(ctx),
       );
     }
     return Image.asset(
@@ -621,17 +622,17 @@ class _TrackingItemImage extends StatelessWidget {
       width: 64,
       height: 64,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _placeholder(),
+      errorBuilder: (ctx, _, __) => _placeholder(ctx),
     );
   }
 
-  Widget _placeholder() => Container(
+  Widget _placeholder(BuildContext ctx) => Container(
         width: 64,
         height: 64,
-        color: const Color(0xFF2C2C2E),
-        child: const Icon(
+        color: Theme.of(ctx).colorScheme.surface,
+        child: Icon(
           Icons.restaurant_rounded,
-          color: Color(0xFF636366),
+          color: Theme.of(ctx).dividerColor,
           size: 28,
         ),
       );
@@ -651,7 +652,7 @@ class _TrackingMenuImage extends StatelessWidget {
         height: height,
         width: double.infinity,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _fallback(),
+        errorBuilder: (ctx, _, __) => _fallback(ctx),
       );
     }
     return Image.asset(
@@ -659,16 +660,16 @@ class _TrackingMenuImage extends StatelessWidget {
       height: height,
       width: double.infinity,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _fallback(),
+      errorBuilder: (ctx, _, __) => _fallback(ctx),
     );
   }
 
-  Widget _fallback() => Container(
+  Widget _fallback(BuildContext ctx) => Container(
         height: height,
-        color: const Color(0xFF1C1C1E),
-        child: const Icon(
+        color: Theme.of(ctx).cardColor,
+        child: Icon(
           Icons.restaurant_rounded,
-          color: Color(0xFF3A3A3C),
+          color: Theme.of(ctx).dividerColor,
           size: 48,
         ),
       );
@@ -687,7 +688,7 @@ class _PayNowCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFFFF6F22).withValues(alpha: 0.4),
@@ -696,14 +697,15 @@ class _PayNowCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.payment_rounded, color: Color(0xFFFF6F22), size: 18),
-              SizedBox(width: 8),
+              const Icon(
+                  Icons.payment_rounded, color: Color(0xFFFF6F22), size: 18),
+              const SizedBox(width: 8),
               Text(
                 'Pago',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
