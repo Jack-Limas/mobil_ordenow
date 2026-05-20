@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/app_copy.dart';
 import '../../data/datasources/local/hive_service.dart';
+import '../widgets/app_utility_toggles.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
@@ -17,7 +19,7 @@ class AdminProfileScreen extends StatelessWidget {
 
     return Column(
       children: [
-        _ProfileAppBar(settings: settings),
+        const _ProfileAppBar(),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
@@ -43,14 +45,12 @@ class AdminProfileScreen extends StatelessWidget {
 }
 
 class _ProfileAppBar extends StatelessWidget {
-  const _ProfileAppBar({required this.settings});
-
-  final AppSettingsProvider settings;
+  const _ProfileAppBar();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
@@ -68,33 +68,16 @@ class _ProfileAppBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Text(
+          Text(
             'OrdeNow',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: settings.toggleLanguage,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                settings.isSpanish ? 'ES' : 'EN',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
+          const AppUtilityToggles(),
         ],
       ),
     );
@@ -171,11 +154,12 @@ class _LanguageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(icon: Icons.translate_rounded, label: 'Idioma'),
+          _CardHeader(icon: Icons.translate_rounded, label: copy.settingsLanguage),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -209,17 +193,18 @@ class _AppearanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(icon: Icons.palette_rounded, label: 'Apariencia'),
+          _CardHeader(icon: Icons.palette_rounded, label: copy.settingsAppearance),
           const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: _OptionButton(
-                  label: 'Oscuro',
+                  label: copy.themeDark,
                   selected: settings.themeMode == ThemeMode.dark,
                   onTap: () => settings.updateThemeMode(ThemeMode.dark),
                 ),
@@ -227,7 +212,7 @@ class _AppearanceCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _OptionButton(
-                  label: 'Claro',
+                  label: copy.themeLight,
                   selected: settings.themeMode == ThemeMode.light,
                   onTap: () => settings.updateThemeMode(ThemeMode.light),
                 ),
@@ -235,7 +220,7 @@ class _AppearanceCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _OptionButton(
-                  label: 'Sistema',
+                  label: copy.themeSystem,
                   selected: settings.themeMode == ThemeMode.system,
                   onTap: () => settings.updateThemeMode(ThemeMode.system),
                 ),
