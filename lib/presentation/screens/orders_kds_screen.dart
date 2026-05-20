@@ -122,16 +122,16 @@ class _CashAlertBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Pago Efectivo Pendiente',
-                  style: TextStyle(
+                Text(
+                  AppCopy.of(context).kdsCashPending,
+                  style: const TextStyle(
                     color: Color(0xFFFF6F22),
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 Text(
-                  '${kds.tableLabel(request.tableId)} solicita cierre de cuenta',
+                  '${kds.tableLabel(request.tableId)} ${AppCopy.of(context).kdsRequestsClosing}',
                   style: const TextStyle(
                     color: Color(0xFFFF6F22),
                     fontSize: 12,
@@ -227,10 +227,11 @@ class _OrderCardState extends State<_OrderCard> {
   int get turn => widget.turn;
   OrdersKdsProvider get kds => widget.kds;
 
-  String _elapsed() {
+  String _elapsed(BuildContext context) {
+    final copy = AppCopy.of(context);
     final diff = DateTime.now().difference(order.createdAt);
-    if (diff.inMinutes < 1) return 'Recién llegada';
-    return 'Hace ${diff.inMinutes} min';
+    if (diff.inMinutes < 1) return copy.kdsJustArrived;
+    return copy.kdsMinutesAgo(diff.inMinutes);
   }
 
   String _formatCop(double v) {
@@ -243,7 +244,7 @@ class _OrderCardState extends State<_OrderCard> {
     if (order.status == 'ready') return _buildDetailCard(context);
 
     final isPrep = order.status == 'preparing';
-    final statusLabel = isPrep ? 'Preparando' : 'Recibido';
+    final statusLabel = AppCopy.translateStatus(context, order.status);
     final statusColor = isPrep
         ? const Color(0xFFFF6F22)
         : const Color(0xFFFFB800);
@@ -273,7 +274,7 @@ class _OrderCardState extends State<_OrderCard> {
           ),
           const SizedBox(height: 4),
           Text(
-            _elapsed(),
+            _elapsed(context),
             style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
           ),
           const SizedBox(height: 12),
@@ -350,7 +351,7 @@ class _OrderCardState extends State<_OrderCard> {
               children: [
                 Expanded(
                   child: Text(
-                    'Detalle de Comanda $label',
+                    '${AppCopy.of(context).kdsOrderDetail} $label',
                     style: const TextStyle(
                       color: Color(0xFFFF6F22),
                       fontSize: 14,
@@ -367,7 +368,7 @@ class _OrderCardState extends State<_OrderCard> {
             child: Row(
               children: [
                 Text(
-                  _dateLabel(now),
+                  _dateLabel(context, now),
                   style: const TextStyle(
                     color: Color(0xFF8E8E93),
                     fontSize: 12,
@@ -383,9 +384,9 @@ class _OrderCardState extends State<_OrderCard> {
                     color: const Color(0xFF0D2E0D),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
-                    'Abierta',
-                    style: TextStyle(
+                  child: Text(
+                    AppCopy.of(context).kdsOpen,
+                    style: const TextStyle(
                       color: Color(0xFF4CAF50),
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -418,13 +419,20 @@ class _OrderCardState extends State<_OrderCard> {
                   ),
                 Divider(color: Theme.of(context).dividerColor, height: 24),
                 _BillRow(
-                  label: 'Subtotal',
+                  label: AppCopy.of(context).kdsSubtotal,
                   value: _formatCop(order.totalAmount),
                 ),
                 const SizedBox(height: 6),
-                _BillRow(label: 'Servicio (10%)', value: _formatCop(service)),
+                _BillRow(
+                  label: AppCopy.of(context).kdsServiceFee,
+                  value: _formatCop(service),
+                ),
                 const SizedBox(height: 6),
-                _BillRow(label: 'Total', value: _formatCop(total), bold: true),
+                _BillRow(
+                  label: AppCopy.of(context).kdsTotal,
+                  value: _formatCop(total),
+                  bold: true,
+                ),
                 const SizedBox(height: 14),
                 if (!order.paid)
                   _PaymentPendingBanner(
@@ -464,8 +472,8 @@ class _OrderCardState extends State<_OrderCard> {
                     ),
                     label: Text(
                       order.paid
-                          ? 'Cerrar pedido y liberar mesa'
-                          : 'Esperando confirmación de pago',
+                          ? AppCopy.of(context).kdsCloseAndRelease
+                          : AppCopy.of(context).kdsAwaitingPayment,
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -479,22 +487,8 @@ class _OrderCardState extends State<_OrderCard> {
     );
   }
 
-  String _dateLabel(DateTime dt) {
-    const months = [
-      '',
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ];
+  String _dateLabel(BuildContext context, DateTime dt) {
+    final months = AppCopy.of(context).monthAbbreviations;
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '${months[dt.month]} ${dt.day}, $h:$m';
@@ -552,7 +546,7 @@ class _TurnBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        'TURNO ${turn.toString().padLeft(2, '0')}',
+        '${AppCopy.of(context).kdsTurn} ${turn.toString().padLeft(2, '0')}',
         style: const TextStyle(
           color: Color(0xFFFF6F22),
           fontSize: 11,
@@ -668,9 +662,8 @@ class _PaymentPendingBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCash = order.paymentMethod == 'cash';
-    final message = isCash
-        ? 'Pago en efectivo solicitado. Confírmalo con el botón naranja (💳).'
-        : 'Pago digital pendiente. Toca "Verificar" para comprobar.';
+    final copy = AppCopy.of(context);
+    final message = isCash ? copy.kdsCashMessage : copy.kdsDigitalMessage;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -698,9 +691,9 @@ class _PaymentPendingBanner extends StatelessWidget {
             const SizedBox(width: 8),
             GestureDetector(
               onTap: onRefresh,
-              child: const Text(
-                'Verificar',
-                style: TextStyle(
+              child: Text(
+                copy.kdsVerify,
+                style: const TextStyle(
                   color: Color(0xFFFF6F22),
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -730,7 +723,7 @@ class _EmptyKds extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'Sin órdenes activas',
+            AppCopy.of(context).kdsNoOrders,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
@@ -738,10 +731,10 @@ class _EmptyKds extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Las nuevas comandas aparecerán aquí\nen tiempo real.',
+          Text(
+            AppCopy.of(context).kdsNoOrdersSub,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF8E8E93), height: 1.5),
+            style: const TextStyle(color: Color(0xFF8E8E93), height: 1.5),
           ),
         ],
       ),
@@ -792,15 +785,15 @@ class _CashFab extends StatelessWidget {
           ),
         ),
         content: Text(
-          '¿Confirmar pago en efectivo de $label por $amount?',
+          AppCopy.of(ctx).kdsConfirmCashQuestion(label, amount),
           style: const TextStyle(color: Color(0xFF8E8E93)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: Color(0xFF8E8E93)),
+            child: Text(
+              AppCopy.of(ctx).cancelar,
+              style: const TextStyle(color: Color(0xFF8E8E93)),
             ),
           ),
           FilledButton(
@@ -814,7 +807,7 @@ class _CashFab extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFFF6F22),
             ),
-            child: const Text('Confirmar'),
+            child: Text(AppCopy.of(ctx).confirmar),
           ),
         ],
       ),
