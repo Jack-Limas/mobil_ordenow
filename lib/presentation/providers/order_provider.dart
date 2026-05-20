@@ -5,6 +5,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/services/ai_service.dart';
 import '../../core/utils/constants.dart';
+import '../../data/datasources/local/hive_service.dart';
+import '../../data/datasources/local/menu_local_datasource.dart';
+import '../../data/datasources/local/order_local_datasource.dart';
 import '../../data/datasources/remote/supabase_service.dart';
 import '../../data/models/menu_model.dart';
 import '../../data/models/order_model.dart';
@@ -23,6 +26,8 @@ class CartLineItem {
 
 class OrderProvider extends ChangeNotifier {
   final Uuid _uuid = const Uuid();
+  final _menuLocalDs = MenuLocalDataSource();
+  final _orderLocalDs = OrderLocalDataSource();
   StreamSubscription<List<Map<String, dynamic>>>? _menuSubscription;
   StreamSubscription<List<Map<String, dynamic>>>? _activeOrderSubscription;
 
@@ -44,6 +49,7 @@ class OrderProvider extends ChangeNotifier {
   Order? _completedOrder;
   String _paymentMethod = 'card';
   String _diningPreferences = '';
+  List<String> _historyItemIds = [];
 
   OrderProvider() {
     _loadRemoteMenu();
@@ -59,6 +65,24 @@ class OrderProvider extends ChangeNotifier {
 
   List<Menu> get recommendedMenu =>
       _menu.where((item) => item.recommended).toList();
+
+  /// Names of up to 20 unique dishes ordered in previous visits.
+  /// Resolves lazily from the current menu — safe to call before menu loads.
+  List<String> get historyItemNames {
+    if (_historyItemIds.isEmpty || _menu.isEmpty) return const [];
+    final seen = <String>{};
+    final result = <String>[];
+    for (final id in _historyItemIds) {
+      for (final m in _menu) {
+        if (m.id == id && seen.add(m.name)) {
+          result.add(m.name);
+          break;
+        }
+      }
+      if (result.length >= 20) break;
+    }
+    return result;
+  }
 
   List<Menu> get cartItems => _cartMenuIds
       .map((id) => _menu.firstWhere((item) => item.id == id))
@@ -358,12 +382,35 @@ class OrderProvider extends ChangeNotifier {
     _syncTableState(current.id, occupied: occupied, needsPayment: needsPayment);
   }
 
+  void _saveHistoryToHive(String userId) {
+    HiveService.settingsBox.put(
+      '${HiveKeys.orderHistory}$userId',
+      _historyItemIds,
+    );
+  }
+
+  void _loadHistoryFromHive(String userId) {
+    final raw = HiveService.settingsBox.get('${HiveKeys.orderHistory}$userId');
+    if (raw is List) {
+      _historyItemIds = raw.whereType<String>().toList();
+    }
+  }
+
   Future<void> _loadRemoteMenu() async {
     try {
       final rows = await SupabaseService.getMenu();
       _applyRemoteMenu(rows);
+      // Cache for offline use — fire-and-forget, never block the UI
+      _menuLocalDs.saveMenu(rows.map(MenuModel.fromJson).toList()).ignore();
     } catch (_) {
-      // Demo menu remains available when Supabase is not reachable.
+      // Offline or network error → serve cached Hive menu
+      try {
+        final cached = await _menuLocalDs.getMenu();
+        if (cached.isNotEmpty) {
+          _menu = List<Menu>.from(cached);
+          notifyListeners();
+        }
+      } catch (_) {}
     }
   }
 
@@ -415,14 +462,25 @@ class OrderProvider extends ChangeNotifier {
 
   Future<void> _syncActiveOrder() async {
     final order = _activeOrder;
-    if (order == null) {
-      return;
-    }
+    if (order == null) return;
 
+    final model = OrderModel.fromEntity(order);
+
+    // Always persist locally first so the order survives offline restarts.
     try {
-      await SupabaseService.upsertOrder(OrderModel.fromEntity(order).toJson());
+      await _orderLocalDs.saveOrder(model);
+    } catch (_) {}
+
+    // Then try to reach Supabase.
+    try {
+      final payload = model.toJson()..remove('synced');
+      await SupabaseService.upsertOrder(payload);
+      // Mark synced in Hive
+      final syncedJson = model.toJson();
+      syncedJson['synced'] = true;
+      HiveService.getOrderBox().put(order.id, syncedJson);
     } catch (_) {
-      // Local state keeps the customer flow usable if the network is down.
+      // Stays with synced=false in Hive; ConnectivityProvider will retry on reconnect.
     }
   }
 
@@ -578,6 +636,21 @@ class OrderProvider extends ChangeNotifier {
     _subscribeToActiveOrder(userId);
   }
 
+  /// Loads the active order and history from Hive when Supabase is unreachable.
+  Future<bool> _loadLocalSession(String userId) async {
+    try {
+      _loadHistoryFromHive(userId);
+      final local = await _orderLocalDs.getActiveOrder(userId);
+      if (local == null) return false;
+      _activeOrder = local;
+      _selectedTableId = local.tableId;
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> loadUserSession(String userId) async {
     try {
       final rows = await SupabaseService.getOrdersByUser(userId);
@@ -589,7 +662,7 @@ class OrderProvider extends ChangeNotifier {
         OrderStatuses.delivered,
       };
 
-      // Restore history from most recent completed order
+      // Restore history from completed orders
       final completedRows = rows
           .where((r) =>
               r['status'] == OrderStatuses.completed ||
@@ -606,6 +679,18 @@ class OrderProvider extends ChangeNotifier {
           return db.compareTo(da);
         });
         _completedOrder = OrderModel.fromJson(completedRows.first);
+
+        // Collect raw item IDs from all completed orders (capped to avoid bloat)
+        final historyIds = <String>[];
+        for (final row in completedRows) {
+          final rawItems = row['items'];
+          if (rawItems is List) historyIds.addAll(rawItems.whereType<String>());
+          if (historyIds.length >= 60) break;
+        }
+        if (historyIds.isNotEmpty) {
+          _historyItemIds = historyIds;
+          _saveHistoryToHive(userId);
+        }
       }
 
       final activeRows = rows
@@ -651,7 +736,8 @@ class OrderProvider extends ChangeNotifier {
       _subscribeToActiveOrder(userId);
       return true;
     } catch (_) {
-      return false;
+      // Offline: restore from local Hive storage
+      return _loadLocalSession(userId);
     }
   }
 

@@ -6,6 +6,7 @@ import '../providers/admin_dashboard_provider.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/offline_banner.dart';
 import 'admin_profile_screen.dart';
 import 'menu_management_screen.dart';
 import 'orders_kds_screen.dart';
@@ -41,13 +42,20 @@ class _AdminAppScreenState extends State<AdminAppScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: IndexedStack(
-          index: flow.adminScreen.index,
-          children: const [
-            _AdminHomeView(),
-            MenuManagementScreen(),
-            OrdersKdsScreen(showBackButton: false),
-            AdminProfileScreen(),
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: IndexedStack(
+                index: flow.adminScreen.index,
+                children: const [
+                  _AdminHomeView(),
+                  MenuManagementScreen(),
+                  OrdersKdsScreen(showBackButton: false),
+                  AdminProfileScreen(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -149,6 +157,26 @@ class _AdminAppBar extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: settings.cycleThemeMode,
+            child: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                settings.themeMode == ThemeMode.light
+                    ? Icons.light_mode_rounded
+                    : settings.themeMode == ThemeMode.system
+                    ? Icons.settings_brightness_rounded
+                    : Icons.dark_mode_outlined,
+                color: Colors.white,
+                size: 18,
               ),
             ),
           ),

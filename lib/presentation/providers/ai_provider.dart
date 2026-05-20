@@ -10,11 +10,13 @@ class DemoAiMessage {
     required this.text,
     required this.isUser,
     this.isConfirmation = false,
+    this.isVoice = false,
   });
 
   final String text;
   final bool isUser;
   final bool isConfirmation;
+  final bool isVoice;
 }
 
 class AiProvider extends ChangeNotifier {
@@ -122,6 +124,7 @@ class AiProvider extends ChangeNotifier {
     int? tableNumber,
     List<String> allergies = const [],
     String diningPreferences = '',
+    List<String> orderHistory = const [],
   }) async {
     if (_messages.isNotEmpty || _isLoading) return;
 
@@ -138,6 +141,7 @@ class AiProvider extends ChangeNotifier {
       orderStatus: '',
       allergies: allergies,
       diningPreferences: diningPreferences,
+      orderHistory: orderHistory,
       isGreeting: true,
     );
   }
@@ -150,11 +154,13 @@ class AiProvider extends ChangeNotifier {
     required String orderStatus,
     List<String> allergies = const [],
     String diningPreferences = '',
+    List<String> orderHistory = const [],
+    bool isVoice = false,
   }) async {
     final trimmed = prompt.trim();
     if (trimmed.isEmpty || _isLoading) return;
 
-    _messages.add(DemoAiMessage(text: trimmed, isUser: true));
+    _messages.add(DemoAiMessage(text: trimmed, isUser: true, isVoice: isVoice));
     notifyListeners();
 
     await _callAi(
@@ -165,6 +171,7 @@ class AiProvider extends ChangeNotifier {
       orderStatus: orderStatus,
       allergies: allergies,
       diningPreferences: diningPreferences,
+      orderHistory: orderHistory,
     );
   }
 
@@ -176,6 +183,7 @@ class AiProvider extends ChangeNotifier {
     required String orderStatus,
     required List<String> allergies,
     required String diningPreferences,
+    List<String> orderHistory = const [],
     bool isGreeting = false,
   }) async {
     _isLoading = true;
@@ -191,6 +199,7 @@ class AiProvider extends ChangeNotifier {
       allergies: allergies,
       diningPreferences: diningPreferences,
       hasActiveOrder: _orderProvider.hasActiveOrder,
+      orderHistory: orderHistory,
     );
 
     _history.add(ChatMessage(role: 'user', content: prompt));

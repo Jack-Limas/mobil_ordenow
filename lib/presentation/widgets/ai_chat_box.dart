@@ -5,12 +5,19 @@ class AiChatBox extends StatefulWidget {
   const AiChatBox({
     super.key,
     required this.onSend,
-    this.hintText = 'Habla o escribe aquí...',
+    this.onVoiceSend,
+    this.hintText = 'Escribe aquí...',
     this.isLoading = false,
     this.onListeningChanged,
   });
 
+  /// Called when the user sends a typed text message.
   final Future<void> Function(String prompt) onSend;
+
+  /// Called when a voice message is captured and auto-sent.
+  /// If null, falls back to [onSend].
+  final Future<void> Function(String prompt)? onVoiceSend;
+
   final String hintText;
   final bool isLoading;
   final ValueChanged<bool>? onListeningChanged;
@@ -22,10 +29,14 @@ class AiChatBox extends StatefulWidget {
 class _AiChatBoxState extends State<AiChatBox> {
   final TextEditingController _controller = TextEditingController();
   final stt.SpeechToText _speech = stt.SpeechToText();
+
   bool _isListening = false;
   bool _speechAvailable = false;
   bool _speechInitialized = false;
   bool _hasText = false;
+
+  // Accumulates the transcription internally — never written to the text field.
+  String _lastRecognized = '';
 
   @override
   void initState() {
@@ -38,13 +49,13 @@ class _AiChatBoxState extends State<AiChatBox> {
     if (has != _hasText) setState(() => _hasText = has);
   }
 
-  // Lazy init: only asks for mic permission the first time the user taps the mic button.
+  // Lazy init: requests microphone permission only on first tap.
   Future<bool> _ensureSpeechReady() async {
     if (_speechInitialized) return _speechAvailable;
     final available = await _speech.initialize(
-      onError: (_) => _setListening(false),
+      onError: (_) => _onVoiceDone(),
       onStatus: (status) {
-        if (status == 'done' || status == 'notListening') _setListening(false);
+        if (status == 'done' || status == 'notListening') _onVoiceDone();
       },
     );
     _speechInitialized = true;
@@ -70,22 +81,22 @@ class _AiChatBoxState extends State<AiChatBox> {
 
   Future<void> _toggleListening() async {
     if (_isListening) {
+      // User tapped stop — finalize the voice message.
       await _speech.stop();
-      _setListening(false);
+      // _onVoiceDone is also called by the onStatus callback; guard handles double calls.
       return;
     }
     final ready = await _ensureSpeechReady();
     if (!ready) return;
+
+    _lastRecognized = '';
     _setListening(true);
+
     await _speech.listen(
       onResult: (result) {
         if (!mounted) return;
-        setState(() {
-          _controller.text = result.recognizedWords;
-          _controller.selection = TextSelection.fromPosition(
-            TextPosition(offset: _controller.text.length),
-          );
-        });
+        // Accumulate transcription internally — NOT shown in the text field.
+        _lastRecognized = result.recognizedWords;
       },
       localeId: 'es_CO',
       listenFor: const Duration(seconds: 30),
@@ -93,13 +104,24 @@ class _AiChatBoxState extends State<AiChatBox> {
     );
   }
 
-  Future<void> _send() async {
+  /// Fires when voice recording ends (either by user stop or silence timeout).
+  /// Auto-sends the transcription as a voice message without writing it to the field.
+  void _onVoiceDone() {
+    if (!_isListening) return;
+    _setListening(false);
+
+    final text = _lastRecognized.trim();
+    _lastRecognized = '';
+
+    if (text.isEmpty || widget.isLoading) return;
+
+    final sendFn = widget.onVoiceSend ?? widget.onSend;
+    sendFn(text);
+  }
+
+  Future<void> _sendText() async {
     final text = _controller.text.trim();
     if (text.isEmpty || widget.isLoading) return;
-    if (_isListening) {
-      await _speech.stop();
-      _setListening(false);
-    }
     _controller.clear();
     await widget.onSend(text);
   }
@@ -117,7 +139,8 @@ class _AiChatBoxState extends State<AiChatBox> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Mic button — tap to start, tap again to stop
+        // ── Voice button (left) ────────────────────────────────────────────
+        // Tap to start recording. Tap again to stop & auto-send voice message.
         GestureDetector(
           onTap: _toggleListening,
           child: AnimatedContainer(
@@ -147,7 +170,9 @@ class _AiChatBoxState extends State<AiChatBox> {
           ),
         ),
         const SizedBox(width: 10),
-        // Text field — shows transcription in real time; editable before sending
+
+        // ── Text field (center) ────────────────────────────────────────────
+        // Disabled while recording so the two channels don't interfere.
         Expanded(
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -163,8 +188,14 @@ class _AiChatBoxState extends State<AiChatBox> {
             ),
             child: TextField(
               controller: _controller,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              onSubmitted: (_) => _send(),
+              enabled: !_isListening,
+              style: TextStyle(
+                color: _isListening
+                    ? const Color(0xFF636366)
+                    : Colors.white,
+                fontSize: 14,
+              ),
+              onSubmitted: (_) => _sendText(),
               textInputAction: TextInputAction.send,
               decoration: InputDecoration(
                 border: InputBorder.none,
@@ -181,17 +212,19 @@ class _AiChatBoxState extends State<AiChatBox> {
             ),
           ),
         ),
-        // Send button — appears with animation when text is present
+
+        // ── Send button (right) ────────────────────────────────────────────
+        // Appears only when the text field has content AND not recording.
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
           transitionBuilder: (child, animation) =>
               ScaleTransition(scale: animation, child: child),
-          child: _hasText
+          child: (_hasText && !_isListening)
               ? Padding(
                   key: const ValueKey('send'),
                   padding: const EdgeInsets.only(left: 10),
                   child: GestureDetector(
-                    onTap: widget.isLoading ? null : _send,
+                    onTap: widget.isLoading ? null : _sendText,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       width: 50,

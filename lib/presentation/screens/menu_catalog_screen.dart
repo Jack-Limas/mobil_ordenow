@@ -65,46 +65,55 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
         child: Column(
           children: [
             _CatalogAppBar(settings: settings),
-            SizedBox(
-              height: 48,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemCount: categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final cat = categories[index];
-                  final isSelected = cat == selectedCat;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = cat),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFFFF6F22)
-                            : const Color(0xFF1C1C1E),
-                        borderRadius: BorderRadius.circular(999),
-                        border: isSelected
-                            ? null
-                            : Border.all(color: const Color(0xFF3A3A3C)),
-                      ),
-                      child: Text(
-                        cat,
-                        style: TextStyle(
+            ShaderMask(
+              shaderCallback: (rect) => const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Colors.white, Colors.white, Colors.transparent],
+                stops: [0.0, 0.80, 1.0],
+              ).createShader(rect),
+              blendMode: BlendMode.dstIn,
+              child: SizedBox(
+                height: 48,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final cat = categories[index];
+                    final isSelected = cat == selectedCat;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedCategory = cat),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.white
-                              : const Color(0xFF8E8E93),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                              ? const Color(0xFFFF6F22)
+                              : const Color(0xFF1C1C1E),
+                          borderRadius: BorderRadius.circular(999),
+                          border: isSelected
+                              ? null
+                              : Border.all(color: const Color(0xFF3A3A3C)),
+                        ),
+                        child: Text(
+                          cat,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF8E8E93),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -191,6 +200,26 @@ class _CatalogAppBar extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: settings.cycleThemeMode,
+            child: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                settings.themeMode == ThemeMode.light
+                    ? Icons.light_mode_rounded
+                    : settings.themeMode == ThemeMode.system
+                    ? Icons.settings_brightness_rounded
+                    : Icons.dark_mode_outlined,
+                color: Colors.white,
+                size: 18,
               ),
             ),
           ),

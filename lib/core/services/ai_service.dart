@@ -77,6 +77,7 @@ class AiService {
     List<String> allergies = const [],
     String diningPreferences = '',
     bool hasActiveOrder = false,
+    List<String> orderHistory = const [],
   }) async {
     try {
       final response = await SupabaseConfig.client.functions.invoke(
@@ -93,6 +94,7 @@ class AiService {
           'cart_items': cartItems.map((item) => item.name).toList(),
           'menu': recommendedMenu.map(_menuToPayload).toList(),
           'recommended_menu': recommendedMenu.map(_menuToPayload).toList(),
+          'order_history': orderHistory,
         },
       );
 

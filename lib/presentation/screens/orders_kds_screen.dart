@@ -112,15 +112,24 @@ class _KdsAppBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            IconButton(
-              icon: const Icon(
-                Icons.ios_share_rounded,
-                color: Colors.white,
-                size: 20,
+            GestureDetector(
+              onTap: settings.cycleThemeMode,
+              child: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1C1C1E),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  settings.themeMode == ThemeMode.light
+                      ? Icons.light_mode_rounded
+                      : settings.themeMode == ThemeMode.system
+                      ? Icons.settings_brightness_rounded
+                      : Icons.dark_mode_outlined,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
-              onPressed: () {},
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
             ),
           ],
         ),
@@ -336,7 +345,7 @@ class _OrderCardState extends State<_OrderCard> {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 44,
+            height: 56,
             child: isPrep
                 ? _ReadyButton(
                     onTap: () =>

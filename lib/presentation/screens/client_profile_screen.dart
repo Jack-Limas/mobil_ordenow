@@ -18,6 +18,130 @@ class ClientProfileScreen extends StatefulWidget {
 class _ClientProfileScreenState extends State<ClientProfileScreen> {
   bool _showAllHistory = false;
 
+  static const _commonAllergies = [
+    'Mani', 'Mariscos', 'Gluten', 'Lactosa', 'Huevo', 'Soya',
+  ];
+
+  Future<void> _showAddAllergyDialog(AuthProvider auth) async {
+    final selected = <String>{};
+    final customController = TextEditingController();
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1C1C1E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'Añadir alergias',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Selecciona tus alergias:',
+                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _commonAllergies.map((a) {
+                  final isSelected = selected.contains(a);
+                  return GestureDetector(
+                    onTap: () => setDialogState(() {
+                      if (isSelected) selected.remove(a);
+                      else selected.add(a);
+                    }),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFFF6F22)
+                            : const Color(0xFF2C2C2E),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        a,
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF8E8E93),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: customController,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Otras (separadas por coma)',
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF636366),
+                    fontSize: 13,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFF2C2C2E),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: Color(0xFF8E8E93)),
+              ),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final u = auth.currentUser;
+                if (u == null) return;
+                final custom = customController.text
+                    .split(',')
+                    .map((s) => s.trim())
+                    .where((s) => s.isNotEmpty)
+                    .toSet();
+                final merged = {...u.allergies, ...selected, ...custom}.toList();
+                await auth.updateInitialProfile(
+                  allergies: merged,
+                  preferences: u.preferences,
+                );
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6F22),
+              ),
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    customController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -52,7 +176,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                     preferences: u.preferences,
                   );
                 },
-                onAdd: () => flow.openProfileSetup(),
+                onAdd: () => _showAddAllergyDialog(auth),
               ),
               const SizedBox(height: 16),
               _HistorialCard(
@@ -139,6 +263,26 @@ class _ProfileAppBar extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: settings.cycleThemeMode,
+            child: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                settings.themeMode == ThemeMode.light
+                    ? Icons.light_mode_rounded
+                    : settings.themeMode == ThemeMode.system
+                    ? Icons.settings_brightness_rounded
+                    : Icons.dark_mode_outlined,
+                color: Colors.white,
+                size: 18,
               ),
             ),
           ),

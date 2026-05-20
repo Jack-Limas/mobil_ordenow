@@ -32,6 +32,7 @@ class HiveKeys {
   static const String languageCode = 'language_code';
   static const String currentUserId = 'current_user_id';
   static const String selectedTableId = 'selected_table_id';
+  static const String orderHistory = 'order_history_';
 }
 
 class SupabaseTables {

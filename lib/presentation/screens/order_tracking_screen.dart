@@ -111,13 +111,33 @@ class _TrackingAppBar extends StatelessWidget {
                 color: const Color(0xFF1C1C1E),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
-                'XA',
-                style: TextStyle(
+              child: Text(
+                settings.isSpanish ? 'ES' : 'EN',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: settings.cycleThemeMode,
+            child: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                settings.themeMode == ThemeMode.light
+                    ? Icons.light_mode_rounded
+                    : settings.themeMode == ThemeMode.system
+                    ? Icons.settings_brightness_rounded
+                    : Icons.dark_mode_outlined,
+                color: Colors.white,
+                size: 18,
               ),
             ),
           ),

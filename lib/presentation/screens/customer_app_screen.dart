@@ -7,9 +7,11 @@ import '../providers/ai_provider.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../providers/order_provider.dart';
 import '../widgets/ai_chat_box.dart';
 import '../widgets/ai_message_bubble.dart';
+import '../widgets/offline_banner.dart';
 import 'client_profile_screen.dart';
 import 'menu_catalog_screen.dart';
 import 'order_tracking_screen.dart';
@@ -43,16 +45,23 @@ class CustomerAppScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: palette.background,
       body: SafeArea(
-        child: IndexedStack(
-          index: flow.customerScreen.index,
-          children: const [
-            _MenuCatalogView(),
-            _SmartCartView(),
-            _AiConciergeView(),
-            _CheckoutView(),
-            OrderTrackingScreen(),
-            _HistoryView(),
-            _CustomerProfileView(),
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(
+              child: IndexedStack(
+                index: flow.customerScreen.index,
+                children: const [
+                  _MenuCatalogView(),
+                  _SmartCartView(),
+                  _AiConciergeView(),
+                  _CheckoutView(),
+                  OrderTrackingScreen(),
+                  _HistoryView(),
+                  _CustomerProfileView(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -294,6 +303,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
       tableNumber: order.selectedTable?.number,
       allergies: auth.currentUser?.allergies ?? [],
       diningPreferences: order.diningPreferences,
+      orderHistory: order.historyItemNames,
     );
     _scrollToBottom();
   }
@@ -330,6 +340,26 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
       orderStatus: order.currentOrderStatus,
       allergies: auth.currentUser?.allergies ?? [],
       diningPreferences: order.diningPreferences,
+      orderHistory: order.historyItemNames,
+    );
+    _scrollToBottom();
+  }
+
+  Future<void> _sendVoicePrompt(String prompt) async {
+    final order = context.read<OrderProvider>();
+    final auth = context.read<AuthProvider>();
+    final ai = context.read<AiProvider>();
+    ai.setCurrentUser(auth.currentUser?.id);
+    await ai.sendMessage(
+      prompt: prompt,
+      recommendedMenu: order.menu,
+      cartItems: order.cartItems,
+      tableNumber: order.selectedTable?.number,
+      orderStatus: order.currentOrderStatus,
+      allergies: auth.currentUser?.allergies ?? [],
+      diningPreferences: order.diningPreferences,
+      orderHistory: order.historyItemNames,
+      isVoice: true,
     );
     _scrollToBottom();
   }
@@ -390,9 +420,9 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                     color: const Color(0xFF1C1C1E),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'XA',
-                    style: TextStyle(
+                  child: Text(
+                    settings.isSpanish ? 'ES' : 'EN',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -439,6 +469,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                   text: msg.text,
                   isUser: msg.isUser,
                   userInitials: initials,
+                  isVoice: msg.isVoice,
                 ),
               );
             },
@@ -485,21 +516,56 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
             child: _isListening ? const _OrbSection() : const SizedBox.shrink(),
           ),
         ),
-        // Quick suggestion chips
-        _QuickChips(onSend: _sendPrompt),
+        // Quick suggestion chips — hide when offline
+        if (context.watch<ConnectivityProvider>().isOnline)
+          _QuickChips(onSend: _sendPrompt),
         const SizedBox(height: 8),
-        // Input bar
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: AiChatBox(
-            hintText: settings.isSpanish
-                ? 'Habla o escribe aquí...'
-                : 'Talk or type here...',
-            onSend: _sendPrompt,
-            isLoading: ai.isLoading,
-            onListeningChanged: (v) => setState(() => _isListening = v),
+        // Input bar — replaced by offline notice when disconnected
+        if (context.watch<ConnectivityProvider>().isOnline)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: AiChatBox(
+              hintText: settings.isSpanish
+                  ? 'Escribe aquí...'
+                  : 'Type here...',
+              onSend: _sendPrompt,
+              onVoiceSend: _sendVoicePrompt,
+              isLoading: ai.isLoading,
+              onListeningChanged: (v) => setState(() => _isListening = v),
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.wifi_off_rounded,
+                    color: Color(0xFF636366),
+                    size: 18,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'La IA no está disponible sin conexión. '
+                      'Explora el menú para hacer tu pedido.',
+                      style: TextStyle(
+                        color: Color(0xFF8E8E93),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -717,13 +783,33 @@ class _HistoryView extends StatelessWidget {
                     color: const Color(0xFF1C1C1E),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'XA',
-                    style: TextStyle(
+                  child: Text(
+                    settings.isSpanish ? 'ES' : 'EN',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: settings.cycleThemeMode,
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1C1C1E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    settings.themeMode == ThemeMode.light
+                        ? Icons.light_mode_rounded
+                        : settings.themeMode == ThemeMode.system
+                        ? Icons.settings_brightness_rounded
+                        : Icons.dark_mode_outlined,
+                    color: Colors.white,
+                    size: 18,
                   ),
                 ),
               ),
