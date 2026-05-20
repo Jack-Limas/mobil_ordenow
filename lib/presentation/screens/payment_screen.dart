@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/app_copy.dart';
 import '../../domain/entities/menu.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/auth_provider.dart';
@@ -147,20 +148,23 @@ class _PaymentAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
       child: Row(
         children: [
           IconButton(
             onPressed: onBack,
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
-                'PAGO Y COMANDA',
+                AppCopy.of(context).paymentTitle.toUpperCase(),
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
@@ -197,9 +201,9 @@ class _TotalCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'MONTO TOTAL',
-            style: TextStyle(
+          Text(
+            AppCopy.of(context).paymentTotal.toUpperCase(),
+            style: const TextStyle(
               color: Color(0xFFFF6F22),
               fontSize: 11,
               fontWeight: FontWeight.w900,
