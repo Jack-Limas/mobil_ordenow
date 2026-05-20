@@ -9,6 +9,31 @@ class AppCopy {
 
   bool get isSpanish => localeCode == 'es';
 
+  static String translateStatus(BuildContext context, String? status) {
+    final copy = AppCopy.of(context);
+    return switch (status) {
+      'pending' => copy.isSpanish ? 'Pendiente' : 'Pending',
+      'accepted' => copy.isSpanish ? 'Aceptado' : 'Accepted',
+      'preparing' => copy.isSpanish ? 'Preparando' : 'Preparing',
+      'ready' => copy.isSpanish ? 'Listo' : 'Ready',
+      'delivered' => copy.isSpanish ? 'Entregado' : 'Delivered',
+      'completed' => copy.isSpanish ? 'Completado' : 'Completed',
+      _ => status ?? (copy.isSpanish ? 'Desconocido' : 'Unknown'),
+    };
+  }
+
+  static String translateCategory(BuildContext context, String category) {
+    final copy = AppCopy.of(context);
+    return switch (category.toLowerCase()) {
+      'main' || 'plato' || 'signature' || 'healthy' =>
+        copy.isSpanish ? 'Plato' : 'Main',
+      'drink' || 'bebida' => copy.isSpanish ? 'Bebida' : 'Drink',
+      'dessert' || 'postre' => copy.isSpanish ? 'Postre' : 'Dessert',
+      'starter' || 'entrada' => copy.isSpanish ? 'Entrada' : 'Starter',
+      _ => category,
+    };
+  }
+
   static AppCopy of(BuildContext context) {
     return AppCopy._(
       localeCode: Localizations.localeOf(context).languageCode,
@@ -253,6 +278,21 @@ class AppCopy {
       isSpanish ? 'Explora el Menú' : 'Explore the Menu';
   String get trackingViewOnly =>
       isSpanish ? 'Solo consulta' : 'View only';
+  String get trackingOrder => isSpanish ? 'Pedido' : 'Order';
+  String get trackingStartedAt => isSpanish ? 'Iniciado a las' : 'Started at';
+  String get trackingInKitchen => isSpanish ? 'En Cocina' : 'In Kitchen';
+  String get trackingReady => isSpanish ? 'Listo' : 'Ready';
+  String get trackingYourSelection =>
+      isSpanish ? 'Tu Selección' : 'Your Selection';
+  String trackingItemCount(int n) =>
+      isSpanish ? '$n artículo${n == 1 ? '' : 's'}' : '$n item${n == 1 ? '' : 's'}';
+  String get trackingPayment => isSpanish ? 'Pago' : 'Payment';
+  String get trackingPayWait => isSpanish
+      ? 'Puedes pagar ahora o esperar a recibir tu pedido.'
+      : 'You can pay now or wait until you receive your order.';
+  String get trackingPayNow => isSpanish ? 'Pagar Pedido' : 'Pay Order';
+  String get trackingExploreAction => isSpanish ? 'Explorar' : 'Explore';
+  String get trackingIaOrder => isSpanish ? '✦ IA Order' : '✦ AI Order';
 
   // ── Payment ──────────────────────────────────────────────────────────────────
   String get paymentTitle => isSpanish ? 'Pago y Comanda' : 'Payment & Order';
@@ -267,4 +307,136 @@ class AppCopy {
   // ── History ──────────────────────────────────────────────────────────────────
   String get historyTitle =>
       isSpanish ? 'Historial de pedidos' : 'Order history';
+  String get historyEmpty => isSpanish ? 'Sin historial' : 'No history';
+  String get historyEmptySub => isSpanish
+      ? 'Tus pedidos anteriores\naparecerán aquí.'
+      : 'Your previous orders\nwill appear here.';
+
+  // ── Navigation (customer) ────────────────────────────────────────────────────
+  String get navIa => isSpanish ? 'IA' : 'AI';
+  String get navMenu => isSpanish ? 'Menú' : 'Menu';
+  String get navOrders => isSpanish ? 'Pedidos' : 'Orders';
+  String get navHistory => isSpanish ? 'Historial' : 'History';
+  String get navProfile => isSpanish ? 'Perfil' : 'Profile';
+
+  // ── Navigation (admin) ───────────────────────────────────────────────────────
+  String get adminNavHome => isSpanish ? 'Inicio' : 'Home';
+  String get adminNavOrders => isSpanish ? 'Comandas' : 'Orders';
+  String get adminNavMenu => isSpanish ? 'Menu' : 'Menu';
+  String get adminNavProfile => isSpanish ? 'Perfil' : 'Profile';
+
+  // ── AI Concierge ─────────────────────────────────────────────────────────────
+  String get iaListening =>
+      isSpanish ? 'ESCUCHANDO TUS ANTOJOS...' : 'LISTENING TO YOUR CRAVINGS...';
+  String get iaPlaceholder => isSpanish ? 'Escribe aquí...' : 'Type here...';
+  String get iaOfflineNotice => isSpanish
+      ? 'La IA no está disponible sin conexión. Explora el menú para hacer tu pedido.'
+      : 'AI is not available offline. Explore the menu to place your order.';
+  String get iaChip1 =>
+      isSpanish ? 'Recomiéndame algo saludable' : 'Recommend something healthy';
+  String get iaChip2 =>
+      isSpanish ? 'Quiero algo con mucho sabor' : 'I want something flavorful';
+  String get iaChip3 =>
+      isSpanish ? 'Una bebida refrescante' : 'A refreshing drink';
+  String get iaChip4 =>
+      isSpanish ? 'El plato especial del chef' : "The chef's special dish";
+  String get cancelOrder => isSpanish ? 'Cancelar' : 'Cancel';
+  String get confirmOrder => isSpanish ? 'Confirmar pedido' : 'Confirm order';
+
+  // ── Smart cart ────────────────────────────────────────────────────────────────
+  String get cartYourSelection =>
+      isSpanish ? 'TU SELECCION' : 'YOUR SELECTION';
+  String get cartTitle => isSpanish ? 'Carrito Inteligente' : 'Smart Cart';
+  String get cartEmpty =>
+      isSpanish ? 'Tu carrito esta vacio' : 'Your cart is empty';
+  String get cartEmptySub => isSpanish
+      ? 'Agrega platos desde el menu para construir tu pedido y desbloquear maridajes de IA.'
+      : 'Add dishes from the menu to build your order and unlock AI pairings.';
+  String get cartBrowse => isSpanish ? 'Ver Menu' : 'Browse Menu';
+  String get cartSubtotal => 'Subtotal';
+  String get cartServiceFee =>
+      isSpanish ? 'Tarifa de servicio' : 'Delivery Fee';
+  String get cartFree => isSpanish ? 'GRATIS' : 'FREE';
+  String get cartTotal => isSpanish ? 'TOTAL' : 'TOTAL AMOUNT';
+  String get cartCheckout => isSpanish ? 'PAGAR' : 'CHECKOUT';
+
+  // ── Catalog ───────────────────────────────────────────────────────────────────
+  String get menuEmptyCategory =>
+      isSpanish ? 'No hay platos en esta categoría' : 'No dishes in this category';
+
+  // ── Admin (additions) ────────────────────────────────────────────────────────
+  String get adminTableLabel => isSpanish ? 'Mesa' : 'Table';
+  String get adminReleaseTableTitle => isSpanish ? 'Liberar mesa' : 'Release table';
+  String get adminReleaseTableContent => isSpanish
+      ? 'La mesa quedará disponible para nuevos clientes. Si tiene una orden activa, se marcará como completada.'
+      : 'The table will become available for new customers. If it has an active order, it will be marked as completed.';
+  String get adminComanda => isSpanish ? 'Comanda' : 'Order';
+  String get adminWithOrder => isSpanish ? 'Con pedido' : 'With order';
+  String get cancelar => isSpanish ? 'Cancelar' : 'Cancel';
+  String get confirmar => isSpanish ? 'Confirmar' : 'Confirm';
+
+  // ── KDS (additions) ──────────────────────────────────────────────────────────
+  String get kdsCashPending =>
+      isSpanish ? 'Pago Efectivo Pendiente' : 'Cash Payment Pending';
+  String get kdsRequestsClosing =>
+      isSpanish ? 'solicita cierre de cuenta' : 'requests account closure';
+  String get kdsJustArrived => isSpanish ? 'Recién llegada' : 'Just arrived';
+  String kdsMinutesAgo(int n) =>
+      isSpanish ? 'Hace $n min' : '$n min ago';
+  String get kdsOrderDetail =>
+      isSpanish ? 'Detalle de Comanda' : 'Order Detail';
+  String get kdsOpen => isSpanish ? 'Abierta' : 'Open';
+  String get kdsSubtotal => 'Subtotal';
+  String get kdsServiceFee => isSpanish ? 'Servicio (10%)' : 'Service (10%)';
+  String get kdsTotal => isSpanish ? 'Total' : 'Total';
+  String get kdsCloseAndRelease =>
+      isSpanish ? 'Cerrar pedido y liberar mesa' : 'Close order & release table';
+  String get kdsAwaitingPayment =>
+      isSpanish ? 'Esperando confirmación de pago' : 'Awaiting payment confirmation';
+  String get kdsCashMessage => isSpanish
+      ? 'Pago en efectivo solicitado. Confírmalo con el botón naranja (💳).'
+      : 'Cash payment requested. Confirm it with the orange button (💳).';
+  String get kdsDigitalMessage => isSpanish
+      ? 'Pago digital pendiente. Toca "Verificar" para comprobar.'
+      : 'Digital payment pending. Tap "Verify" to check.';
+  String get kdsVerify => isSpanish ? 'Verificar' : 'Verify';
+  String get kdsNoOrders =>
+      isSpanish ? 'Sin órdenes activas' : 'No active orders';
+  String get kdsNoOrdersSub => isSpanish
+      ? 'Las nuevas comandas aparecerán aquí\nen tiempo real.'
+      : 'New orders will appear here\nin real time.';
+  String kdsConfirmCashQuestion(String tableLabel, String amount) => isSpanish
+      ? '¿Confirmar pago en efectivo de $tableLabel por $amount?'
+      : 'Confirm cash payment from $tableLabel for $amount?';
+  String get kdsTurn => isSpanish ? 'TURNO' : 'TURN';
+  List<String> get monthAbbreviations => isSpanish
+      ? ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+      : ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // ── Menu management (additions) ──────────────────────────────────────────────
+  String get menuEmptyList => isSpanish
+      ? 'No hay platos en el menú. Añade el primero.'
+      : 'No dishes in the menu. Add the first one.';
+  String get menuEditItem => isSpanish ? 'Editar Plato' : 'Edit Dish';
+  String get menuSaveChanges => isSpanish ? 'Guardar Cambios' : 'Save Changes';
+  String get menuCancelEdit =>
+      isSpanish ? 'Cancelar edición' : 'Cancel editing';
+  String get menuDeleteTitle =>
+      isSpanish ? '¿Eliminar plato?' : 'Delete dish?';
+  String menuDeleteContent(String name) => isSpanish
+      ? '¿Seguro que quieres eliminar "$name"? Esta acción no se puede deshacer.'
+      : 'Are you sure you want to delete "$name"? This action cannot be undone.';
+  String get menuDeleteButton => isSpanish ? 'Eliminar' : 'Delete';
+  String get menuRequired =>
+      isSpanish ? 'Nombre y precio son obligatorios' : 'Name and price are required';
+  String get menuPublishedSuccess => isSpanish
+      ? '¡Plato publicado! Ya está disponible para los clientes'
+      : 'Dish published! Now available to customers';
+  String get menuFieldName => isSpanish ? 'Nombre del Plato*' : 'Dish Name*';
+  String get menuFieldPrice => isSpanish ? 'Precio (\$)*' : 'Price (\$)*';
+  String get menuFieldCategory => isSpanish ? 'Categoría' : 'Category';
+  String get menuFieldIngredients => isSpanish ? 'Ingredientes' : 'Ingredients';
+  String get menuFieldDescription => isSpanish ? 'Descripción' : 'Description';
+  String get menuFieldImage =>
+      isSpanish ? 'Imagen de referencia' : 'Reference image';
 }
