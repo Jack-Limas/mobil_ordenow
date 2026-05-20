@@ -89,9 +89,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final priceStr = _priceCtrl.text.trim();
     if (name.isEmpty || priceStr.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Nombre y precio son obligatorios'),
-          backgroundColor: Color(0xFFD32F2F),
+        SnackBar(
+          content: Text(AppCopy.of(context).menuRequired),
+          backgroundColor: const Color(0xFFD32F2F),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -121,11 +121,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     _cancelEdit();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('¡Plato publicado! Ya está disponible para los clientes'),
-        backgroundColor: Color(0xFF2E7D32),
+      SnackBar(
+        content: Text(AppCopy.of(context).menuPublishedSuccess),
+        backgroundColor: const Color(0xFF2E7D32),
         behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 3),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -148,22 +148,22 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          '¿Eliminar plato?',
+          AppCopy.of(ctx).menuDeleteTitle,
           style: TextStyle(
             color: Theme.of(ctx).colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
         content: Text(
-          '¿Seguro que quieres eliminar "${item.name}"? Esta acción no se puede deshacer.',
+          AppCopy.of(ctx).menuDeleteContent(item.name),
           style: const TextStyle(color: Color(0xFF8E8E93)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: Color(0xFF8E8E93)),
+            child: Text(
+              AppCopy.of(ctx).cancelar,
+              style: const TextStyle(color: Color(0xFF8E8E93)),
             ),
           ),
           FilledButton(
@@ -171,7 +171,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFD32F2F),
             ),
-            child: const Text('Eliminar'),
+            child: Text(AppCopy.of(ctx).menuDeleteButton),
           ),
         ],
       ),
@@ -355,11 +355,11 @@ class _CurrentDishesSection extends StatelessWidget {
               ),
             )
           else if (menu.isEmpty)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               child: Text(
-                'No hay platos en el menú. Añade el primero.',
-                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+                AppCopy.of(context).menuEmptyList,
+                style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
               ),
             )
           else
@@ -599,7 +599,7 @@ class _AddDishForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isEditing ? 'Editar Plato' : AppCopy.of(context).menuAddItem,
+            isEditing ? AppCopy.of(context).menuEditItem : AppCopy.of(context).menuAddItem,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
@@ -609,7 +609,7 @@ class _AddDishForm extends StatelessWidget {
           const SizedBox(height: 16),
           _FormField(
             controller: nameCtrl,
-            label: 'Nombre del Plato*',
+            label: AppCopy.of(context).menuFieldName,
             hint: 'Ej: Risotto de Azafrán',
           ),
           const SizedBox(height: 12),
@@ -618,7 +618,7 @@ class _AddDishForm extends StatelessWidget {
               Expanded(
                 child: _FormField(
                   controller: priceCtrl,
-                  label: 'Precio (\$)*',
+                  label: AppCopy.of(context).menuFieldPrice,
                   hint: '0',
                   keyboardType: TextInputType.number,
                 ),
@@ -628,8 +628,8 @@ class _AddDishForm extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Categoría',
+                    Text(
+                      AppCopy.of(context).menuFieldCategory,
                       style: TextStyle(
                         color: Color(0xFF8E8E93),
                         fontSize: 12,
@@ -674,21 +674,21 @@ class _AddDishForm extends StatelessWidget {
           const SizedBox(height: 12),
           _FormField(
             controller: ingredientsCtrl,
-            label: 'Ingredientes',
+            label: AppCopy.of(context).menuFieldIngredients,
             hint: 'Separados por coma...',
             maxLines: 2,
           ),
           const SizedBox(height: 12),
           _FormField(
             controller: descCtrl,
-            label: 'Descripción',
+            label: AppCopy.of(context).menuFieldDescription,
             hint: 'Describe la experiencia sensorial...',
             maxLines: 3,
           ),
           const SizedBox(height: 12),
           _FormField(
             controller: imageCtrl,
-            label: 'Imagen de referencia',
+            label: AppCopy.of(context).menuFieldImage,
             hint: 'Pega una URL https://... o una ruta de asset',
             suffix: const Icon(
               Icons.image_outlined,
@@ -711,9 +711,9 @@ class _AddDishForm extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
-                    'Cancelar edición',
-                    style: TextStyle(color: Color(0xFF8E8E93)),
+                  child: Text(
+                    AppCopy.of(context).menuCancelEdit,
+                    style: const TextStyle(color: Color(0xFF8E8E93)),
                   ),
                 ),
               ),
@@ -730,7 +730,7 @@ class _AddDishForm extends StatelessWidget {
                 ),
               ),
               child: Text(
-                isEditing ? 'Guardar Cambios' : AppCopy.of(context).menuPublish,
+                isEditing ? AppCopy.of(context).menuSaveChanges : AppCopy.of(context).menuPublish,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
