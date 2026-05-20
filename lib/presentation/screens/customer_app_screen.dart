@@ -30,13 +30,10 @@ class CustomerAppScreen extends StatelessWidget {
     'menu-6': 'lib/assets/images/background_bienvenida.png',
   };
 
-  static const List<String> _customerLabels = [
-    'IA',
-    'Menú',
-    'Pedidos',
-    'Historial',
-    'Perfil',
-  ];
+  static List<String> _customerLabels(BuildContext context) {
+    final copy = AppCopy.of(context);
+    return [copy.navIa, copy.navMenu, copy.navOrders, copy.navHistory, copy.navProfile];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +65,7 @@ class CustomerAppScreen extends StatelessWidget {
       ),
       bottomNavigationBar: _CustomerBottomBar(
         selectedIndex: _navigationIndex(flow.customerScreen),
-        highlightedLabel: _highlightedLabel(flow.customerScreen),
+        highlightedLabel: _highlightedLabel(context, flow.customerScreen),
         onTap: (index) {
           switch (index) {
             case 0:
@@ -108,8 +105,8 @@ class CustomerAppScreen extends StatelessWidget {
     }
   }
 
-  String _highlightedLabel(CustomerScreen screen) {
-    return _customerLabels[_navigationIndex(screen)];
+  String _highlightedLabel(BuildContext context, CustomerScreen screen) {
+    return _customerLabels(context)[_navigationIndex(screen)];
   }
 }
 
@@ -147,7 +144,7 @@ class _SmartCartView extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            copy.isSpanish ? 'TU SELECCION' : 'YOUR SELECTION',
+            copy.cartYourSelection,
             style: const TextStyle(
               color: Color(0xFFE3B6A1),
               fontSize: 12,
@@ -157,7 +154,7 @@ class _SmartCartView extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            copy.isSpanish ? 'Carrito Inteligente' : 'Smart Cart',
+            copy.cartTitle,
             style: TextStyle(
               color: palette.primaryText,
               fontSize: 40,
@@ -168,13 +165,9 @@ class _SmartCartView extends StatelessWidget {
           const SizedBox(height: 18),
           if (order.cartLineItems.isEmpty)
             _EmptyStateCard(
-              title: copy.isSpanish
-                  ? 'Tu carrito esta vacio'
-                  : 'Your cart is empty',
-              subtitle: copy.isSpanish
-                  ? 'Agrega platos desde el menu para construir tu pedido y desbloquear maridajes de IA.'
-                  : 'Add dishes from the menu to build your order and unlock AI pairings.',
-              actionLabel: copy.isSpanish ? 'Ver Menu' : 'Browse Menu',
+              title: copy.cartEmpty,
+              subtitle: copy.cartEmptySub,
+              actionLabel: copy.cartBrowse,
               onTap: () => flow.setCustomerScreen(CustomerScreen.menu),
             )
           else
@@ -193,14 +186,14 @@ class _SmartCartView extends StatelessWidget {
             child: Column(
               children: [
                 _SummaryRow(
-                  label: copy.isSpanish ? 'Subtotal' : 'Subtotal',
+                  label: copy.cartSubtotal,
                   value: _formatPrice(order.cartTotal),
                 ),
                 const SizedBox(height: 10),
                 _SummaryRow(
-                  label: copy.isSpanish ? 'Tarifa de servicio' : 'Delivery Fee',
-                  value: copy.isSpanish ? 'GRATIS' : 'FREE',
-                  valueColor: Color(0xFF7EDB7A),
+                  label: copy.cartServiceFee,
+                  value: copy.cartFree,
+                  valueColor: const Color(0xFF7EDB7A),
                 ),
                 const Divider(height: 30, color: Color(0x33FFFFFF)),
                 Row(
@@ -210,7 +203,7 @@ class _SmartCartView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            copy.isSpanish ? 'TOTAL' : 'TOTAL AMOUNT',
+                            copy.cartTotal,
                             style: const TextStyle(
                               color: Color(0xFFB7A39A),
                               fontSize: 12,
@@ -243,7 +236,7 @@ class _SmartCartView extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 20),
                         ),
                         child: Text(
-                          copy.isSpanish ? 'PAGAR' : 'CHECKOUT',
+                          copy.cartCheckout,
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
@@ -455,7 +448,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                         foregroundColor: Colors.redAccent,
                         side: const BorderSide(color: Colors.redAccent),
                       ),
-                      child: const Text('Cancelar'),
+                      child: Text(AppCopy.of(context).cancelOrder),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -465,7 +458,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFFFF6F22),
                       ),
-                      child: const Text('Confirmar pedido'),
+                      child: Text(AppCopy.of(context).confirmOrder),
                     ),
                   ),
                 ],
@@ -490,9 +483,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: AiChatBox(
-              hintText: settings.isSpanish
-                  ? 'Escribe aquí...'
-                  : 'Type here...',
+              hintText: AppCopy.of(context).iaPlaceholder,
               onSend: _sendPrompt,
               onVoiceSend: _sendVoicePrompt,
               isLoading: ai.isLoading,
@@ -518,9 +509,8 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'La IA no está disponible sin conexión. '
-                      'Explora el menú para hacer tu pedido.',
-                      style: TextStyle(
+                      AppCopy.of(context).iaOfflineNotice,
+                      style: const TextStyle(
                         color: Color(0xFF8E8E93),
                         fontSize: 13,
                         height: 1.4,
@@ -579,7 +569,7 @@ class _OrbSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'ESCUCHANDO TUS ANTOJOS...',
+            AppCopy.of(context).iaListening,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onBackground,
               fontSize: 12,
@@ -641,12 +631,15 @@ class _QuickChips extends StatelessWidget {
 
   final ValueChanged<String> onSend;
 
-  static const List<(IconData, String)> _chips = [
-    (Icons.eco_outlined, 'Recomiéndame algo saludable'),
-    (Icons.whatshot_outlined, 'Quiero algo con mucho sabor'),
-    (Icons.local_cafe_outlined, 'Una bebida refrescante'),
-    (Icons.star_outline_rounded, 'El plato especial del chef'),
-  ];
+  static List<(IconData, String)> _chips(BuildContext context) {
+    final copy = AppCopy.of(context);
+    return [
+      (Icons.eco_outlined, copy.iaChip1),
+      (Icons.whatshot_outlined, copy.iaChip2),
+      (Icons.local_cafe_outlined, copy.iaChip3),
+      (Icons.star_outline_rounded, copy.iaChip4),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -655,10 +648,10 @@ class _QuickChips extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _chips.length,
+        itemCount: _chips(context).length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final (icon, label) = _chips[index];
+          final (icon, label) = _chips(context)[index];
           return GestureDetector(
             onTap: () => onSend(label),
             child: Container(
@@ -816,25 +809,26 @@ class _EmptyHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final copy = AppCopy.of(context);
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.receipt_long_outlined, color: Color(0xFF3A3A3C), size: 64),
-          SizedBox(height: 16),
+          const Icon(Icons.receipt_long_outlined, color: Color(0xFF3A3A3C), size: 64),
+          const SizedBox(height: 16),
           Text(
-            'Sin historial',
-            style: TextStyle(
+            copy.historyEmpty,
+            style: const TextStyle(
               color: Color(0xFF636366),
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
-            'Tus pedidos anteriores\naparecerán aquí.',
+            copy.historyEmptySub,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF3A3A3C)),
+            style: const TextStyle(color: Color(0xFF3A3A3C)),
           ),
         ],
       ),
@@ -1041,6 +1035,7 @@ class _CustomerBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = _CustomerPalette.of(context);
+    final copy = AppCopy.of(context);
     const icons = [
       Icons.auto_awesome_outlined,
       Icons.restaurant_menu_outlined,
@@ -1048,7 +1043,7 @@ class _CustomerBottomBar extends StatelessWidget {
       Icons.history_outlined,
       Icons.person_outline_rounded,
     ];
-    const labels = ['IA', 'Menú', 'Pedidos', 'Historial', 'Perfil'];
+    final labels = [copy.navIa, copy.navMenu, copy.navOrders, copy.navHistory, copy.navProfile];
 
     return Container(
       margin: EdgeInsets.zero,
