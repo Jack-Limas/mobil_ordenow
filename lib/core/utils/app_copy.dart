@@ -178,4 +178,72 @@ class AppCopy {
   String get accountCreatedAdminArea => isSpanish
       ? 'Cuenta admin creada. Bienvenido al panel.'
       : 'Admin account created. Welcome to the panel.';
+
+  // ── Admin home ──────────────────────────────────────────────────────────────
+  String get adminOccupiedTables =>
+      isSpanish ? 'Mesas ocupadas' : 'Occupied tables';
+  String get adminInService =>
+      isSpanish ? 'en servicio • Tiempo real' : 'in service • Real time';
+  String get adminRealStats =>
+      isSpanish ? 'Estadísticas reales' : 'Real statistics';
+  String get adminDailySales =>
+      isSpanish ? 'Ventas del dia' : 'Daily sales';
+  String get adminActiveOrders =>
+      isSpanish ? 'Pedidos activos' : 'Active orders';
+  String get adminAvgTicket =>
+      isSpanish ? 'Ticket promedio' : 'Average ticket';
+  String get adminReleaseTable => isSpanish ? 'Liberar' : 'Release';
+  String get adminOccupied => isSpanish ? 'Ocupada' : 'Occupied';
+
+  // ── KDS ─────────────────────────────────────────────────────────────────────
+  String get kdsTitle =>
+      isSpanish ? 'Gestión de Comandas' : 'Order Management';
+  String get kdsStartPrep =>
+      isSpanish ? 'Comenzar Preparación' : 'Start Preparation';
+  String get kdsMarkReady =>
+      isSpanish ? 'Listo para servir' : 'Ready to serve';
+  String get kdsConfirmCash =>
+      isSpanish ? 'Confirmar Pago en Caja' : 'Confirm Cash Payment';
+  String get kdsActive => isSpanish ? 'Activos' : 'Active';
+
+  // ── Menu management ──────────────────────────────────────────────────────────
+  String get menuMgmtTitle =>
+      isSpanish ? 'Gestión del Menú' : 'Menu Management';
+  String get menuAddItem =>
+      isSpanish ? 'Añadir Nuevo Plato' : 'Add New Dish';
+  String get menuPublish =>
+      isSpanish ? 'Publicar en Menú' : 'Publish to Menu';
+  String get menuCurrent =>
+      isSpanish ? 'Platos Actuales' : 'Current Dishes';
+
+  // ── Admin profile ────────────────────────────────────────────────────────────
+  String get settingsLanguage => isSpanish ? 'Idioma' : 'Language';
+  String get settingsAppearance => isSpanish ? 'Apariencia' : 'Appearance';
+
+  // ── Order tracking ───────────────────────────────────────────────────────────
+  String get trackingTitle => isSpanish ? 'Seguimiento' : 'Tracking';
+  String get trackingReceived => isSpanish ? 'Recibido' : 'Received';
+  String get trackingCooking => isSpanish ? 'Cocinando' : 'Cooking';
+  String get trackingDelivery => isSpanish ? 'Reparto' : 'Delivery';
+  String get trackingDelivered => isSpanish ? 'Entregado' : 'Delivered';
+  String get trackingActiveOrder =>
+      isSpanish ? 'Sin pedido activo' : 'No active order';
+  String get trackingExplore =>
+      isSpanish ? 'Explora el Menú' : 'Explore the Menu';
+  String get trackingViewOnly =>
+      isSpanish ? 'Solo consulta' : 'View only';
+
+  // ── Payment ──────────────────────────────────────────────────────────────────
+  String get paymentTitle => isSpanish ? 'Pago y Comanda' : 'Payment & Order';
+  String get paymentTotal => isSpanish ? 'Monto Total' : 'Total Amount';
+  String get paymentMethod =>
+      isSpanish ? 'Selecciona Método de Pago' : 'Select Payment Method';
+  String get paymentDigital => isSpanish ? 'Pago Digital' : 'Digital Payment';
+  String get paymentCash => isSpanish ? 'Pago en Efectivo' : 'Cash Payment';
+  String get paymentFinish =>
+      isSpanish ? 'Finalizar Visita' : 'End Visit';
+
+  // ── History ──────────────────────────────────────────────────────────────────
+  String get historyTitle =>
+      isSpanish ? 'Historial de pedidos' : 'Order history';
 }
