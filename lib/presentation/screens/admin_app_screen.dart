@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 import '../../domain/entities/table.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/app_demo_provider.dart';
-import '../providers/app_settings_provider.dart';
+import '../../core/utils/app_copy.dart';
 import '../providers/auth_provider.dart';
 import '../providers/orders_kds_provider.dart';
+import '../widgets/app_utility_toggles.dart';
 import '../widgets/offline_banner.dart';
 import 'admin_profile_screen.dart';
 import 'menu_management_screen.dart';
@@ -41,7 +42,6 @@ class _AdminAppScreenState extends State<AdminAppScreen> {
     final flow = context.watch<AppDemoProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
@@ -74,26 +74,27 @@ class _AdminHomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dash = context.watch<AdminDashboardProvider>();
-    final settings = context.watch<AppSettingsProvider>();
+    final copy = AppCopy.of(context);
+    final onSurface = Theme.of(context).colorScheme.onSurface;
 
     return Column(
       children: [
-        _AdminAppBar(settings: settings),
+        const _AdminAppBar(),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
             children: [
-              const Text(
-                'Mesas ocupadas',
+              Text(
+                copy.adminOccupiedTables,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: onSurface,
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                '${dash.occupiedTables.length} mesas en servicio • Tiempo real',
+                '${dash.occupiedTables.length} ${copy.adminInService}',
                 style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
               ),
               const SizedBox(height: 20),
@@ -109,14 +110,12 @@ class _AdminHomeView extends StatelessWidget {
 }
 
 class _AdminAppBar extends StatelessWidget {
-  const _AdminAppBar({required this.settings});
-
-  final AppSettingsProvider settings;
+  const _AdminAppBar();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
@@ -134,53 +133,16 @@ class _AdminAppBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Text(
+          Text(
             'OrdeNow',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: settings.toggleLanguage,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                settings.isSpanish ? 'ES' : 'EN',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: settings.cycleThemeMode,
-            child: Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                settings.themeMode == ThemeMode.light
-                    ? Icons.light_mode_rounded
-                    : settings.themeMode == ThemeMode.system
-                    ? Icons.settings_brightness_rounded
-                    : Icons.dark_mode_outlined,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ),
+          const AppUtilityToggles(),
         ],
       ),
     );
@@ -426,32 +388,33 @@ class _StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Estadisticas reales',
+        Text(
+          copy.adminRealStats,
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 12),
         _MetricTile(
-          label: 'Ventas del dia',
+          label: copy.adminDailySales,
           value: _formatCop(dash.salesToday),
           icon: Icons.show_chart_rounded,
         ),
         const SizedBox(height: 10),
         _MetricTile(
-          label: 'Pedidos activos',
+          label: copy.adminActiveOrders,
           value: '${dash.activeOrders}',
           icon: Icons.receipt_long_rounded,
         ),
         const SizedBox(height: 10),
         _MetricTile(
-          label: 'Ticket promedio',
+          label: copy.adminAvgTicket,
           value: _formatCop(dash.avgTicket),
           icon: Icons.payments_rounded,
         ),
@@ -519,7 +482,7 @@ class _AdminBottomBar extends StatelessWidget {
     ];
 
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
       child: SafeArea(
         top: false,
