@@ -288,12 +288,12 @@ class _MethodPill extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFFFF6F22).withValues(alpha: 0.15)
-                : const Color(0xFF1C1C1E),
+                : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: isSelected
                   ? const Color(0xFFFF6F22)
-                  : const Color(0xFF3A3A3C),
+                  : Theme.of(context).dividerColor,
               width: 1.5,
             ),
           ),
@@ -394,7 +394,7 @@ class _ComandaDigital extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -439,7 +439,7 @@ class _ComandaDigital extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Divider(color: Color(0xFF3A3A3C), height: 1),
+          Divider(color: Theme.of(context).dividerColor, height: 1),
           const SizedBox(height: 10),
           const Row(
             children: [
@@ -487,8 +487,8 @@ class _ComandaDigital extends StatelessWidget {
                     flex: 3,
                     child: Text(
                       entry.key.name,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -507,8 +507,8 @@ class _ComandaDigital extends StatelessWidget {
                     child: Text(
                       _formatCop(entry.key.price * entry.value),
                       textAlign: TextAlign.right,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -518,17 +518,17 @@ class _ComandaDigital extends StatelessWidget {
               ),
             ),
           ),
-          const Divider(color: Color(0xFF3A3A3C), height: 24),
+          Divider(color: Theme.of(context).dividerColor, height: 24),
           _SummaryRow(label: 'Subtotal', value: _formatCop(subtotal)),
           const SizedBox(height: 6),
           _SummaryRow(label: 'Impuesto (8%)', value: _formatCop(tax)),
-          const Divider(color: Color(0xFF3A3A3C), height: 24),
+          Divider(color: Theme.of(context).dividerColor, height: 24),
           Row(
             children: [
-              const Text(
+              Text(
                 'TOTAL',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1,
@@ -568,8 +568,8 @@ class _SummaryRow extends StatelessWidget {
         const Spacer(),
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
@@ -670,10 +670,10 @@ class _CashWaitState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               '¡Cajero en camino!',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
               ),
