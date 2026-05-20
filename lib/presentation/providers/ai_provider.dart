@@ -190,6 +190,7 @@ class AiProvider extends ChangeNotifier {
       orderStatus: orderStatus,
       allergies: allergies,
       diningPreferences: diningPreferences,
+      hasActiveOrder: _orderProvider.hasActiveOrder,
     );
 
     _history.add(ChatMessage(role: 'user', content: prompt));
@@ -222,26 +223,57 @@ class AiProvider extends ChangeNotifier {
   Future<void> _executeAction(String action, AiActionData? data) async {
     switch (action) {
       case 'add_to_cart':
-      case 'update_order':
         if (data != null) {
           for (final item in data.items) {
             _orderProvider.addItemById(id: item.id, quantity: item.quantity);
           }
         }
+
+      case 'update_order':
+        if (data != null) {
+          if (_orderProvider.hasActiveOrder) {
+            // Active order exists → append directly to it in Supabase
+            await _orderProvider.appendItemsToActiveOrder(items: data.items);
+            _messages.add(const DemoAiMessage(
+              text: '¡Listo! Agregué los platos a tu pedido en curso.',
+              isUser: false,
+            ));
+            notifyListeners();
+          } else {
+            // No active order yet → just add to local cart
+            for (final item in data.items) {
+              _orderProvider.addItemById(id: item.id, quantity: item.quantity);
+            }
+          }
+        }
+
       case 'create_order':
         if (data != null && _currentUserId != null) {
-          await _orderProvider.createOrderFromAi(
-            items: data.items,
-            total: data.total ?? 0,
-            userId: _currentUserId!,
-          );
-          _messages.add(const DemoAiMessage(
-            text:
-                '¡Tu pedido está en camino a la cocina! Te aviso cuando esté listo.',
-            isUser: false,
-          ));
+          if (_orderProvider.hasActiveOrder) {
+            // Guard: an order is already in flight — never create a second one.
+            // Append the new items to the existing order instead.
+            await _orderProvider.appendItemsToActiveOrder(items: data.items);
+            _messages.add(const DemoAiMessage(
+              text:
+                  '¡Listo! Agregué los nuevos platos a tu pedido en curso. '
+                  'El equipo de cocina ya los tiene.',
+              isUser: false,
+            ));
+          } else {
+            await _orderProvider.createOrderFromAi(
+              items: data.items,
+              total: data.total ?? 0,
+              userId: _currentUserId!,
+            );
+            _messages.add(const DemoAiMessage(
+              text:
+                  '¡Tu pedido está en camino a la cocina! Te aviso cuando esté listo.',
+              isUser: false,
+            ));
+          }
           notifyListeners();
         }
+
       case 'go_to_payment':
         _shouldNavigateToPayment = true;
         notifyListeners();

@@ -487,6 +487,50 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Adds new items to an already-existing active order without replacing it.
+  /// Called when the user asks the AI to add items while a previous order is in flight.
+  Future<void> appendItemsToActiveOrder({
+    required List<AiCartItem> items,
+  }) async {
+    if (_activeOrder == null || items.isEmpty) return;
+
+    final resolvedIds = <String>[];
+    for (final item in items) {
+      final found = _findMenuItemForAi(item.id, item.name);
+      if (found != null) {
+        for (var i = 0; i < item.quantity; i++) {
+          resolvedIds.add(found.id);
+        }
+      }
+    }
+    if (resolvedIds.isEmpty) return;
+
+    var addedTotal = 0.0;
+    for (final id in resolvedIds) {
+      try {
+        addedTotal += _menu.firstWhere((m) => m.id == id).price;
+      } catch (_) {}
+    }
+
+    _activeOrder = Order(
+      id: _activeOrder!.id,
+      userId: _activeOrder!.userId,
+      tableId: _activeOrder!.tableId,
+      items: [..._activeOrder!.items, ...resolvedIds],
+      status: _activeOrder!.status,
+      createdAt: _activeOrder!.createdAt,
+      updatedAt: DateTime.now(),
+      paid: _activeOrder!.paid,
+      paymentMethod: _activeOrder!.paymentMethod,
+      totalAmount: _activeOrder!.totalAmount + addedTotal,
+      notes: _activeOrder!.notes,
+      synced: false,
+    );
+
+    notifyListeners();
+    await _syncActiveOrder();
+  }
+
   Future<void> createOrderFromAi({
     required List<AiCartItem> items,
     required double total,
@@ -583,6 +627,26 @@ class OrderProvider extends ChangeNotifier {
 
       _activeOrder = OrderModel.fromJson(activeRows.first);
       _selectedTableId = _activeOrder!.tableId;
+
+      // Validate that the table is actually still occupied.
+      // If the admin released the table while the app was closed, the order is
+      // a ghost and should not be restored as active.
+      try {
+        final tableRows = await SupabaseService.getTables();
+        final tableRow = tableRows.firstWhere(
+          (r) => r['id'] == _activeOrder!.tableId,
+          orElse: () => <String, dynamic>{},
+        );
+        final tableOccupied = (tableRow['occupied'] as bool?) ?? false;
+        if (!tableOccupied) {
+          _completedOrder = _activeOrder;
+          _activeOrder = null;
+          _selectedTableId = null;
+          notifyListeners();
+          return false;
+        }
+      } catch (_) {}
+
       notifyListeners();
       _subscribeToActiveOrder(userId);
       return true;
