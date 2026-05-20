@@ -11,6 +11,7 @@ import '../providers/connectivity_provider.dart';
 import '../providers/order_provider.dart';
 import '../widgets/ai_chat_box.dart';
 import '../widgets/ai_message_bubble.dart';
+import '../widgets/app_utility_toggles.dart';
 import '../widgets/offline_banner.dart';
 import 'client_profile_screen.dart';
 import 'menu_catalog_screen.dart';
@@ -382,7 +383,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
       children: [
         // App bar
         Container(
-          color: Colors.black,
+          color: Theme.of(context).scaffoldBackgroundColor,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Row(
             children: [
@@ -400,52 +401,16 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'OrdeNow',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const Spacer(),
-              GestureDetector(
-                onTap: settings.toggleLanguage,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1E),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    settings.isSpanish ? 'ES' : 'EN',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => _cycleTheme(settings),
-                child: Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1E),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.settings_outlined,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              ),
+              const AppUtilityToggles(),
             ],
           ),
         ),
@@ -739,13 +704,12 @@ class _HistoryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final order = context.watch<OrderProvider>();
-    final settings = context.watch<AppSettingsProvider>();
     final items = order.historyItems;
 
     return Column(
       children: [
         Container(
-          color: Colors.black,
+          color: Theme.of(context).scaffoldBackgroundColor,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Row(
             children: [
@@ -763,56 +727,16 @@ class _HistoryView extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'OrdeNow',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const Spacer(),
-              GestureDetector(
-                onTap: settings.toggleLanguage,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1E),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    settings.isSpanish ? 'ES' : 'EN',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: settings.cycleThemeMode,
-                child: Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1E),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    settings.themeMode == ThemeMode.light
-                        ? Icons.light_mode_rounded
-                        : settings.themeMode == ThemeMode.system
-                        ? Icons.settings_brightness_rounded
-                        : Icons.dark_mode_outlined,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              ),
+              const AppUtilityToggles(),
             ],
           ),
         ),
@@ -822,10 +746,10 @@ class _HistoryView extends StatelessWidget {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
                   children: [
-                    const Text(
-                      'Historial de pedidos',
+                    Text(
+                      AppCopy.of(context).historyTitle,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                       ),
@@ -1127,9 +1051,9 @@ class _CustomerBottomBar extends StatelessWidget {
     return Container(
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        border: Border(top: BorderSide(color: Color(0xFF1C1C1E), width: 1)),
+      decoration: BoxDecoration(
+        color: palette.navBackground,
+        border: const Border(top: BorderSide(color: Color(0xFF1C1C1E), width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
