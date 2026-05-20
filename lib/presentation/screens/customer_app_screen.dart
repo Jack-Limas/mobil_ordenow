@@ -499,14 +499,14 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.wifi_off_rounded,
                     color: Color(0xFF636366),
                     size: 18,
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       AppCopy.of(context).iaOfflineNotice,
