@@ -232,27 +232,27 @@ class _OccupiedTablesSection extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: Theme.of(dialogContext).cardColor,
         title: Text(
-          'Liberar mesa ${table.number}',
+          '${AppCopy.of(dialogContext).adminReleaseTableTitle} ${table.number}',
           style: TextStyle(
             color: Theme.of(dialogContext).colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
-        content: const Text(
-          'La mesa quedará disponible para nuevos clientes. Si tiene una orden activa, se marcará como completada.',
-          style: TextStyle(color: Color(0xFF8E8E93)),
+        content: Text(
+          AppCopy.of(dialogContext).adminReleaseTableContent,
+          style: const TextStyle(color: Color(0xFF8E8E93)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(AppCopy.of(dialogContext).cancelar),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFFF6F22),
             ),
-            child: const Text('Liberar'),
+            child: Text(AppCopy.of(dialogContext).adminReleaseTable),
           ),
         ],
       ),
@@ -322,7 +322,7 @@ class _TableServiceCard extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            'Mesa ${table.number}',
+            '${AppCopy.of(context).adminTableLabel} ${table.number}',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
               fontSize: 22,
@@ -331,7 +331,9 @@ class _TableServiceCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            table.needsPayment ? 'Pago pendiente' : _statusLabel(orderStatus),
+            table.needsPayment
+                ? AppCopy.of(context).paymentPendingTable
+                : _statusLabel(context, orderStatus),
             style: const TextStyle(color: Color(0xFFB8A59B), fontSize: 12),
           ),
           if (orderTotal > 0) ...[
@@ -352,7 +354,7 @@ class _TableServiceCard extends StatelessWidget {
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Color(0xFF3A3A3C)),
                   ),
-                  child: const Text('Comanda'),
+                  child: Text(AppCopy.of(context).adminComanda),
                 ),
               ),
               const SizedBox(width: 8),
@@ -371,14 +373,13 @@ class _TableServiceCard extends StatelessWidget {
     );
   }
 
-  String _statusLabel(String? status) {
-    return switch (status) {
-      'pending' => 'Pendiente',
-      'accepted' => 'Aceptado',
-      'preparing' => 'Preparando',
-      'ready' => 'Listo',
-      _ => hasOrder ? 'Con pedido' : 'Ocupada',
-    };
+  String _statusLabel(BuildContext context, String? status) {
+    const known = {'pending', 'accepted', 'preparing', 'ready', 'delivered', 'completed'};
+    if (status != null && known.contains(status)) {
+      return AppCopy.translateStatus(context, status);
+    }
+    final copy = AppCopy.of(context);
+    return hasOrder ? copy.adminWithOrder : copy.adminOccupied;
   }
 }
 
@@ -474,7 +475,8 @@ class _AdminBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Inicio', 'Menu', 'Comandas', 'Perfil'];
+    final copy = AppCopy.of(context);
+    final labels = [copy.adminNavHome, copy.adminNavMenu, copy.adminNavOrders, copy.adminNavProfile];
     const icons = [
       Icons.home_rounded,
       Icons.restaurant_menu_rounded,
