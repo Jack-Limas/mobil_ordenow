@@ -151,7 +151,7 @@ class _AiChatBoxState extends State<AiChatBox> {
               shape: BoxShape.circle,
               color: _isListening
                   ? const Color(0xFFFF6F22)
-                  : const Color(0xFF2C2C2E),
+                  : Theme.of(context).colorScheme.surface,
               boxShadow: _isListening
                   ? [
                       BoxShadow(
@@ -178,7 +178,7 @@ class _AiChatBoxState extends State<AiChatBox> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E),
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: _isListening
@@ -192,7 +192,7 @@ class _AiChatBoxState extends State<AiChatBox> {
               style: TextStyle(
                 color: _isListening
                     ? const Color(0xFF636366)
-                    : Colors.white,
+                    : Theme.of(context).colorScheme.onSurface,
                 fontSize: 14,
               ),
               onSubmitted: (_) => _sendText(),
