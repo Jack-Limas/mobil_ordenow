@@ -194,6 +194,11 @@ class AppCopy {
       isSpanish ? 'Ticket promedio' : 'Average ticket';
   String get adminReleaseTable => isSpanish ? 'Liberar' : 'Release';
   String get adminOccupied => isSpanish ? 'Ocupada' : 'Occupied';
+  String get adminNoTables =>
+      isSpanish ? 'No hay mesas ocupadas' : 'No occupied tables';
+  String get adminNoTablesSub => isSpanish
+      ? 'Cuando un cliente reserve una mesa, aparecerá aquí.'
+      : 'When a client reserves a table, it will appear here.';
 
   // ── KDS ─────────────────────────────────────────────────────────────────────
   String get kdsTitle =>
@@ -215,10 +220,26 @@ class AppCopy {
       isSpanish ? 'Publicar en Menú' : 'Publish to Menu';
   String get menuCurrent =>
       isSpanish ? 'Platos Actuales' : 'Current Dishes';
+  String get menuSubtitle => isSpanish
+      ? 'Administra y optimiza tus platos del menú'
+      : 'Manage and optimize your menu dishes';
+  String get menuAll => isSpanish ? 'Todos' : 'All';
+  String get menuOrderIa => isSpanish ? 'Ordenar con IA' : 'Order with AI';
 
   // ── Admin profile ────────────────────────────────────────────────────────────
   String get settingsLanguage => isSpanish ? 'Idioma' : 'Language';
   String get settingsAppearance => isSpanish ? 'Apariencia' : 'Appearance';
+
+  // ── Client profile ───────────────────────────────────────────────────────────
+  String get profileSettings => isSpanish ? 'Ajustes' : 'Settings';
+  String get profileTheme => isSpanish ? 'Tema' : 'Theme';
+  String get profileWellness => isSpanish ? 'Bienestar' : 'Wellness';
+  String get profileAllergiesLabel =>
+      isSpanish ? 'Alergias persistentes:' : 'Persistent allergies:';
+  String get profileAddAllergy => isSpanish ? '+ Añadir' : '+ Add';
+  String get profileNoOrders =>
+      isSpanish ? 'Sin pedidos en esta sesión.' : 'No orders in this session.';
+  String get profileLogout => isSpanish ? 'Cerrar Sesion' : 'Sign Out';
 
   // ── Order tracking ───────────────────────────────────────────────────────────
   String get trackingTitle => isSpanish ? 'Seguimiento' : 'Tracking';
