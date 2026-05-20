@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/app_copy.dart';
 import '../providers/admin_dashboard_provider.dart';
-import '../providers/app_settings_provider.dart';
 import '../providers/orders_kds_provider.dart';
+import '../widgets/app_utility_toggles.dart';
 
 class OrdersKdsScreen extends StatelessWidget {
   const OrdersKdsScreen({super.key, this.showBackButton = true});
@@ -15,7 +16,6 @@ class OrdersKdsScreen extends StatelessWidget {
     final kds = context.watch<OrdersKdsProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.black,
       floatingActionButton: kds.pendingCash.isNotEmpty
           ? _CashFab(request: kds.pendingCash.first)
           : null,
@@ -56,19 +56,19 @@ class _KdsAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<AppSettingsProvider>();
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return SafeArea(
       bottom: false,
       child: Container(
-        color: Colors.black,
+        color: Theme.of(context).scaffoldBackgroundColor,
         padding: const EdgeInsets.fromLTRB(4, 8, 16, 12),
         child: Row(
           children: [
             if (showBackButton)
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
+                  color: onSurface,
                   size: 20,
                 ),
                 onPressed: () => Navigator.pop(context),
@@ -81,56 +81,16 @@ class _KdsAppBar extends StatelessWidget {
               size: 22,
             ),
             const SizedBox(width: 6),
-            const Text(
+            Text(
               'OrdeNow',
               style: TextStyle(
-                color: Colors.white,
+                color: onSurface,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const Spacer(),
-            GestureDetector(
-              onTap: () => settings.toggleLanguage(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  settings.isSpanish ? 'ES' : 'EN',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: settings.cycleThemeMode,
-              child: Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  settings.themeMode == ThemeMode.light
-                      ? Icons.light_mode_rounded
-                      : settings.themeMode == ThemeMode.system
-                      ? Icons.settings_brightness_rounded
-                      : Icons.dark_mode_outlined,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-            ),
+            const AppUtilityToggles(),
           ],
         ),
       ),
@@ -193,12 +153,13 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     return Row(
       children: [
-        const Text(
-          'Gestión de Comandas',
+        Text(
+          copy.kdsTitle,
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.w800,
           ),
@@ -211,7 +172,7 @@ class _SectionHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            '$count Activos',
+            '$count ${copy.kdsActive}',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -659,9 +620,9 @@ class _StartButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       icon: const Text('🍳', style: TextStyle(fontSize: 16)),
-      label: const Text(
-        'Comenzar Preparación',
-        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+      label: Text(
+        AppCopy.of(context).kdsStartPrep,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
       ),
     );
   }
@@ -683,9 +644,9 @@ class _ReadyButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-      label: const Text(
-        'Notificar: Listo para servir',
-        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+      label: Text(
+        AppCopy.of(context).kdsMarkReady,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
       ),
     );
   }
@@ -812,9 +773,9 @@ class _CashFab extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Confirmar Pago en Efectivo',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        title: Text(
+          AppCopy.of(ctx).kdsConfirmCash,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
         content: Text(
           '¿Confirmar pago en efectivo de $label por $amount?',
