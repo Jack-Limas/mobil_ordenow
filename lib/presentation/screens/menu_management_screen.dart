@@ -145,11 +145,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           '¿Eliminar plato?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Theme.of(ctx).colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           '¿Seguro que quieres eliminar "${item.name}"? Esta acción no se puede deshacer.',
@@ -289,9 +292,9 @@ class _MenuHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Administra y optimiza tus platos actuales con inteligencia artificial',
-          style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13, height: 1.4),
+        Text(
+          AppCopy.of(context).menuSubtitle,
+          style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 13, height: 1.4),
         ),
       ],
     );
@@ -317,7 +320,7 @@ class _CurrentDishesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -362,8 +365,8 @@ class _CurrentDishesSection extends StatelessWidget {
           else
             for (var i = 0; i < menu.length; i++) ...[
               if (i > 0)
-                const Divider(
-                  color: Color(0xFF2C2C2E),
+                Divider(
+                  color: Theme.of(context).dividerColor,
                   height: 1,
                   indent: 16,
                   endIndent: 16,
@@ -440,8 +443,8 @@ class _DishCard extends StatelessWidget {
               children: [
                 Text(
                   item.name,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
@@ -505,10 +508,10 @@ class _DishImage extends StatelessWidget {
     final placeholder = Container(
       width: size,
       height: size,
-      color: const Color(0xFF2C2C2E),
-      child: const Icon(
+      color: Theme.of(context).colorScheme.surface,
+      child: Icon(
         Icons.restaurant_rounded,
-        color: Color(0xFF48484A),
+        color: Theme.of(context).dividerColor,
         size: 28,
       ),
     );
@@ -588,7 +591,7 @@ class _AddDishForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(16),
@@ -640,17 +643,17 @@ class _AddDishForm extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF2C2C2E)),
+                        border: Border.all(color: Theme.of(context).dividerColor),
                       ),
                       child: DropdownButton<String>(
                         value: category,
                         isExpanded: true,
                         underline: const SizedBox(),
-                        dropdownColor: const Color(0xFF1C1C1E),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        dropdownColor: Theme.of(context).cardColor,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 14,
                         ),
                         items: _categories
@@ -703,7 +706,7 @@ class _AddDishForm extends StatelessWidget {
                   onPressed: onCancel,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: const BorderSide(color: Color(0xFF2C2C2E)),
+                    side: BorderSide(color: Theme.of(context).dividerColor),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -777,24 +780,27 @@ class _FormField extends StatelessWidget {
           keyboardType: keyboardType,
           maxLines: maxLines,
           minLines: 1,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 14,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF3A3A3C), fontSize: 14),
+            hintStyle: const TextStyle(color: Color(0xFF8E8E93), fontSize: 14),
             suffixIcon: suffix,
             filled: true,
-            fillColor: Colors.black,
+            fillColor: Theme.of(context).cardColor,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF2C2C2E)),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF2C2C2E)),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
