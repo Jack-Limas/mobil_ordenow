@@ -16,7 +16,7 @@ class OfflineBanner extends StatelessWidget {
           : Container(
               key: const ValueKey('offline'),
               width: double.infinity,
-              color: const Color(0xFF1C1C1E),
+              color: Theme.of(context).cardColor,
               padding: const EdgeInsets.symmetric(vertical: 7),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
