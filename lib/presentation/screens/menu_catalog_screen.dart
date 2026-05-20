@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/app_copy.dart';
 import '../../domain/entities/menu.dart';
 import '../providers/ai_provider.dart';
 import '../providers/app_demo_provider.dart';
