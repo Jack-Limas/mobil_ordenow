@@ -98,9 +98,9 @@ class _IdentityCard extends StatelessWidget {
           Container(
             width: 82,
             height: 82,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF2C2C2E),
+              color: Theme.of(context).colorScheme.surface,
             ),
             child: const Icon(
               Icons.admin_panel_settings_rounded,
@@ -112,8 +112,8 @@ class _IdentityCard extends StatelessWidget {
           Text(
             name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
@@ -243,7 +243,7 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: child,
@@ -265,8 +265,8 @@ class _CardHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -294,14 +294,18 @@ class _OptionButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFF6F22) : const Color(0xFF2C2C2E),
+          color: selected
+              ? const Color(0xFFFF6F22)
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: selected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
@@ -345,11 +349,13 @@ class _LogoutButton extends StatelessWidget {
   Future<void> _confirmLogout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
-        title: const Text(
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Theme.of(dialogContext).cardColor,
+        title: Text(
           'Cerrar sesion',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Theme.of(dialogContext).colorScheme.onSurface,
+          ),
         ),
         content: const Text(
           'Tendras que iniciar sesion nuevamente.',
