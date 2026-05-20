@@ -266,30 +266,6 @@ class _TrackingCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           OrderProgress(currentStep: order.trackingStep),
-          if (activeOrder != null) ...[
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: order.advanceKitchenStatus,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2C2C2E),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Simular avance →',
-                    style: TextStyle(
-                      color: Color(0xFF8E8E93),
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );

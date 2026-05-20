@@ -129,9 +129,29 @@ class AiProvider extends ChangeNotifier {
     if (_messages.isNotEmpty || _isLoading) return;
 
     final name = userName?.trim() ?? '';
-    final greetingPrompt = name.isNotEmpty
-        ? 'Saluda a $name por su nombre y preséntate brevemente como el asistente virtual de OrdeNow. Ofrécete a ayudarle a explorar el menú o hacer su pedido.'
-        : 'Saluda al cliente y preséntate brevemente como el asistente virtual de OrdeNow. Ofrécete a ayudarle a explorar el menú o hacer su pedido.';
+    final isReturning = orderHistory.isNotEmpty;
+    final hasAllergies = allergies.isNotEmpty;
+    final hasPreferences = diningPreferences.trim().isNotEmpty;
+
+    final buffer = StringBuffer();
+    if (name.isNotEmpty) {
+      buffer.write('Saluda a $name por su nombre y preséntate brevemente como el asistente virtual de OrdeNow.');
+    } else {
+      buffer.write('Saluda al cliente y preséntate brevemente como el asistente virtual de OrdeNow.');
+    }
+    if (isReturning) {
+      buffer.write(' Es un cliente recurrente — puedes hacer referencia a visitas anteriores si es natural.');
+    } else {
+      buffer.write(' Es su primera visita — no menciones visitas ni pedidos anteriores que no existen.');
+    }
+    if (hasAllergies) {
+      buffer.write(' YA sabes que tiene alergia a: ${allergies.join(", ")}. NO le preguntes por sus alergias; simplemente tenlas presentes.');
+    }
+    if (hasPreferences) {
+      buffer.write(' Sus preferencias registradas son: $diningPreferences. No le preguntes qué prefiere.');
+    }
+    buffer.write(' Ofrécete a ayudarle a explorar el menú o hacer su pedido.');
+    final greetingPrompt = buffer.toString();
 
     await _callAi(
       prompt: greetingPrompt,

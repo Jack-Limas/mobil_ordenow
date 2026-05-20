@@ -81,8 +81,12 @@ class AuthRemoteDataSource {
   }
 
   Future<UserModel> updateProfile(UserModel user) async {
-    final profileUser = UserModel.fromEntity(user.copyWith(password: ''));
-    await SupabaseService.upsertUser(profileUser.toJson());
+    await SupabaseService.updateUserProfile(user.id, {
+      'full_name': user.fullName,
+      'allergies': user.allergies,
+      'preferences': user.preferences,
+      'updated_at': user.updatedAt.toIso8601String(),
+    });
     return user;
   }
 }

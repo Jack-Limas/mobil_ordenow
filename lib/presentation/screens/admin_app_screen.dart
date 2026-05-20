@@ -6,6 +6,7 @@ import '../providers/admin_dashboard_provider.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/orders_kds_provider.dart';
 import '../widgets/offline_banner.dart';
 import 'admin_profile_screen.dart';
 import 'menu_management_screen.dart';
@@ -295,7 +296,17 @@ class _OccupiedTablesSection extends StatelessWidget {
     );
 
     if (confirmed == true) {
+      // Capture order ID before releasing (dash does optimistic update immediately)
+      final activeOrder = dash.activeOrderForTable(table.id);
       await dash.releaseTable(table.id);
+      // Immediately sync KDS local state so the comanda disappears without
+      // waiting for the Realtime event, which can lag.
+      if (context.mounted && activeOrder != null) {
+        await context.read<OrdersKdsProvider>().releaseTable(
+          orderId: activeOrder['id'] as String,
+          tableId: table.id,
+        );
+      }
     }
   }
 }

@@ -301,6 +301,23 @@ class OrderProvider extends ChangeNotifier {
   }
 
   void requestCashDesk() {
+    _paymentMethod = 'cash';
+    if (_activeOrder != null) {
+      _activeOrder = Order(
+        id: _activeOrder!.id,
+        userId: _activeOrder!.userId,
+        tableId: _activeOrder!.tableId,
+        items: _activeOrder!.items,
+        status: _activeOrder!.status,
+        createdAt: _activeOrder!.createdAt,
+        updatedAt: DateTime.now(),
+        paid: _activeOrder!.paid,
+        paymentMethod: 'cash',
+        totalAmount: _activeOrder!.totalAmount,
+        notes: _activeOrder!.notes,
+        synced: false,
+      );
+    }
     _updateTableState(occupied: true, needsPayment: true);
     _syncActiveOrder();
     _syncCashRequest();

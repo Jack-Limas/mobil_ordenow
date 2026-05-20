@@ -6,8 +6,6 @@ import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
-import 'customer_app_screen.dart';
-
 class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
 
@@ -772,25 +770,7 @@ class _HistoryRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              CustomerAppScreen.imageFor(menu.id),
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 50,
-                height: 50,
-                color: const Color(0xFF2C2C2E),
-                child: const Icon(
-                  Icons.restaurant_rounded,
-                  color: Color(0xFFFF6F22),
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
+          _HistoryItemImage(menu: menu),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -910,6 +890,53 @@ class _LogoutDialog extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _HistoryItemImage extends StatelessWidget {
+  const _HistoryItemImage({required this.menu});
+
+  final Menu menu;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = menu.imageUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          url,
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const _HistoryImageFallback(),
+        ),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.asset(
+        url.isNotEmpty ? url : 'lib/assets/images/background_bienvenida.png',
+        width: 50,
+        height: 50,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const _HistoryImageFallback(),
+      ),
+    );
+  }
+}
+
+class _HistoryImageFallback extends StatelessWidget {
+  const _HistoryImageFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 50,
+      height: 50,
+      color: const Color(0xFF2C2C2E),
+      child: const Icon(Icons.restaurant_rounded, color: Color(0xFFFF6F22), size: 24),
     );
   }
 }

@@ -10,6 +10,13 @@ class SupabaseService {
     await client.from(SupabaseTables.user).upsert(data);
   }
 
+  static Future<void> updateUserProfile(
+    String userId,
+    Map<String, dynamic> fields,
+  ) async {
+    await client.from(SupabaseTables.user).update(fields).eq('id', userId);
+  }
+
   static Future<List<Map<String, dynamic>>> getUsers() async {
     final res = await client.from(SupabaseTables.user).select();
     return List<Map<String, dynamic>>.from(res);

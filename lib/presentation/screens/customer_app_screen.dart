@@ -842,20 +842,7 @@ class _HistoryView extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFFFF6F22,
-                                  ).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(
-                                  Icons.restaurant_rounded,
-                                  color: Color(0xFFFF6F22),
-                                ),
-                              ),
+                              _HistoryItemThumbnail(item: item),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -1413,6 +1400,59 @@ class _SummaryRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _HistoryItemThumbnail extends StatelessWidget {
+  const _HistoryItemThumbnail({required this.item});
+
+  final Menu item;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = item.imageUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          url,
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const _HistoryThumbFallback(),
+        ),
+      );
+    }
+    final assetPath = url.isNotEmpty
+        ? url
+        : CustomerAppScreen.imageFor(item.id);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.asset(
+        assetPath,
+        width: 48,
+        height: 48,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const _HistoryThumbFallback(),
+      ),
+    );
+  }
+}
+
+class _HistoryThumbFallback extends StatelessWidget {
+  const _HistoryThumbFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF6F22).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(Icons.restaurant_rounded, color: Color(0xFFFF6F22)),
     );
   }
 }
