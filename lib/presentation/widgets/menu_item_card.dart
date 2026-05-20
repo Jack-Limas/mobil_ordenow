@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/utils/app_copy.dart';
 import '../../domain/entities/menu.dart';
 
 class MenuItemCard extends StatelessWidget {
@@ -18,7 +19,7 @@ class MenuItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -67,8 +68,8 @@ class MenuItemCard extends StatelessWidget {
                     menu.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       height: 1.3,
@@ -114,7 +115,7 @@ class MenuItemCard extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.auto_awesome_rounded, size: 14),
-                      label: const Text('Ordenar con IA'),
+                      label: Text(AppCopy.of(context).menuOrderIa),
                     ),
                   ),
                 ],
@@ -162,13 +163,13 @@ class _ImagePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 140,
-      decoration: const BoxDecoration(
-        color: Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.restaurant_rounded,
-        color: Color(0xFF3A3A3C),
+        color: Theme.of(context).dividerColor,
         size: 48,
       ),
     );
