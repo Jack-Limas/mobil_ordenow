@@ -505,7 +505,7 @@ class _AiConciergeViewState extends State<_AiConciergeView> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Row(
@@ -578,10 +578,10 @@ class _OrbSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'ESCUCHANDO TUS ANTOJOS...',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onBackground,
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 2.0,
@@ -613,9 +613,9 @@ class _TypingIndicator extends StatelessWidget {
         const SizedBox(width: 10),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1C1C1E),
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(4),
               topRight: Radius.circular(16),
               bottomLeft: Radius.circular(16),
@@ -664,9 +664,9 @@ class _QuickChips extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0xFF2C2C2E)),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -675,8 +675,8 @@ class _QuickChips extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     label,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -761,7 +761,7 @@ class _HistoryView extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1C1C1E),
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Row(
@@ -774,8 +774,10 @@ class _HistoryView extends StatelessWidget {
                                   children: [
                                     Text(
                                       item.name,
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -1053,7 +1055,9 @@ class _CustomerBottomBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: palette.navBackground,
-        border: const Border(top: BorderSide(color: Color(0xFF1C1C1E), width: 1)),
+        border: Border(
+          top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1238,10 +1242,10 @@ class _CartImagePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 180,
-      color: const Color(0xFF2C2C2E),
-      child: const Icon(
+      color: Theme.of(context).colorScheme.surface,
+      child: Icon(
         Icons.restaurant_rounded,
-        color: Color(0xFF48484A),
+        color: Theme.of(context).dividerColor,
         size: 44,
       ),
     );
