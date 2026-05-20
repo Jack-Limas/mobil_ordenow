@@ -55,6 +55,10 @@ lib/
 
 ## Base de datos (Supabase)
 
+.env
+SUPABASE_URL= https://jzkosbnlvdtjbjnofapj.supabase.co
+SUPABASE_ANON_KEY= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6a29zYm5sdmR0amJqbm9mYXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjQwOTUsImV4cCI6MjA5MDA0MDA5NX0.TqgiByFB8sC-8qZ7x95m6nJhzDNmF_lVindSLerIk_w
+
 ### Tablas
 
 ```
