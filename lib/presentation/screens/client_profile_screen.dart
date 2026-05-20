@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/app_copy.dart';
 import '../../domain/entities/menu.dart';
 import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
@@ -29,11 +30,14 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF1C1C1E),
+          backgroundColor: Theme.of(ctx).cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
+          title: Text(
             'Añadir alergias',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: Theme.of(ctx).colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -63,7 +67,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? const Color(0xFFFF6F22)
-                            : const Color(0xFF2C2C2E),
+                            : Theme.of(ctx).colorScheme.surface,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
@@ -83,15 +87,18 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
               const SizedBox(height: 14),
               TextField(
                 controller: customController,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: TextStyle(
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                  fontSize: 13,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Otras (separadas por coma)',
                   hintStyle: const TextStyle(
-                    color: Color(0xFF636366),
+                    color: Color(0xFF8E8E93),
                     fontSize: 13,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFF2C2C2E),
+                  fillColor: Theme.of(ctx).colorScheme.surface,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 10,
@@ -318,8 +325,8 @@ class _AvatarSection extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           name.isNotEmpty ? name : 'Usuario',
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.w800,
           ),
@@ -351,20 +358,20 @@ class _AjustesCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.settings_rounded, color: Color(0xFFFF6F22), size: 20),
-              SizedBox(width: 10),
+              const Icon(Icons.settings_rounded, color: Color(0xFFFF6F22), size: 20),
+              const SizedBox(width: 10),
               Text(
-                'Ajustes',
+                AppCopy.of(context).profileSettings,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -374,9 +381,9 @@ class _AjustesCard extends StatelessWidget {
           const SizedBox(height: 20),
           Row(
             children: [
-              const Text(
-                'Idioma',
-                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 14),
+              Text(
+                AppCopy.of(context).settingsLanguage,
+                style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 14),
               ),
               const Spacer(),
               _TogglePill(
@@ -387,13 +394,13 @@ class _AjustesCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(color: Color(0xFF2C2C2E), height: 1),
+          Divider(color: Theme.of(context).dividerColor, height: 1),
           const SizedBox(height: 16),
           Row(
             children: [
-              const Text(
-                'Tema',
-                style: TextStyle(color: Color(0xFF8E8E93), fontSize: 14),
+              Text(
+                AppCopy.of(context).profileTheme,
+                style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 14),
               ),
               const Spacer(),
               _ThemeSelector(
@@ -424,7 +431,7 @@ class _TogglePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -488,7 +495,7 @@ class _ThemeSelector extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected
                   ? const Color(0xFFFF6F22)
-                  : const Color(0xFF2C2C2E),
+                  : Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -523,20 +530,20 @@ class _BienestarCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.spa_rounded, color: Color(0xFF4CAF50), size: 20),
-              SizedBox(width: 10),
+              const Icon(Icons.spa_rounded, color: Color(0xFF4CAF50), size: 20),
+              const SizedBox(width: 10),
               Text(
-                'Bienestar',
+                AppCopy.of(context).profileWellness,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -544,9 +551,9 @@ class _BienestarCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Alergias persistentes:',
-            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+          Text(
+            AppCopy.of(context).profileAllergiesLabel,
+            style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -567,9 +574,9 @@ class _BienestarCard extends StatelessWidget {
                       color: const Color(0xFFFF6F22).withValues(alpha: 0.6),
                     ),
                   ),
-                  child: const Text(
-                    '+ Añadir',
-                    style: TextStyle(
+                  child: Text(
+                    AppCopy.of(context).profileAddAllergy,
+                    style: const TextStyle(
                       color: Color(0xFFFF6F22),
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -596,7 +603,7 @@ class _AllergyChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -604,8 +611,8 @@ class _AllergyChip extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -661,7 +668,7 @@ class _HistorialCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -675,10 +682,10 @@ class _HistorialCard extends StatelessWidget {
                 size: 20,
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Historial de Pedidos',
+              Text(
+                AppCopy.of(context).historyTitle,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -700,9 +707,9 @@ class _HistorialCard extends StatelessWidget {
           ),
           if (visible.isEmpty) ...[
             const SizedBox(height: 16),
-            const Text(
-              'Sin pedidos en esta sesión.',
-              style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+            Text(
+              AppCopy.of(context).profileNoOrders,
+              style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
             ),
           ] else ...[
             const SizedBox(height: 14),
@@ -739,8 +746,8 @@ class _HistoryRow extends StatelessWidget {
               children: [
                 Text(
                   quantity > 1 ? '${menu.name} ×$quantity' : menu.name,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -818,11 +825,14 @@ class _LogoutDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF1C1C1E),
+      backgroundColor: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text(
+      title: Text(
         '¿Cerrar sesión?',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontWeight: FontWeight.w800,
+        ),
       ),
       content: const Text(
         '¿Seguro que deseas cerrar sesión?',
@@ -896,7 +906,7 @@ class _HistoryImageFallback extends StatelessWidget {
     return Container(
       width: 50,
       height: 50,
-      color: const Color(0xFF2C2C2E),
+      color: Theme.of(context).colorScheme.surface,
       child: const Icon(Icons.restaurant_rounded, color: Color(0xFFFF6F22), size: 24),
     );
   }
