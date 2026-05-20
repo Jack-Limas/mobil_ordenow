@@ -34,16 +34,16 @@ class AppUtilityToggles extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.language_rounded,
                 size: 14,
-                color: Color(0xFFE5E2E1),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               const SizedBox(width: 8),
               Text(
                 settings.isSpanish ? 'ES / EN' : 'EN / ES',
-                style: const TextStyle(
-                  color: Color(0xFFE5E2E1),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -65,13 +65,13 @@ class AppUtilityToggles extends StatelessWidget {
                 Icon(
                   activeThemeIcon,
                   size: 15,
-                  color: const Color(0xFFE5E2E1),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   activeThemeLabel,
-                  style: const TextStyle(
-                    color: Color(0xFFE5E2E1),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -107,7 +107,7 @@ class _GlassButton extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Material(
-          color: const Color(0xFF1C1B1B).withValues(alpha: 0.40),
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.70),
           child: InkWell(
             onTap: onTap,
             child: Container(
