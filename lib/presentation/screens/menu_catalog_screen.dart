@@ -82,6 +82,9 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                   itemBuilder: (context, index) {
                     final cat = categories[index];
                     final isSelected = cat == selectedCat;
+                    final displayCat = cat == 'Todos'
+                        ? AppCopy.of(context).menuAll
+                        : cat;
                     return GestureDetector(
                       onTap: () => setState(() => _selectedCategory = cat),
                       child: AnimatedContainer(
@@ -93,14 +96,16 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? const Color(0xFFFF6F22)
-                              : const Color(0xFF1C1C1E),
+                              : Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(999),
                           border: isSelected
                               ? null
-                              : Border.all(color: const Color(0xFF3A3A3C)),
+                              : Border.all(
+                                  color: Theme.of(context).dividerColor,
+                                ),
                         ),
                         child: Text(
-                          cat,
+                          displayCat,
                           style: TextStyle(
                             color: isSelected
                                 ? Colors.white
