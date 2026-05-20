@@ -6,6 +6,7 @@ import '../providers/app_demo_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/order_provider.dart';
+import '../widgets/app_utility_toggles.dart';
 class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
 
@@ -150,7 +151,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
 
     return Column(
       children: [
-        _ProfileAppBar(settings: settings),
+        const _ProfileAppBar(),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
@@ -211,14 +212,12 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
 // ─────────────────────────────────────────
 
 class _ProfileAppBar extends StatelessWidget {
-  const _ProfileAppBar({required this.settings});
-
-  final AppSettingsProvider settings;
+  const _ProfileAppBar();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
@@ -236,54 +235,16 @@ class _ProfileAppBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Text(
+          Text(
             'OrdeNow',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: settings.toggleLanguage,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                settings.isSpanish ? 'ES' : 'EN',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: settings.cycleThemeMode,
-            child: Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                settings.themeMode == ThemeMode.light
-                    ? Icons.light_mode_rounded
-                    : settings.themeMode == ThemeMode.system
-                    ? Icons.settings_brightness_rounded
-                    : Icons.dark_mode_outlined,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ),
+          const AppUtilityToggles(),
         ],
       ),
     );
