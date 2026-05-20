@@ -85,7 +85,7 @@ class _MenuCatalogScreenState extends State<MenuCatalogScreen> {
                     final isSelected = cat == selectedCat;
                     final displayCat = cat == 'Todos'
                         ? AppCopy.of(context).menuAll
-                        : cat;
+                        : AppCopy.translateCategory(context, cat);
                     return GestureDetector(
                       onTap: () => setState(() => _selectedCategory = cat),
                       child: AnimatedContainer(
@@ -200,15 +200,15 @@ class _EmptyCategory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.restaurant_rounded, color: Color(0xFF3A3A3C), size: 56),
-          SizedBox(height: 16),
+          const Icon(Icons.restaurant_rounded, color: Color(0xFF3A3A3C), size: 56),
+          const SizedBox(height: 16),
           Text(
-            'No hay platos en esta categoría',
-            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 15),
+            AppCopy.of(context).menuEmptyCategory,
+            style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 15),
           ),
         ],
       ),
