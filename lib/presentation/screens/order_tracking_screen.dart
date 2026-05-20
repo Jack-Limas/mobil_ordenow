@@ -114,17 +114,18 @@ class _TrackingCard extends StatelessWidget {
 
   final OrderProvider order;
 
-  ({Color color, String label}) _badge(String status) {
+  ({Color color, String label}) _badge(BuildContext context, String status) {
+    final copy = AppCopy.of(context);
     switch (status) {
       case OrderStatuses.preparing:
-        return (color: const Color(0xFFFF6F22), label: 'En Cocina');
+        return (color: const Color(0xFFFF6F22), label: copy.trackingInKitchen);
       case OrderStatuses.ready:
-        return (color: const Color(0xFF62D26F), label: 'Listo');
+        return (color: const Color(0xFF62D26F), label: copy.trackingReady);
       case OrderStatuses.delivered:
       case OrderStatuses.completed:
-        return (color: const Color(0xFF5E9FFF), label: 'Entregado');
+        return (color: const Color(0xFF5E9FFF), label: copy.trackingDelivered);
       default:
-        return (color: const Color(0xFFF0B63E), label: 'Recibido');
+        return (color: const Color(0xFFF0B63E), label: copy.trackingReceived);
     }
   }
 
@@ -140,12 +141,12 @@ class _TrackingCard extends StatelessWidget {
     final copy = AppCopy.of(context);
     final activeOrder = order.activeOrder;
     final status = order.currentOrderStatus;
-    final badge = _badge(status);
+    final badge = _badge(context, status);
     final orderId = activeOrder != null
         ? '#${activeOrder.id.substring(0, 4).toUpperCase()}'
         : '#—';
     final timeStr = activeOrder != null
-        ? 'Iniciado a las ${_formatTime(activeOrder.createdAt)}'
+        ? '${copy.trackingStartedAt} ${_formatTime(activeOrder.createdAt)}'
         : copy.trackingActiveOrder;
 
     return Container(
@@ -175,7 +176,7 @@ class _TrackingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Pedido $orderId',
+                      '${copy.trackingOrder} $orderId',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 22,
@@ -242,6 +243,7 @@ class _SelectionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copy = AppCopy.of(context);
     final items = order.orderedItems;
     final unique = _deduped(items);
 
@@ -254,7 +256,7 @@ class _SelectionSection extends StatelessWidget {
                 color: Color(0xFFFF6F22), size: 18),
             const SizedBox(width: 8),
             Text(
-              'Tu Selección',
+              copy.trackingYourSelection,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 16,
@@ -263,7 +265,7 @@ class _SelectionSection extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              '${items.length} artículo${items.length == 1 ? '' : 's'}',
+              copy.trackingItemCount(items.length),
               style: const TextStyle(
                 color: Color(0xFF8E8E93),
                 fontSize: 13,
@@ -409,12 +411,16 @@ class _ExploreMenuSection extends StatelessWidget {
             children: [
               Expanded(
                 child: _SmallMenuCard(
-                    menu: rest[0], onAction: onExplore, actionLabel: 'Explorar'),
+                    menu: rest[0],
+                    onAction: onExplore,
+                    actionLabel: AppCopy.of(context).trackingExploreAction),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _SmallMenuCard(
-                    menu: rest[1], onAction: onAiOrder, actionLabel: '✦ IA Order'),
+                    menu: rest[1],
+                    onAction: onAiOrder,
+                    actionLabel: AppCopy.of(context).trackingIaOrder),
               ),
             ],
           ),
@@ -504,9 +510,9 @@ class _LargeMenuCard extends StatelessWidget {
                       color: const Color(0xFF1C1C1E).withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
-                      '✦ IA Order',
-                      style: TextStyle(
+                    child: Text(
+                      AppCopy.of(context).trackingIaOrder,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -703,7 +709,7 @@ class _PayNowCard extends StatelessWidget {
                   Icons.payment_rounded, color: Color(0xFFFF6F22), size: 18),
               const SizedBox(width: 8),
               Text(
-                'Pago',
+                AppCopy.of(context).trackingPayment,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
@@ -714,16 +720,16 @@ class _PayNowCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Total: ${_formatCop(total)}',
+            '${AppCopy.of(context).kdsTotal}: ${_formatCop(total)}',
             style: const TextStyle(
               color: Color(0xFF8E8E93),
               fontSize: 13,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Puedes pagar ahora o esperar a recibir tu pedido.',
-            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
+          Text(
+            AppCopy.of(context).trackingPayWait,
+            style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 12),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -739,9 +745,9 @@ class _PayNowCard extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.payment_rounded, size: 18),
-              label: const Text(
-                'Pagar Pedido',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              label: Text(
+                AppCopy.of(context).trackingPayNow,
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ),
